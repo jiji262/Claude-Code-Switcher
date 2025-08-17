@@ -851,9 +851,90 @@ impl App for ConfigManagerApp {
 }
 
 fn main() -> Result<(), eframe::Error> {
+    // 加载应用图标
+    let icon_data = include_bytes!("../resources/icons/icon.svg");
+    let icon_image = load_icon_from_svg(icon_data);
+
     let options = eframe::NativeOptions {
-        viewport: egui::ViewportBuilder::default().with_inner_size([900.0, 600.0]).with_min_inner_size([600.0, 400.0]),
+        viewport: egui::ViewportBuilder::default()
+            .with_inner_size([900.0, 600.0])
+            .with_min_inner_size([600.0, 400.0])
+            .with_icon(icon_image),
         ..Default::default()
     };
     eframe::run_native("Claude Code Switcher", options, Box::new(|cc| Box::new(ConfigManagerApp::new(cc))))
+}
+
+// 从 SVG 数据加载图标
+fn load_icon_from_svg(svg_data: &[u8]) -> egui::IconData {
+    use resvg::usvg::{self, TreeParsing};
+    use tiny_skia::Pixmap;
+
+    let size = 64; // 使用 64x64 像素的图标
+
+    // 尝试解析 SVG 并渲染为位图
+    if let Ok(svg_str) = std::str::from_utf8(svg_data) {
+        let options = usvg::Options::default();
+        if let Ok(usvg_tree) = usvg::Tree::from_str(svg_str, &options) {
+            if let Some(mut pixmap) = Pixmap::new(size, size) {
+                let transform = tiny_skia::Transform::from_scale(
+                    size as f32 / usvg_tree.size.width(),
+                    size as f32 / usvg_tree.size.height(),
+                );
+
+                let resvg_tree = resvg::Tree::from_usvg(&usvg_tree);
+                resvg_tree.render(transform, &mut pixmap.as_mut());
+
+                // 转换为 RGBA 格式
+                let pixels = pixmap.data();
+                let mut rgba = Vec::with_capacity(pixels.len());
+
+                // tiny-skia 使用 BGRA 格式，需要转换为 RGBA
+                for chunk in pixels.chunks_exact(4) {
+                    rgba.push(chunk[2]); // R
+                    rgba.push(chunk[1]); // G
+                    rgba.push(chunk[0]); // B
+                    rgba.push(chunk[3]); // A
+                }
+
+                return egui::IconData {
+                    rgba,
+                    width: size,
+                    height: size,
+                };
+            }
+        }
+    }
+
+    // 如果 SVG 解析失败，创建一个简单的备用图标
+    create_fallback_icon(size)
+}
+
+// 创建备用图标
+fn create_fallback_icon(size: u32) -> egui::IconData {
+    let mut rgba = vec![0u8; (size * size * 4) as usize];
+
+    // 创建一个简单的渐变图标
+    for y in 0..size {
+        for x in 0..size {
+            let i = ((y * size + x) * 4) as usize;
+            let center_x = size as f32 / 2.0;
+            let center_y = size as f32 / 2.0;
+            let distance = ((x as f32 - center_x).powi(2) + (y as f32 - center_y).powi(2)).sqrt();
+            let max_distance = (center_x.powi(2) + center_y.powi(2)).sqrt();
+            let intensity = (1.0 - distance / max_distance).max(0.0);
+
+            // 使用类似 SVG 中的颜色 (#2E3440 到 #5E81AC)
+            rgba[i] = (46 as f32 * (1.0 - intensity) + 94 as f32 * intensity) as u8; // R
+            rgba[i + 1] = (52 as f32 * (1.0 - intensity) + 129 as f32 * intensity) as u8; // G
+            rgba[i + 2] = (64 as f32 * (1.0 - intensity) + 172 as f32 * intensity) as u8; // B
+            rgba[i + 3] = 255; // A
+        }
+    }
+
+    egui::IconData {
+        rgba,
+        width: size,
+        height: size,
+    }
 }

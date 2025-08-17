@@ -9,6 +9,7 @@
 - 🎨 **主题切换**：支持深色和浅色主题
 - 📝 **JSON 编辑**：内置 JSON 编辑器，支持语法高亮和格式化
 - ⚙️ **设置管理**：自定义配置文件目录和应用设置
+- 🎯 **统一图标**：使用 `resources/icons/icon.svg` 作为应用图标，在所有平台和位置统一显示
 
 ## 快速开始
 
@@ -21,6 +22,9 @@
 ```bash
 # 克隆或下载源码后进入项目目录
 cd claude-code-switcher
+
+# 生成应用图标 (可选，已预生成)
+./generate_icons.sh
 
 # 构建 release 版本
 cargo build --release

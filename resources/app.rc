@@ -1,0 +1,35 @@
+// Windows 资源文件
+#include <windows.h>
+
+// 应用程序图标
+IDI_ICON1 ICON "icons/icon.ico"
+
+// 版本信息
+1 VERSIONINFO
+FILEVERSION 0,1,2,0
+PRODUCTVERSION 0,1,2,0
+FILEFLAGSMASK 0x3fL
+FILEFLAGS 0x0L
+FILEOS 0x40004L
+FILETYPE 0x1L
+FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904b0"
+        BEGIN
+            VALUE "CompanyName", "Claude Code"
+            VALUE "FileDescription", "Claude Code Switcher"
+            VALUE "FileVersion", "0.1.2.0"
+            VALUE "InternalName", "claude-code-switcher"
+            VALUE "LegalCopyright", "Copyright (C) 2024"
+            VALUE "OriginalFilename", "claude-code-switcher.exe"
+            VALUE "ProductName", "Claude Code Switcher"
+            VALUE "ProductVersion", "0.1.2.0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1200
+    END
+END
