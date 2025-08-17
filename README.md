@@ -2,6 +2,8 @@
 
 用于快速切换 Claude Code 配置的桌面应用程序。
 
+![demo](dist/demo.png)
+
 ## 功能特性
 
 - 🔄 **配置切换**：一键切换不同的 Claude Code 配置
