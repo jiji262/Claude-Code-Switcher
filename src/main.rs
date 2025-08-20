@@ -881,17 +881,209 @@ impl App for ConfigManagerApp {
 
                 // 编辑器内容区域
                 egui::CentralPanel::default().frame(egui::Frame::default().fill(colors.mantle).inner_margin(egui::Margin { left: 12.0, right: 12.0, top: 10.0, bottom: 10.0 })).show_inside(ui, |ui| {
-                    egui::ScrollArea::vertical().auto_shrink([false; 2]).show(ui, |ui| {
-                        let editor = TextEdit::multiline(&mut self.editor_content).id(Id::new("main_editor")).font(egui::FontId::monospace(14.0)).code_editor().desired_width(f32::INFINITY).frame(false);
-                        let response = ui.add_enabled(self.selected_file.is_some(), editor);
+                    if self.selected_file.is_some() {
+                        // 创建一个带行号的代码编辑器
+                        egui::ScrollArea::vertical().auto_shrink([false; 2]).id_source("main_editor_scroll").show(ui, |ui| {
+                            // 自定义JSON语法高亮，带行号
+                            let mut layouter = |ui: &egui::Ui, string: &str, wrap_width: f32| {
+                                let mut job = egui::text::LayoutJob::default();
+                                job.wrap.max_width = wrap_width;
 
-                        // 检测内容是否修改
-                        if response.changed() {
-                            self.is_content_modified = self.editor_content != self.original_content;
-                        }
+                                // 定义颜色
+                                let (key_color, string_color, number_color, keyword_color, punctuation_color) =
+                                    if matches!(self.current_theme, Theme::Dark) {
+                                        (
+                                            Color32::from_rgb(156, 220, 254), // 浅蓝色 - 键名
+                                            Color32::from_rgb(206, 145, 120), // 橙色 - 字符串值
+                                            Color32::from_rgb(181, 206, 168), // 浅绿色 - 数字
+                                            Color32::from_rgb(197, 134, 192), // 紫色 - 关键字
+                                            Color32::from_rgb(212, 212, 212), // 浅灰色 - 标点
+                                        )
+                                    } else {
+                                        (
+                                            Color32::from_rgb(0, 92, 197),    // 深蓝色 - 键名
+                                            Color32::from_rgb(163, 21, 21),   // 深红色 - 字符串值
+                                            Color32::from_rgb(9, 134, 88),    // 深绿色 - 数字
+                                            Color32::from_rgb(111, 66, 193),  // 深紫色 - 关键字
+                                            Color32::from_rgb(80, 80, 80),    // 深灰色 - 标点
+                                        )
+                                    };
+
+                                // 按行处理，为每行添加行号
+                                let lines: Vec<&str> = string.lines().collect();
+
+                                for (line_idx, line) in lines.iter().enumerate() {
+                                    let line_num = line_idx + 1;
+
+                                    // 添加行号（简单的文本格式，不使用背景色）
+                                    job.append(
+                                        &format!("{:>3} │ ", line_num),
+                                        0.0,
+                                        egui::TextFormat {
+                                            font_id: egui::FontId::monospace(13.0),
+                                            color: Color32::from_rgb(120, 120, 120),
+                                            ..Default::default()
+                                        },
+                                    );
+
+                                    // 处理这一行的语法高亮
+                                    let mut chars = line.char_indices().peekable();
+                                    let mut in_string = false;
+                                    let mut in_key = false;
+                                    let mut current_start = 0;
+                                    let mut current_color = colors.text;
+
+                                    while let Some((i, ch)) = chars.next() {
+                                            match ch {
+                                                '"' => {
+                                                    // 添加当前段落
+                                                    if i > current_start {
+                                                        job.append(&line[current_start..i], 0.0, egui::TextFormat {
+                                                            color: current_color,
+                                                            font_id: egui::FontId::monospace(14.0),
+                                                            ..Default::default()
+                                                        });
+                                                    }
+
+                                                    if !in_string {
+                                                        // 开始字符串，检查是否是键名
+                                                        in_string = true;
+                                                        // 向前查找冒号来判断是否是键名
+                                                        let rest_of_line = &line[i..];
+                                                        if let Some(quote_end) = rest_of_line[1..].find('"') {
+                                                            let after_quote = &rest_of_line[quote_end + 2..];
+                                                            in_key = after_quote.trim_start().starts_with(':');
+                                                        }
+                                                        current_color = if in_key { key_color } else { string_color };
+                                                    } else {
+                                                        // 结束字符串
+                                                        in_string = false;
+                                                        in_key = false;
+                                                        current_color = colors.text;
+                                                    }
+
+                                                    // 添加引号
+                                                    job.append(&ch.to_string(), 0.0, egui::TextFormat {
+                                                        color: current_color,
+                                                        font_id: egui::FontId::monospace(14.0),
+                                                        ..Default::default()
+                                                    });
+
+                                                    current_start = i + ch.len_utf8();
+                                                }
+                                                '{' | '}' | '[' | ']' | ',' | ':' if !in_string => {
+                                                    // 添加当前段落
+                                                    if i > current_start {
+                                                        job.append(&line[current_start..i], 0.0, egui::TextFormat {
+                                                            color: current_color,
+                                                            font_id: egui::FontId::monospace(14.0),
+                                                            ..Default::default()
+                                                        });
+                                                    }
+
+                                                    // 添加标点符号
+                                                    job.append(&ch.to_string(), 0.0, egui::TextFormat {
+                                                        color: punctuation_color,
+                                                        font_id: egui::FontId::monospace(14.0),
+                                                        ..Default::default()
+                                                    });
+
+                                                    current_start = i + ch.len_utf8();
+                                                    current_color = colors.text;
+                                                }
+                                                _ if !in_string && (ch.is_ascii_digit() || ch == '-') => {
+                                                    // 数字开始
+                                                    if current_color != number_color {
+                                                        // 添加当前段落
+                                                        if i > current_start {
+                                                            job.append(&line[current_start..i], 0.0, egui::TextFormat {
+                                                                color: current_color,
+                                                                font_id: egui::FontId::monospace(14.0),
+                                                                ..Default::default()
+                                                            });
+                                                        }
+                                                        current_start = i;
+                                                        current_color = number_color;
+                                                    }
+                                                }
+                                                _ if !in_string && ch.is_ascii_alphabetic() => {
+                                                    // 检查关键字 (true, false, null)
+                                                    let word_start = i;
+                                                    let mut word_end = i + ch.len_utf8();
+
+                                                    // 找到单词结束
+                                                    let remaining = &line[word_end..];
+                                                    for (_offset, next_ch) in remaining.char_indices() {
+                                                        if next_ch.is_ascii_alphanumeric() {
+                                                            word_end += next_ch.len_utf8();
+                                                        } else {
+                                                            break;
+                                                        }
+                                                    }
+
+                                                    let word = &line[word_start..word_end];
+                                                    let is_keyword = matches!(word, "true" | "false" | "null");
+
+                                                    if is_keyword && current_color != keyword_color {
+                                                        // 添加当前段落
+                                                        if i > current_start {
+                                                            job.append(&line[current_start..i], 0.0, egui::TextFormat {
+                                                                color: current_color,
+                                                                font_id: egui::FontId::monospace(14.0),
+                                                                ..Default::default()
+                                                            });
+                                                        }
+                                                        current_start = i;
+                                                        current_color = keyword_color;
+                                                    }
+                                                }
+                                                _ => {}
+                                            }
+                                        }
+
+                                        // 添加这一行的剩余部分
+                                        if current_start < line.len() {
+                                            job.append(&line[current_start..], 0.0, egui::TextFormat {
+                                                color: current_color,
+                                                font_id: egui::FontId::monospace(14.0),
+                                                ..Default::default()
+                                            });
+                                        }
+
+                                        // 如果不是最后一行，添加换行符
+                                        if line_idx < lines.len() - 1 {
+                                            job.append("\n", 0.0, egui::TextFormat {
+                                                font_id: egui::FontId::monospace(14.0),
+                                                color: colors.text,
+                                                ..Default::default()
+                                            });
+                                        }
+                                    }
+
+                                    ui.fonts(|f| f.layout_job(job))
+                                };
+
+                                let editor = TextEdit::multiline(&mut self.editor_content)
+                                    .id(Id::new("main_editor"))
+                                    .font(egui::FontId::monospace(14.0))
+                                    .code_editor()
+                                    .desired_width(f32::INFINITY)
+                                    .frame(false)
+                                    .layouter(&mut layouter);
+                                let response = ui.add(editor);
+
+                                // 检测内容是否修改
+                                if response.changed() {
+                                    self.is_content_modified = self.editor_content != self.original_content;
+                                }
+                            });
 
                         self.char_count = self.editor_content.chars().count();
-                    });
+                    } else {
+                        ui.centered_and_justified(|ui| {
+                            ui.label(RichText::new("请选择一个配置文件进行编辑").size(16.0).color(colors.text.linear_multiply(0.7)));
+                        });
+                    }
                 });
             });
 
