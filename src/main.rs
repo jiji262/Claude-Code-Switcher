@@ -8,7 +8,7 @@ use serde_json::{from_str, to_string_pretty, Value};
 use std::fs;
 use std::path::PathBuf;
 use directories::UserDirs;
-use egui::{Color32, Grid, Id, TextEdit, RichText, Layout, Align, SidePanel};
+use egui::{Color32, Id, TextEdit, RichText, Layout, Align, SidePanel};
 use std::collections::VecDeque;
 use std::time::{Duration, Instant};
 use serde::{Deserialize, Serialize};
@@ -17,6 +17,8 @@ const DEFAULT_CONFIG_DIR_NAME: &str = ".claude";  // Claude AI 配置目录
 const ACTIVE_CONFIG_NAME: &str = "settings.json";
 const APP_SETTINGS_NAME: &str = "app_settings.json";
 const APP_DIR_NAME: &str = ".claude-code-switcher";  // 应用程序目录
+const DEFAULT_CONFIG_FILE: &str = "default_config.json";  // 默认配置文件名称
+const SETTINGS_SUBDIR: &str = "settings";  // 配置文件子目录
 
 // --- Custom Toast Notification System ---
 #[derive(Clone)]
@@ -74,19 +76,21 @@ enum Theme {
 struct AppSettings {
     config_directory: PathBuf,
     theme: String,
+    default_config_file: String,
 }
 
 impl Default for AppSettings {
     fn default() -> Self {
         let default_dir = if let Some(user_dirs) = UserDirs::new() {
-            user_dirs.home_dir().join(DEFAULT_CONFIG_DIR_NAME)
+            user_dirs.home_dir().join(APP_DIR_NAME)
         } else {
-            PathBuf::from(DEFAULT_CONFIG_DIR_NAME)
+            PathBuf::from(APP_DIR_NAME)
         };
 
         Self {
             config_directory: default_dir,
             theme: "Dark".to_string(),
+            default_config_file: String::new(),
         }
     }
 }
@@ -99,7 +103,6 @@ struct ConfigManagerApp {
     show_delete_confirmation: bool,
     char_count: usize,
     toasts: VecDeque<Toast>,
-    source_of_active_config: Option<PathBuf>,
     status_text: String,
     show_rename_dialog: bool,
     new_file_name: String,
@@ -128,7 +131,6 @@ impl Default for ConfigManagerApp {
             config_dir: app_settings.config_directory.clone(),
             show_delete_confirmation: false,
             char_count: 0,
-            source_of_active_config: None,
             toasts: VecDeque::new(),
             show_rename_dialog: false,
             new_file_name: String::new(),
@@ -156,6 +158,7 @@ impl ConfigManagerApp {
         app.ensure_config_directory();
         app.new_config_dir_input = app.config_dir.to_string_lossy().to_string();
         app.refresh_file_list();
+        app.sync_with_claude_config();
         app
     }
 
@@ -215,10 +218,19 @@ impl ConfigManagerApp {
     }
 
     fn ensure_config_directory(&mut self) {
-        // 确保配置目录存在
+        // 确保主配置目录存在
         if !self.config_dir.exists() {
             if let Err(e) = fs::create_dir_all(&self.config_dir) {
                 self.show_toast(format!("创建配置目录时出错: {}", e), ToastKind::Error);
+                return;
+            }
+        }
+
+        // 确保 settings 子目录存在
+        let settings_subdir = self.config_dir.join(SETTINGS_SUBDIR);
+        if !settings_subdir.exists() {
+            if let Err(e) = fs::create_dir_all(&settings_subdir) {
+                self.show_toast(format!("创建 settings 子目录时出错: {}", e), ToastKind::Error);
                 return;
             }
         }
@@ -232,8 +244,8 @@ impl ConfigManagerApp {
             }
         }
 
-        // 创建默认的 settings.json 文件
-        let settings_path = self.config_dir.join(ACTIVE_CONFIG_NAME);
+        // 创建默认的 settings.json 文件在 settings 子目录中
+        let settings_path = settings_subdir.join(ACTIVE_CONFIG_NAME);
         if !settings_path.exists() {
             let default_content = "{\n\t\"env\": {\n\t\t\"ANTHROPIC_AUTH_TOKEN\": \"1234\",\n\t\t\"ANTHROPIC_BASE_URL\": \"http://127.0.0.1:3456\"\n\t}\n}";
             if let Err(e) = fs::write(&settings_path, default_content) {
@@ -342,51 +354,105 @@ impl ConfigManagerApp {
         visuals
     }
 
-    fn check_active_config_source(&mut self) {
-        let active_path = self.config_dir.join(ACTIVE_CONFIG_NAME);
-        if !active_path.exists() { self.source_of_active_config = None; return; }
-        if let Ok(active_content) = fs::read_to_string(&active_path) {
-            let active_json: Value = from_str(&active_content).unwrap_or_default();
-            self.source_of_active_config = None;
-            for file_path in &self.config_files {
-                if file_path.file_name().unwrap() != ACTIVE_CONFIG_NAME {
-                    if let Ok(content) = fs::read_to_string(file_path) {
-                        if let Ok(json_val) = from_str::<Value>(&content) {
-                            if json_val == active_json { self.source_of_active_config = Some(file_path.clone()); break; }
-                        }
-                    }
-                }
-            }
-        } else { self.source_of_active_config = None; }
-    }
+
 
     fn refresh_file_list(&mut self) {
         self.config_files.clear();
-        if self.config_dir.exists() {
-            if let Ok(entries) = fs::read_dir(&self.config_dir) {
+        let settings_subdir = self.config_dir.join(SETTINGS_SUBDIR);
+        
+        if settings_subdir.exists() {
+            if let Ok(entries) = fs::read_dir(&settings_subdir) {
                 self.config_files = entries
                     .filter_map(Result::ok)
                     .map(|e| e.path())
-                    .filter(|p| p.is_file() && p.extension().map_or(false, |ext| ext == "json"))
+                    .filter(|p| {
+                        p.is_file() &&
+                        p.extension().map_or(false, |ext| ext == "json") &&
+                        p.file_name().and_then(|s| s.to_str()).unwrap_or_default() != ACTIVE_CONFIG_NAME
+                    })
                     .collect();
 
                 self.config_files.sort_by(|a, b| {
                     let a_name = a.file_name().and_then(|s| s.to_str()).unwrap_or_default();
                     let b_name = b.file_name().and_then(|s| s.to_str()).unwrap_or_default();
-                    if a_name == ACTIVE_CONFIG_NAME {
-                        std::cmp::Ordering::Less
-                    } else if b_name == ACTIVE_CONFIG_NAME {
-                        std::cmp::Ordering::Greater
-                    } else {
-                        a_name.cmp(b_name)
-                    }
+                    a_name.cmp(b_name)
                 });
 
             } else {
                 self.show_toast("无法读取配置目录。", ToastKind::Error);
             }
         }
-        self.check_active_config_source();
+    }
+
+    fn sync_with_claude_config(&mut self) {
+        // 获取 Claude 配置文件路径
+        let claude_config_dir = if let Some(user_dirs) = UserDirs::new() {
+            user_dirs.home_dir().join(DEFAULT_CONFIG_DIR_NAME)
+        } else {
+            PathBuf::from(DEFAULT_CONFIG_DIR_NAME)
+        };
+
+        let claude_settings_path = claude_config_dir.join(ACTIVE_CONFIG_NAME);
+
+        // 如果 Claude 配置文件不存在，跳过同步
+        if !claude_settings_path.exists() {
+            return;
+        }
+
+        // 读取 Claude 配置文件内容
+        let claude_content = match fs::read_to_string(&claude_settings_path) {
+            Ok(content) => content,
+            Err(_) => return,
+        };
+
+        // 解析 Claude 配置为 JSON
+        let claude_json: Value = match from_str(&claude_content) {
+            Ok(json) => json,
+            Err(_) => return,
+        };
+
+        // 检查是否有配置文件与 Claude 配置相同
+        let mut found_matching_config = false;
+        for file_path in &self.config_files {
+            if let Ok(content) = fs::read_to_string(file_path) {
+                if let Ok(json_val) = from_str::<Value>(&content) {
+                    if json_val == claude_json {
+                        // 找到匹配的配置，设为默认
+                        let file_name = file_path.file_name().unwrap().to_str().unwrap().to_string();
+                        self.app_settings.default_config_file = file_name;
+                        self.save_app_settings();
+                        found_matching_config = true;
+                        self.show_toast("已找到与 Claude 配置匹配的文件并设为默认", ToastKind::Success);
+                        break;
+                    }
+                }
+            }
+        }
+
+        // 如果没有找到匹配的配置，创建新的配置文件
+        if !found_matching_config {
+            let settings_subdir = self.config_dir.join(SETTINGS_SUBDIR);
+            let mut new_path = settings_subdir.join("Claude默认配置.json");
+            let mut i = 1;
+            while new_path.exists() {
+                new_path = settings_subdir.join(format!("Claude默认配置_{}.json", i));
+                i += 1;
+            }
+
+            // 创建新配置文件，内容为 Claude 的配置
+            match fs::write(&new_path, &claude_content) {
+                Ok(_) => {
+                    let file_name = new_path.file_name().unwrap().to_str().unwrap().to_string();
+                    self.app_settings.default_config_file = file_name.clone();
+                    self.save_app_settings();
+                    self.refresh_file_list();
+                    self.show_toast(format!("已创建新配置文件 '{}' 并设为默认", file_name), ToastKind::Success);
+                }
+                Err(e) => {
+                    self.show_toast(format!("创建配置文件时出错: {}", e), ToastKind::Error);
+                }
+            }
+        }
     }
 
     fn load_file_content(&mut self) {
@@ -415,7 +481,6 @@ impl ConfigManagerApp {
                         Ok(_) => {
                             self.show_toast(format!("成功保存 {}", path.file_name().unwrap().to_str().unwrap()), ToastKind::Success);
                             self.editor_content = pretty_content;
-                            self.check_active_config_source();
                         }
                         Err(e) => self.show_toast(format!("保存文件时出错: {}", e), ToastKind::Error),
                     }
@@ -450,10 +515,11 @@ impl ConfigManagerApp {
     }
 
     fn add_new_config(&mut self) {
-        let mut new_path = self.config_dir.join("新配置.json");
+        let settings_subdir = self.config_dir.join(SETTINGS_SUBDIR);
+        let mut new_path = settings_subdir.join("新配置.json");
         let mut i = 1;
         while new_path.exists() {
-            new_path = self.config_dir.join(format!("新配置_{}.json", i));
+            new_path = settings_subdir.join(format!("新配置_{}.json", i));
             i += 1;
         }
 
@@ -471,13 +537,15 @@ impl ConfigManagerApp {
 
     fn delete_selected_file(&mut self) {
         if let Some(path) = self.selected_file.clone() {
-            if path.file_name().unwrap() == ACTIVE_CONFIG_NAME {
-                self.show_toast("不能删除当前激活的 settings.json 文件.", ToastKind::Warning);
-                return;
-            }
+            let file_name = path.file_name().unwrap().to_str().unwrap();
             match fs::remove_file(&path) {
                 Ok(_) => {
-                    self.show_toast(format!("已删除 {}", path.file_name().unwrap().to_str().unwrap()), ToastKind::Success);
+                    // 如果删除的是默认配置文件，清除默认设置
+                    if self.app_settings.default_config_file == file_name {
+                        self.app_settings.default_config_file = String::new();
+                        self.save_app_settings();
+                    }
+                    self.show_toast(format!("已删除 {}", file_name), ToastKind::Success);
                     self.selected_file = None;
                     self.editor_content = String::new();
                     self.refresh_file_list();
@@ -489,14 +557,21 @@ impl ConfigManagerApp {
 
     fn rename_selected_file(&mut self) {
         if let Some(selected_path) = self.selected_file.clone() {
+            let old_file_name = selected_path.file_name().unwrap().to_str().unwrap();
             let mut new_name = self.new_file_name.trim().to_string();
             if !new_name.ends_with(".json") { new_name.push_str(".json"); }
             if new_name.is_empty() || new_name == ".json" { self.show_toast("文件名不能为空.", ToastKind::Error); return; }
-            if new_name == ACTIVE_CONFIG_NAME { self.show_toast(format!("不能重命名为 \"{}\".", ACTIVE_CONFIG_NAME), ToastKind::Error); return; }
-            let new_path = self.config_dir.join(&new_name);
+
+            // 新路径需要在同一个 settings 子目录中
+            let new_path = selected_path.parent().unwrap().join(&new_name);
             if new_path.exists() { self.show_toast("文件名已存在.", ToastKind::Error); return; }
             match fs::rename(&selected_path, &new_path) {
                 Ok(_) => {
+                    // 如果重命名的是默认配置文件，更新默认设置
+                    if self.app_settings.default_config_file == old_file_name {
+                        self.app_settings.default_config_file = new_name.clone();
+                        self.save_app_settings();
+                    }
                     self.show_toast(format!("文件已重命名为 \"{}\"", new_name), ToastKind::Success);
                     self.selected_file = Some(new_path);
                     self.show_rename_dialog = false;
@@ -510,12 +585,12 @@ impl ConfigManagerApp {
     fn set_selected_as_active(&mut self) {
         if let Some(selected_path) = self.selected_file.clone() {
             if selected_path.file_name().unwrap() == ACTIVE_CONFIG_NAME { self.show_toast("此文件已是当前激活的配置.", ToastKind::Info); return; }
-            let active_path = self.config_dir.join(ACTIVE_CONFIG_NAME);
+            let settings_subdir = self.config_dir.join(SETTINGS_SUBDIR);
+            let active_path = settings_subdir.join(ACTIVE_CONFIG_NAME);
             match fs::read_to_string(&selected_path) {
                 Ok(content) => {
                     match fs::write(&active_path, &content) {
                         Ok(_) => {
-                            self.source_of_active_config = Some(selected_path.clone());
                             let file_name = selected_path.file_name().unwrap().to_str().unwrap();
                             self.show_toast(format!("已将 '{}' 的内容应用到 settings.json", file_name), ToastKind::Success);
                             self.refresh_file_list();
@@ -525,6 +600,45 @@ impl ConfigManagerApp {
                 }
                 Err(e) => self.show_toast(format!("读取所选文件时出错: {}", e), ToastKind::Error),
             }
+        }
+    }
+
+    fn set_as_default(&mut self, file_path: PathBuf) {
+        let file_name = file_path.file_name().unwrap().to_str().unwrap().to_string();
+        
+        // 更新应用设置中的默认配置文件
+        self.app_settings.default_config_file = file_name.clone();
+        self.save_app_settings();
+        
+        // 将配置文件内容复制到 Claude 配置文件
+        let claude_config_dir = if let Some(user_dirs) = UserDirs::new() {
+            user_dirs.home_dir().join(DEFAULT_CONFIG_DIR_NAME)
+        } else {
+            PathBuf::from(DEFAULT_CONFIG_DIR_NAME)
+        };
+        
+        // 确保 Claude 配置目录存在
+        if !claude_config_dir.exists() {
+            if let Err(e) = fs::create_dir_all(&claude_config_dir) {
+                self.show_toast(format!("创建 Claude 配置目录时出错: {}", e), ToastKind::Error);
+                return;
+            }
+        }
+        
+        let claude_settings_path = claude_config_dir.join(ACTIVE_CONFIG_NAME);
+        
+        // 从 settings 子目录读取配置文件
+        match fs::read_to_string(&file_path) {
+            Ok(content) => {
+                match fs::write(&claude_settings_path, &content) {
+                    Ok(_) => {
+                        self.show_toast(format!("已将 '{}' 设为默认配置并复制到 Claude 配置文件", file_name), ToastKind::Success);
+                        self.refresh_file_list();
+                    }
+                    Err(e) => self.show_toast(format!("写入 Claude 配置文件时出错: {}", e), ToastKind::Error),
+                }
+            }
+            Err(e) => self.show_toast(format!("读取配置文件时出错: {}", e), ToastKind::Error),
         }
     }
 }
@@ -565,39 +679,13 @@ impl App for ConfigManagerApp {
 
                 });
 
-                // 按钮操作区域 - 使用Grid布局更整齐，添加左边距
+                // 新增配置按钮
                 ui.add_space(8.0);
                 ui.horizontal(|ui| {
                     ui.add_space(12.0); // 左边距
-                    Grid::new("button_grid").spacing([8.0, 8.0]).show(ui, |ui| {
                     if ui.button(RichText::new("[+] 新增").color(colors.green)).clicked() {
                         self.add_new_config();
                     }
-
-                    let rename_button = egui::Button::new("[R] 重命名");
-                    let rename_enabled = self.selected_file.is_some()
-                        && self.selected_file.as_deref().map_or(false, |p| p.file_name().unwrap() != ACTIVE_CONFIG_NAME);
-                    if ui.add_enabled(rename_enabled, rename_button).clicked() {
-                        self.new_file_name = self.selected_file.as_ref().unwrap().file_name().unwrap().to_str().unwrap().to_string();
-                        self.show_rename_dialog = true;
-                    }
-                    ui.end_row();
-
-                    let delete_button = egui::Button::new(RichText::new("[-] 删除").color(colors.red));
-                    let delete_enabled = self.selected_file.is_some()
-                        && self.selected_file.as_deref().map_or(false, |p| p.file_name().unwrap() != ACTIVE_CONFIG_NAME);
-                    if ui.add_enabled(delete_enabled, delete_button).clicked() {
-                        self.show_delete_confirmation = true;
-                    }
-
-                    let set_active_button = egui::Button::new(RichText::new("[*] 切换配置").color(self.get_button_color("switch")));
-                    let set_active_enabled = self.selected_file.is_some()
-                        && self.selected_file.as_deref().map_or(false, |p| p.file_name().unwrap() != ACTIVE_CONFIG_NAME);
-                    if ui.add_enabled(set_active_enabled, set_active_button).clicked() {
-                        self.set_selected_as_active();
-                    }
-                        ui.end_row();
-                    });
                 });
 
                 // 恢复原来的分隔线，但使用合适的颜色
@@ -608,29 +696,71 @@ impl App for ConfigManagerApp {
                 // 文件列表区域
                 let mut selection_changed = false;
                 let mut selected_path = self.selected_file.clone();
+                let mut actions_to_perform = Vec::new();
+                
                 egui::ScrollArea::vertical().auto_shrink([false; 2]).show(ui, |ui| {
                     ui.horizontal(|ui| {
                         ui.add_space(12.0); // 左边距
                         ui.vertical(|ui| {
-                            for path in self.config_files.iter().map(|p| p.as_path()) {
-                        let file_name = path.file_name().unwrap().to_str().unwrap();
-                        let is_active_file = file_name == ACTIVE_CONFIG_NAME;
-                        let is_applied_source = self.source_of_active_config.as_deref() == Some(path);
-                        let text = if is_active_file {
-                            RichText::new(format!("{} (应用配置)", file_name)).color(colors.lavender).strong()
-                        } else if is_applied_source {
-                            RichText::new(format!("{} (当前)", file_name)).color(colors.green).strong()
-                        } else {
-                            RichText::new(file_name)
-                        };
-                        if ui.selectable_label(self.selected_file.as_deref() == Some(path), text).clicked() {
-                            selected_path = Some(path.to_path_buf());
-                            selection_changed = true;
-                        }
-                    }
+                            for (index, path) in self.config_files.iter().map(|p| p.as_path()).enumerate() {
+                                let file_name = path.file_name().unwrap().to_str().unwrap();
+                                let is_default_file = self.app_settings.default_config_file == file_name;
+
+                                ui.vertical(|ui| {
+                                    // 文件名部分
+                                    let file_text = if is_default_file {
+                                        RichText::new(format!("{} (默认)", file_name)).color(colors.yellow).strong()
+                                    } else {
+                                        RichText::new(file_name)
+                                    };
+
+                                    if ui.selectable_label(self.selected_file.as_deref() == Some(path), file_text).clicked() {
+                                        selected_path = Some(path.to_path_buf());
+                                        selection_changed = true;
+                                    }
+
+                                    // 操作按钮区域 - 一行显示
+                                    ui.add_space(4.0);
+                                    ui.horizontal(|ui| {
+                                        if ui.button(RichText::new("[R] 重命名").color(colors.yellow).size(10.0)).clicked() {
+                                            actions_to_perform.push(('r', index));
+                                        }
+                                        ui.add_space(4.0);
+                                        if ui.button(RichText::new("[-] 删除").color(colors.red).size(10.0)).clicked() {
+                                            actions_to_perform.push(('d', index));
+                                        }
+                                        ui.add_space(4.0);
+                                        if ui.add_enabled(!is_default_file, egui::Button::new(RichText::new("[*] 设为默认").color(self.get_button_color("switch")).size(10.0))).clicked() {
+                                            actions_to_perform.push(('s', index));
+                                        }
+                                    });
+                                });
+                            }
                         });
                     });
                 });
+                
+                // 处理收集的操作
+                for (action_type, index) in actions_to_perform {
+                    if let Some(path) = self.config_files.get(index) {
+                        match action_type {
+                            'd' => {
+                                self.selected_file = Some(path.clone());
+                                self.show_delete_confirmation = true;
+                            }
+                            'r' => {
+                                self.selected_file = Some(path.clone());
+                                self.new_file_name = path.file_name().unwrap().to_str().unwrap().to_string();
+                                self.show_rename_dialog = true;
+                            }
+                            's' => {
+                                self.set_as_default(path.clone());
+                            }
+                            _ => {}
+                        }
+                    }
+                }
+                
                 if selection_changed {
                     self.selected_file = selected_path;
                     self.load_file_content();
@@ -796,7 +926,7 @@ impl App for ConfigManagerApp {
 
                                     if ui.button(RichText::new("[R] 重置为默认").color(self.get_button_color("reset"))).clicked() {
                                         if let Some(user_dirs) = UserDirs::new() {
-                                            self.new_config_dir_input = user_dirs.home_dir().join(DEFAULT_CONFIG_DIR_NAME).to_string_lossy().to_string();
+                                            self.new_config_dir_input = user_dirs.home_dir().join(APP_DIR_NAME).to_string_lossy().to_string();
                                         }
                                     }
                                 });
