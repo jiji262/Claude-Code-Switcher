@@ -312,25 +312,39 @@ impl ConfigManagerApp {
                     Theme::Dark => Color32::from_rgb(34, 197, 94), // 亮绿色
                 }
             }
-            "rename" | "warning" | "format" | "settings" | "reset" => {
-                // 重命名和警告类按钮使用橙色系
+            "rename" => {
+                // 重命名按钮使用温和的蓝色系
+                match self.current_theme {
+                    Theme::Light => Color32::from_rgb(59, 130, 246), // 蓝色
+                    Theme::Dark => Color32::from_rgb(96, 165, 250), // 亮蓝色
+                }
+            }
+            "warning" | "format" | "settings" | "reset" => {
+                // 警告和格式化按钮使用橙色系
                 match self.current_theme {
                     Theme::Light => Color32::from_rgb(234, 88, 12), // 橙色
                     Theme::Dark => Color32::from_rgb(251, 146, 60), // 亮橙色
                 }
             }
             "delete" | "danger" => {
-                // 删除按钮使用鲜艳的红色
+                // 删除按钮使用适中的红色，不过分刺眼
                 match self.current_theme {
-                    Theme::Light => Color32::from_rgb(220, 38, 38), // 红色
+                    Theme::Light => Color32::from_rgb(239, 68, 68), // 较温和的红色
                     Theme::Dark => Color32::from_rgb(248, 113, 113), // 亮红色
                 }
             }
-            "switch" | "toggle" | "default" => {
+            "switch" | "toggle" => {
                 // 切换类按钮使用紫色系
                 match self.current_theme {
                     Theme::Light => Color32::from_rgb(147, 51, 234), // 紫色
                     Theme::Dark => Color32::from_rgb(196, 181, 253), // 亮紫色
+                }
+            }
+            "default" => {
+                // 默认/设为默认按钮使用金色系，突出重要性
+                match self.current_theme {
+                    Theme::Light => Color32::from_rgb(217, 119, 6), // 深金色
+                    Theme::Dark => Color32::from_rgb(251, 191, 36), // 亮金色
                 }
             }
             "refresh" => {
@@ -724,19 +738,29 @@ impl App for ConfigManagerApp {
 
                 });
 
-                // 新增配置和刷新按钮
+                // 新增配置和刷新按钮 - 居中对齐
                 ui.add_space(8.0);
                 ui.horizontal(|ui| {
-                    ui.add_space(12.0); // 左边距
-                    if ui.button(RichText::new("[+] 新增配置").color(self.get_button_color("add"))).clicked() {
-                        self.add_new_config();
-                    }
-                    ui.add_space(8.0);
-                    if ui.button(RichText::new("[↻] 刷新列表").color(self.get_button_color("refresh"))).clicked() {
-                        self.refresh_file_list();
-                        self.sync_with_claude_config();
-                        self.show_toast("文件列表已刷新", ToastKind::Success);
-                    }
+                    ui.with_layout(Layout::left_to_right(Align::Center), |ui| {
+                        // 使用可用空间来居中按钮
+                        ui.allocate_ui_with_layout(
+                            [ui.available_width(), ui.spacing().button_padding.y * 2.0 + 20.0].into(),
+                            Layout::left_to_right(Align::Center),
+                            |ui| {
+                                // 添加弹性空间使按钮居中
+                                ui.add_space(ui.available_width() / 2.0 - 120.0); // 估算按钮总宽度的一半
+                                if ui.button(RichText::new("[+] 新增配置").color(self.get_button_color("add"))).clicked() {
+                                    self.add_new_config();
+                                }
+                                ui.add_space(8.0);
+                                if ui.button(RichText::new("[↻] 刷新列表").color(self.get_button_color("refresh"))).clicked() {
+                                    self.refresh_file_list();
+                                    self.sync_with_claude_config();
+                                    self.show_toast("文件列表已刷新", ToastKind::Success);
+                                }
+                            }
+                        );
+                    });
                 });
 
                 // 恢复原来的分隔线，但使用合适的颜色
@@ -783,20 +807,31 @@ impl App for ConfigManagerApp {
                                             selection_changed = true;
                                         }
 
-                                        // 操作按钮区域 - 一行显示
+                                        // 操作按钮区域 - 居中对齐
                                         ui.add_space(6.0);
                                         ui.horizontal(|ui| {
-                                            if ui.button(RichText::new("[R] 重命名").color(self.get_button_color("rename")).size(11.0)).clicked() {
-                                                actions_to_perform.push(('r', index));
-                                            }
-                                            ui.add_space(6.0);
-                                            if ui.button(RichText::new("[-] 删除").color(self.get_button_color("delete")).size(11.0)).clicked() {
-                                                actions_to_perform.push(('d', index));
-                                            }
-                                            ui.add_space(6.0);
-                                            if ui.add_enabled(!is_default_file, egui::Button::new(RichText::new("[*] 设为默认").color(self.get_button_color("default")).size(11.0))).clicked() {
-                                                actions_to_perform.push(('s', index));
-                                            }
+                                            ui.with_layout(Layout::left_to_right(Align::Center), |ui| {
+                                                // 使用可用空间来居中按钮
+                                                let total_button_width = 220.0; // 估算三个按钮的总宽度
+                                                let available_width = ui.available_width();
+                                                let padding = (available_width - total_button_width) / 2.0;
+                                                
+                                                if padding > 0.0 {
+                                                    ui.add_space(padding);
+                                                }
+                                                
+                                                if ui.button(RichText::new("[R] 重命名").color(self.get_button_color("rename")).size(11.0)).clicked() {
+                                                    actions_to_perform.push(('r', index));
+                                                }
+                                                ui.add_space(8.0);
+                                                if ui.button(RichText::new("[-] 删除").color(self.get_button_color("delete")).size(11.0)).clicked() {
+                                                    actions_to_perform.push(('d', index));
+                                                }
+                                                ui.add_space(8.0);
+                                                if ui.add_enabled(!is_default_file, egui::Button::new(RichText::new("[*] 设为默认").color(self.get_button_color("default")).size(11.0))).clicked() {
+                                                    actions_to_perform.push(('s', index));
+                                                }
+                                            });
                                         });
                                     });
                                 });
