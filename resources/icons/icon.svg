@@ -1,0 +1,41 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <!-- 背景 -->
+  <rect width="1024" height="1024" rx="180" ry="180" fill="#2E3440"/>
+  
+  <!-- 渐变定义 -->
+  <defs>
+    <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#5E81AC;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#81A1C1;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="grad2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#A3BE8C;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#8FBCBB;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- 主要图标元素 - 代码符号 -->
+  <g transform="translate(512, 512)">
+    <!-- 外圆 -->
+    <circle cx="0" cy="0" r="280" fill="url(#grad1)" opacity="0.9"/>
+    
+    <!-- 代码括号 -->
+    <path d="M -120,-100 L -180,-50 L -180,50 L -120,100" 
+          stroke="white" stroke-width="40" fill="none" stroke-linecap="round"/>
+    <path d="M 120,-100 L 180,-50 L 180,50 L 120,100" 
+          stroke="white" stroke-width="40" fill="none" stroke-linecap="round"/>
+    
+    <!-- 斜杠 -->
+    <path d="M -60,-120 L 60,120" 
+          stroke="url(#grad2)" stroke-width="35" fill="none" stroke-linecap="round"/>
+    
+    <!-- 中心点 -->
+    <circle cx="0" cy="0" r="15" fill="white"/>
+  </g>
+  
+  <!-- 装饰性圆点 -->
+  <circle cx="150" cy="150" r="25" fill="#A3BE8C" opacity="0.7"/>
+  <circle cx="874" cy="150" r="25" fill="#B48EAD" opacity="0.7"/>
+  <circle cx="150" cy="874" r="25" fill="#EBCB8B" opacity="0.7"/>
+  <circle cx="874" cy="874" r="25" fill="#D08770" opacity="0.7"/>
+</svg>

@@ -1,0 +1,27 @@
+[package]
+name = "claude-code-switcher"
+version = "0.1.2"
+edition = "2021"
+authors = ["Your Name <your.email@example.com>"]
+description = "A desktop application for switching Claude Code configurations"
+license = "MIT OR Apache-2.0"
+keywords = ["claude", "code", "switcher", "config", "gui"]
+categories = ["gui", "config"]
+
+[[bin]]
+name = "claude-code-switcher"
+path = "src/main.rs"
+
+[[bin]]
+name = "generate_icons"
+path = "src/bin/generate_icons.rs"
+
+[dependencies]
+eframe = "0.26.2"
+egui_extras = { version = "0.26.2", features = ["syntect"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+directories = "5.0"
+rfd = "0.14"
+resvg = "0.37"
+tiny-skia = "0.11"

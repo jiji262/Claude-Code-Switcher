@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(rm:*)",
+      "Bash(cargo build:*)",
+      "Bash(./claude-code-switcher:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
