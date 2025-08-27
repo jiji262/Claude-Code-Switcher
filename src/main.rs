@@ -37,32 +37,42 @@ struct Toast {
 struct ThemeColors {
     base: Color32, mantle: Color32, crust: Color32, surface0: Color32, surface1: Color32,
     text: Color32, lavender: Color32, green: Color32, red: Color32, yellow: Color32,
+    // 新增颜色用于更精致的UI
+    accent: Color32, muted: Color32, border: Color32, highlight: Color32,
 }
 
 const CLAUDE_DARK: ThemeColors = ThemeColors {
-    base: Color32::from_rgb(31, 30, 29),       // --bg-200
-    crust: Color32::from_rgb(47, 47, 45),      // --bg-000
-    mantle: Color32::from_rgb(38, 38, 36),     // --bg-100
-    surface0: Color32::from_rgb(38, 38, 36),   // for non-interactive widgets
-    surface1: Color32::from_rgb(47, 47, 45),   // for hovered widgets
-    text: Color32::from_rgb(249, 248, 246),     // --text-000
-    lavender: Color32::from_rgb(172, 163, 255),// --accent-pro-000
-    green: Color32::from_rgb(152, 195, 121),    // from .hljs-string
-    red: Color32::from_rgb(230, 110, 110),      // --danger-000
-    yellow: Color32::from_rgb(210, 133, 75),   // --accent-main-000
+    base: Color32::from_rgb(18, 18, 23),       // 更亮的深色背景
+    crust: Color32::from_rgb(28, 28, 35),      // 侧边栏背景 - 更亮
+    mantle: Color32::from_rgb(22, 22, 28),     // 编辑器背景 - 更亮
+    surface0: Color32::from_rgb(40, 40, 48),   // 非交互元素 - 更亮
+    surface1: Color32::from_rgb(50, 50, 60),   // 悬停状态 - 更亮
+    text: Color32::from_rgb(248, 250, 252),    // 更亮的白色文字
+    lavender: Color32::from_rgb(167, 139, 250), // 更亮的紫色主色调
+    green: Color32::from_rgb(52, 211, 153),    // 更亮的绿色
+    red: Color32::from_rgb(248, 113, 113),     // 更亮的红色
+    yellow: Color32::from_rgb(251, 191, 36),   // 更亮的黄色
+    accent: Color32::from_rgb(124, 126, 251),  // 更亮的强调色
+    muted: Color32::from_rgb(156, 163, 175),   // 次要文字色
+    border: Color32::from_rgb(75, 85, 99),     // 更亮的边框色
+    highlight: Color32::from_rgb(45, 55, 72),  // 更亮的高亮背景
 };
 
 const CLAUDE_LIGHT: ThemeColors = ThemeColors {
-    base: Color32::from_rgb(225, 227, 230),    // 主背景，用于空隙显示 (深灰)
-    crust: Color32::from_rgb(240, 242, 245),   // 侧边栏背景 (浅灰，但明显是灰色调)
-    mantle: Color32::from_rgb(225, 227, 230),  // 编辑器背景 (与主背景一致)
-    surface0: Color32::from_rgb(208, 215, 222), // 边框颜色 (GitHub 边框色)
-    surface1: Color32::from_rgb(240, 246, 252), // 悬停状态 (GitHub 悬停色)
-    text: Color32::from_rgb(36, 41, 47),       // GitHub 主文字色
-    lavender: Color32::from_rgb(88, 96, 255),  // 现代紫色
-    green: Color32::from_rgb(40, 167, 69),     // GitHub 绿色
-    red: Color32::from_rgb(203, 36, 49),       // GitHub 红色
-    yellow: Color32::from_rgb(138, 109, 59),   // 深橙棕色，在浅色背景下清晰可见
+    base: Color32::from_rgb(255, 255, 255),    // 纯白背景
+    crust: Color32::from_rgb(248, 250, 252),   // 侧边栏背景 - 更亮的浅灰
+    mantle: Color32::from_rgb(255, 255, 255),  // 编辑器背景 - 纯白
+    surface0: Color32::from_rgb(241, 245, 249), // 非交互元素 - 更亮
+    surface1: Color32::from_rgb(226, 232, 240), // 悬停状态 - 更明显
+    text: Color32::from_rgb(15, 23, 42),       // 更深的文字色
+    lavender: Color32::from_rgb(139, 92, 246), // 鲜艳紫色
+    green: Color32::from_rgb(34, 197, 94),     // 鲜艳绿色
+    red: Color32::from_rgb(239, 68, 68),       // 鲜艳红色
+    yellow: Color32::from_rgb(245, 158, 11),   // 鲜艳黄色
+    accent: Color32::from_rgb(99, 102, 241),   // 鲜艳强调色
+    muted: Color32::from_rgb(100, 116, 139),   // 更深的次要文字色
+    border: Color32::from_rgb(203, 213, 225),  // 更明显的边框色
+    highlight: Color32::from_rgb(219, 234, 254), // 更明显的高亮背景
 };
 
 #[derive(Clone, Copy, PartialEq)]
@@ -289,14 +299,26 @@ impl ConfigManagerApp {
     fn create_custom_style(&self) -> egui::Style {
         let mut style = egui::Style::default();
         style.visuals = self.get_custom_visuals();
-        style.spacing.item_spacing = egui::vec2(10.0, 10.0);
-        style.spacing.button_padding = egui::vec2(12.0, 6.0);
+        
+        // 更现代的间距设置
+        style.spacing.item_spacing = egui::vec2(12.0, 8.0);
+        style.spacing.button_padding = egui::vec2(16.0, 8.0);
         style.spacing.indent = 20.0;
-        // 移除所有按钮的圆角
-        style.visuals.widgets.noninteractive.rounding = egui::Rounding::ZERO;
-        style.visuals.widgets.inactive.rounding = egui::Rounding::ZERO;
-        style.visuals.widgets.hovered.rounding = egui::Rounding::ZERO;
-        style.visuals.widgets.active.rounding = egui::Rounding::ZERO;
+        style.spacing.menu_margin = egui::Margin::same(8.0);
+        style.spacing.combo_width = 120.0;
+        
+        // 现代化的圆角设计
+        let rounding = egui::Rounding::same(6.0);
+        style.visuals.widgets.noninteractive.rounding = rounding;
+        style.visuals.widgets.inactive.rounding = rounding;
+        style.visuals.widgets.hovered.rounding = rounding;
+        style.visuals.widgets.active.rounding = rounding;
+        style.visuals.menu_rounding = rounding;
+        style.visuals.window_rounding = egui::Rounding::same(8.0);
+        
+        // 文字大小调整
+        style.override_text_style = Some(egui::TextStyle::Body);
+        
         style
     }
 
@@ -309,62 +331,52 @@ impl ConfigManagerApp {
     }
     
     fn get_button_color(&self, button_type: &str) -> Color32 {
+        let colors = self.get_theme_colors();
         match button_type {
-            "add" | "new" => {
-                // 新增按钮使用鲜艳的绿色
-                match self.current_theme {
-                    Theme::Light => Color32::from_rgb(22, 163, 74), // 更鲜艳的绿色
-                    Theme::Dark => Color32::from_rgb(34, 197, 94), // 亮绿色
-                }
+            "add" | "new" => colors.green,
+            "save" => colors.accent,
+            "rename" | "refresh" => colors.accent,
+            "warning" | "format" | "settings" | "reset" => colors.yellow,
+            "delete" | "danger" => colors.red,
+            "switch" | "toggle" => colors.lavender,
+            "default" => Color32::from_rgb(245, 158, 11), // 金色，突出重要性
+            "primary" => colors.accent,
+            "secondary" => colors.muted,
+            _ => colors.muted,
+        }
+    }
+
+    // 新增：获取按钮背景色的方法
+    fn get_button_bg_color(&self, button_type: &str, is_hovered: bool, is_active: bool) -> Color32 {
+        let colors = self.get_theme_colors();
+        let base_color = self.get_button_color(button_type);
+        
+        if is_active {
+            // 激活状态：颜色更深
+            Color32::from_rgb(
+                (base_color.r() as f32 * 0.8) as u8,
+                (base_color.g() as f32 * 0.8) as u8,
+                (base_color.b() as f32 * 0.8) as u8,
+            )
+        } else if is_hovered {
+            // 悬停状态：颜色稍浅
+            match self.current_theme {
+                Theme::Dark => Color32::from_rgb(
+                    (base_color.r() as f32 * 0.2 + colors.surface1.r() as f32 * 0.8) as u8,
+                    (base_color.g() as f32 * 0.2 + colors.surface1.g() as f32 * 0.8) as u8,
+                    (base_color.b() as f32 * 0.2 + colors.surface1.b() as f32 * 0.8) as u8,
+                ),
+                Theme::Light => Color32::from_rgb(
+                    (base_color.r() as f32 * 0.1 + colors.surface1.r() as f32 * 0.9) as u8,
+                    (base_color.g() as f32 * 0.1 + colors.surface1.g() as f32 * 0.9) as u8,
+                    (base_color.b() as f32 * 0.1 + colors.surface1.b() as f32 * 0.9) as u8,
+                ),
             }
-            "rename" => {
-                // 重命名按钮使用温和的蓝色系
-                match self.current_theme {
-                    Theme::Light => Color32::from_rgb(59, 130, 246), // 蓝色
-                    Theme::Dark => Color32::from_rgb(96, 165, 250), // 亮蓝色
-                }
-            }
-            "warning" | "format" | "settings" | "reset" => {
-                // 警告和格式化按钮使用橙色系
-                match self.current_theme {
-                    Theme::Light => Color32::from_rgb(234, 88, 12), // 橙色
-                    Theme::Dark => Color32::from_rgb(251, 146, 60), // 亮橙色
-                }
-            }
-            "delete" | "danger" => {
-                // 删除按钮使用适中的红色，不过分刺眼
-                match self.current_theme {
-                    Theme::Light => Color32::from_rgb(239, 68, 68), // 较温和的红色
-                    Theme::Dark => Color32::from_rgb(248, 113, 113), // 亮红色
-                }
-            }
-            "switch" | "toggle" => {
-                // 切换类按钮使用紫色系
-                match self.current_theme {
-                    Theme::Light => Color32::from_rgb(147, 51, 234), // 紫色
-                    Theme::Dark => Color32::from_rgb(196, 181, 253), // 亮紫色
-                }
-            }
-            "default" => {
-                // 默认/设为默认按钮使用金色系，突出重要性
-                match self.current_theme {
-                    Theme::Light => Color32::from_rgb(217, 119, 6), // 深金色
-                    Theme::Dark => Color32::from_rgb(251, 191, 36), // 亮金色
-                }
-            }
-            "refresh" => {
-                // 刷新按钮使用蓝色系
-                match self.current_theme {
-                    Theme::Light => Color32::from_rgb(37, 99, 235), // 蓝色
-                    Theme::Dark => Color32::from_rgb(96, 165, 250), // 亮蓝色
-                }
-            }
-            _ => {
-                // 默认颜色
-                match self.current_theme {
-                    Theme::Light => Color32::from_rgb(107, 114, 128), // 灰色
-                    Theme::Dark => Color32::from_rgb(156, 163, 175), // 亮灰色
-                }
+        } else {
+            // 默认状态：透明背景
+            match self.current_theme {
+                Theme::Dark => colors.surface0,
+                Theme::Light => colors.base,
             }
         }
     }
@@ -377,36 +389,77 @@ impl ConfigManagerApp {
         };
         
         visuals.override_text_color = Some(colors.text);
-        visuals.window_rounding = egui::Rounding::ZERO;
-        visuals.window_stroke = egui::Stroke::new(1.0, colors.mantle);
-        visuals.window_shadow = egui::epaint::Shadow::big_dark();
-        let rounding = egui::Rounding::ZERO;
+        visuals.window_rounding = egui::Rounding::same(8.0);
+        visuals.window_stroke = egui::Stroke::new(1.0, colors.border);
+        visuals.window_shadow = egui::epaint::Shadow {
+            extrusion: 16.0,
+            color: match self.current_theme {
+                Theme::Dark => Color32::from_black_alpha(100),
+                Theme::Light => Color32::from_black_alpha(25),
+            },
+        };
+        
+        let rounding = egui::Rounding::same(6.0);
+        
+        // 非交互元素
         visuals.widgets.noninteractive.rounding = rounding;
-        visuals.widgets.noninteractive.bg_fill = colors.base;
-        visuals.widgets.noninteractive.bg_stroke = egui::Stroke::new(1.0, colors.mantle);
+        visuals.widgets.noninteractive.bg_fill = colors.surface0;
+        visuals.widgets.noninteractive.bg_stroke = egui::Stroke::new(1.0, colors.border);
+        
+        // 非激活状态
         visuals.widgets.inactive = egui::style::WidgetVisuals {
-            bg_fill: colors.base, weak_bg_fill: colors.base, bg_stroke: egui::Stroke::new(1.0, colors.surface0),
-            fg_stroke: egui::Stroke::new(1.0, colors.text), rounding, expansion: 0.0,
+            bg_fill: colors.surface0,
+            weak_bg_fill: colors.surface0,
+            bg_stroke: egui::Stroke::new(1.0, colors.border),
+            fg_stroke: egui::Stroke::new(1.0, colors.text),
+            rounding,
+            expansion: 0.0,
         };
+        
+        // 悬停状态 - 更明显的效果
         visuals.widgets.hovered = egui::style::WidgetVisuals {
-            bg_fill: colors.surface1, weak_bg_fill: colors.surface1, bg_stroke: egui::Stroke::new(1.5, colors.lavender),
-            fg_stroke: egui::Stroke::new(1.5, colors.text), rounding, expansion: 1.0,
+            bg_fill: match self.current_theme {
+                Theme::Dark => Color32::from_rgb(60, 60, 70),  // 更亮的悬停背景
+                Theme::Light => Color32::from_rgb(219, 234, 254), // 更明显的浅色悬停
+            },
+            weak_bg_fill: colors.surface1,
+            bg_stroke: egui::Stroke::new(2.0, colors.accent),
+            fg_stroke: egui::Stroke::new(1.0, colors.text),
+            rounding,
+            expansion: 2.0,  // 增加扩展效果
         };
+        
+        // 激活状态
         visuals.widgets.active = egui::style::WidgetVisuals {
-            bg_fill: colors.lavender, weak_bg_fill: colors.lavender, bg_stroke: egui::Stroke::new(1.0, colors.lavender),
-            fg_stroke: egui::Stroke::new(1.5, colors.base), rounding, expansion: 0.0,
+            bg_fill: colors.accent,
+            weak_bg_fill: colors.accent,
+            bg_stroke: egui::Stroke::new(2.0, colors.accent),
+            fg_stroke: egui::Stroke::new(1.0, colors.base),
+            rounding,
+            expansion: 0.0,
         };
-        visuals.selection.bg_fill = colors.lavender.linear_multiply(0.2);
-        visuals.selection.stroke = egui::Stroke::new(1.0, colors.lavender);
-        visuals.hyperlink_color = colors.lavender;
+        
+        // 选择样式
+        visuals.selection.bg_fill = colors.highlight;
+        visuals.selection.stroke = egui::Stroke::new(1.0, colors.accent);
+        
+        // 其他颜色
+        visuals.hyperlink_color = colors.accent;
         visuals.error_fg_color = colors.red;
         visuals.warn_fg_color = colors.yellow;
+        visuals.extreme_bg_color = colors.base;
+        visuals.code_bg_color = colors.surface0;
+        
         visuals
     }
 
 
 
     fn refresh_file_list(&mut self) {
+        self.refresh_file_list_with_sort(true);
+    }
+
+    fn refresh_file_list_with_sort(&mut self, should_sort: bool) {
         self.config_files.clear();
         let settings_subdir = self.config_dir.join(SETTINGS_SUBDIR);
         
@@ -422,15 +475,48 @@ impl ConfigManagerApp {
                     })
                     .collect();
 
-                self.config_files.sort_by(|a, b| {
-                    let a_name = a.file_name().and_then(|s| s.to_str()).unwrap_or_default();
-                    let b_name = b.file_name().and_then(|s| s.to_str()).unwrap_or_default();
-                    a_name.cmp(b_name)
-                });
+                if should_sort {
+                    self.config_files.sort_by(|a, b| {
+                        let a_name = a.file_name().and_then(|s| s.to_str()).unwrap_or_default();
+                        let b_name = b.file_name().and_then(|s| s.to_str()).unwrap_or_default();
+                        a_name.cmp(b_name)
+                    });
+                }
 
             } else {
                 self.show_toast("无法读取配置目录。", ToastKind::Error);
             }
+        }
+    }
+
+    // 保持当前文件顺序的刷新方法
+    fn refresh_file_list_preserve_order(&mut self) {
+        let current_order: Vec<String> = self.config_files
+            .iter()
+            .filter_map(|p| p.file_name().and_then(|n| n.to_str()).map(|s| s.to_string()))
+            .collect();
+        
+        // 先获取所有文件
+        self.refresh_file_list_with_sort(false);
+        
+        // 如果有之前的顺序，尝试保持
+        if !current_order.is_empty() {
+            let mut ordered_files = Vec::new();
+            let mut remaining_files = self.config_files.clone();
+            
+            // 按原顺序添加存在的文件
+            for old_name in &current_order {
+                if let Some(pos) = remaining_files.iter().position(|p| {
+                    p.file_name().and_then(|n| n.to_str()) == Some(old_name)
+                }) {
+                    ordered_files.push(remaining_files.remove(pos));
+                }
+            }
+            
+            // 添加新文件到末尾
+            ordered_files.extend(remaining_files);
+            
+            self.config_files = ordered_files;
         }
     }
 
@@ -663,7 +749,7 @@ impl ConfigManagerApp {
                     self.show_toast(format!("文件已重命名为 \"{}\"", new_name), ToastKind::Success);
                     self.selected_file = Some(new_path);
                     self.show_rename_dialog = false;
-                    self.refresh_file_list();
+                    self.refresh_file_list_preserve_order();
                 }
                 Err(e) => self.show_toast(format!("重命名文件时出错: {}", e), ToastKind::Error),
             }
@@ -744,7 +830,7 @@ impl App for ConfigManagerApp {
                 egui::TopBottomPanel::top("side_panel_title").frame(egui::Frame::default().inner_margin(egui::Margin::symmetric(12.0, 8.0)).outer_margin(egui::Margin::ZERO).fill(colors.crust).stroke(egui::Stroke::NONE)).show_inside(ui, |ui| {
                     ui.horizontal(|ui| {
                         ui.with_layout(Layout::left_to_right(Align::Center), |ui| {
-                            ui.label(RichText::new("配置文件").size(14.0).color(colors.text));
+                            ui.label(RichText::new("◈ 配置文件").size(15.0).color(colors.text).strong());
                         });
                         ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                             // 添加透明占位按钮，确保与右侧面板高度一致
@@ -755,54 +841,60 @@ impl App for ConfigManagerApp {
 
                 });
 
-                // 新增配置和刷新按钮 - 居中对齐
-                ui.add_space(8.0);
-                ui.horizontal(|ui| {
-                    ui.with_layout(Layout::left_to_right(Align::Center), |ui| {
-                        // 使用可用空间来居中按钮
-                        ui.allocate_ui_with_layout(
-                            [ui.available_width(), ui.spacing().button_padding.y * 2.0 + 20.0].into(),
-                            Layout::left_to_right(Align::Center),
-                            |ui| {
-                                // 添加弹性空间使按钮居中
-                                ui.add_space((200.0 - 160.0) / 2.0); // 固定200px宽度，按钮总宽度约160px
-                                if ui.button(RichText::new("[+] 新增配置").color(self.get_button_color("add"))).clicked() {
-                                    self.add_new_config();
-                                }
-                                ui.add_space(8.0);
-                                if ui.button(RichText::new("[↻] 刷新列表").color(self.get_button_color("refresh"))).clicked() {
-                                    self.refresh_file_list();
-                                    self.sync_with_claude_config();
-                                    self.show_toast("文件列表已刷新", ToastKind::Success);
-                                }
-                            }
-                        );
-                    });
-                });
-
-                // 恢复原来的分隔线，但使用合适的颜色
-                ui.add_space(8.0);
-                ui.separator();
-                ui.add_space(8.0);
-
-                // 文件列表区域
+                // 文件列表区域（包含按钮）
                 let mut selection_changed = false;
                 let mut selected_path = self.selected_file.clone();
                 let mut actions_to_perform = Vec::new();
                 
                 egui::ScrollArea::vertical().auto_shrink([false; 2]).show(ui, |ui| {
                     ui.vertical(|ui| {
+                        // 新增配置和刷新按钮 - 使用最简单的方法
+                        ui.horizontal(|ui| {
+                            ui.spacing_mut().item_spacing.x = 0.0; // 移除水平间距
+                            
+                            // 背景色填充
+                            let (rect, _) = ui.allocate_exact_size(egui::vec2(ui.available_width(), 44.0), egui::Sense::hover());
+                            ui.painter().rect_filled(rect, egui::Rounding::ZERO, colors.crust);
+                            
+                            // 重新定位到矩形内部进行按钮布局
+                            ui.allocate_ui_at_rect(rect.shrink2(egui::vec2(12.0, 8.0)), |ui| {
+                                ui.horizontal(|ui| {
+                                    let button_width = (ui.available_width() - 8.0) / 2.0;
+                                    
+                                    if ui.add_sized([button_width, 28.0], 
+                                        egui::Button::new(RichText::new("+ 新建").color(self.get_button_color("add")).size(13.0))
+                                    ).clicked() {
+                                        self.add_new_config();
+                                    }
+                                    
+                                    ui.add_space(8.0);
+                                    
+                                    if ui.add_sized([button_width, 28.0], 
+                                        egui::Button::new(RichText::new("↻ 刷新").color(self.get_button_color("refresh")).size(13.0))
+                                    ).clicked() {
+                                        self.refresh_file_list();
+                                        self.sync_with_claude_config();
+                                        self.show_toast("文件列表已刷新", ToastKind::Success);
+                                    }
+                                });
+                            });
+                        });
+
+                        // 分隔线
+                        ui.add_space(8.0);
+                        ui.separator();
+                        ui.add_space(8.0);
                         for (index, path) in self.config_files.iter().map(|p| p.as_path()).enumerate() {
                             let file_name = path.file_name().unwrap().to_str().unwrap();
                             let is_default_file = self.app_settings.default_config_file == file_name;
 
-                            // 隔行背景色
+                            // 隔行背景色 - 更明显的区分
                             let bg_color = if index % 2 == 0 {
                                 colors.crust
                             } else {
                                 match self.current_theme {
-                                    Theme::Dark => Color32::from_rgb(40, 40, 38),
-                                    Theme::Light => Color32::from_rgb(248, 249, 250),
+                                    Theme::Dark => Color32::from_rgb(32, 35, 42),  // 更深的对比色
+                                    Theme::Light => Color32::from_rgb(241, 245, 249), // 更明显的浅色
                                 }
                             };
 
@@ -814,9 +906,9 @@ impl App for ConfigManagerApp {
                                     ui.vertical(|ui| {
                                         // 文件名部分
                                         let file_text = if is_default_file {
-                                            RichText::new(format!("{} (默认)", file_name)).color(self.get_button_color("default")).strong()
+                                            RichText::new(format!("★ {} (默认)", file_name)).color(self.get_button_color("default")).strong().size(13.5)
                                         } else {
-                                            RichText::new(file_name).size(13.0)
+                                            RichText::new(file_name).size(13.0).color(colors.text)
                                         };
 
                                         if ui.selectable_label(self.selected_file.as_deref() == Some(path), file_text).clicked() {
@@ -837,15 +929,15 @@ impl App for ConfigManagerApp {
                                                     ui.add_space(padding);
                                                 }
                                                 
-                                                if ui.button(RichText::new("[R] 重命名").color(self.get_button_color("rename")).size(11.0)).clicked() {
+                                                if ui.button(RichText::new("✎ 重命名").color(self.get_button_color("rename")).size(11.0)).clicked() {
                                                     actions_to_perform.push(('r', index));
                                                 }
-                                                ui.add_space(8.0);
-                                                if ui.button(RichText::new("[-] 删除").color(self.get_button_color("delete")).size(11.0)).clicked() {
+                                                ui.add_space(6.0);
+                                                if ui.button(RichText::new("× 删除").color(self.get_button_color("delete")).size(11.0)).clicked() {
                                                     actions_to_perform.push(('d', index));
                                                 }
-                                                ui.add_space(8.0);
-                                                if ui.add_enabled(!is_default_file, egui::Button::new(RichText::new("[*] 设为默认").color(self.get_button_color("default")).size(11.0))).clicked() {
+                                                ui.add_space(6.0);
+                                                if ui.add_enabled(!is_default_file, egui::Button::new(RichText::new("★ 设为默认").color(self.get_button_color("default")).size(11.0))).clicked() {
                                                     actions_to_perform.push(('s', index));
                                                 }
                                             });
@@ -900,30 +992,30 @@ impl App for ConfigManagerApp {
                             if let Some(path) = &self.selected_file {
                                 let file_name = path.file_name().unwrap().to_str().unwrap();
                                 let display_text = if self.is_content_modified {
-                                    format!("{} (未保存)", file_name)
+                                    format!("◉ {} (未保存)", file_name)
                                 } else {
-                                    file_name.to_string()
+                                    format!("◇ {}", file_name)
                                 };
                                 let text_color = if self.is_content_modified {
                                     self.get_button_color("warning")
                                 } else {
                                     colors.text
                                 };
-                                ui.label(RichText::new(display_text).size(14.0).color(text_color));
+                                ui.label(RichText::new(display_text).size(15.0).color(text_color).strong());
                             } else {
                                 ui.label(RichText::new("请选择文件").size(14.0).color(colors.text));
                             }
                         });
                         ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                             // 添加设置按钮
-                            if ui.button(RichText::new("[⚙] 设置").size(12.0).color(self.get_button_color("settings"))).clicked() {
+                            if ui.button(RichText::new("⚙ 设置").size(12.0).color(self.get_button_color("settings"))).clicked() {
                                 self.show_settings_dialog = true;
                             }
                             ui.separator();
-                            if ui.add_enabled(self.selected_file.is_some(), egui::Button::new(RichText::new("[S] 保存").color(self.get_button_color("add")).size(12.0))).clicked() {
+                            if ui.add_enabled(self.selected_file.is_some(), egui::Button::new(RichText::new("💾 保存").color(self.get_button_color("save")).size(12.0))).clicked() {
                                 self.save_current_file();
                             }
-                            if ui.add_enabled(self.selected_file.is_some(), egui::Button::new(RichText::new("[F] 美化JSON").color(self.get_button_color("format")).size(12.0))).clicked() {
+                            if ui.add_enabled(self.selected_file.is_some(), egui::Button::new(RichText::new("◊ 格式化").color(self.get_button_color("format")).size(12.0))).clicked() {
                                 self.format_json();
                             }
                         });
@@ -1196,8 +1288,8 @@ impl App for ConfigManagerApp {
                     ui.text_edit_singleline(&mut self.new_file_name);
                     ui.add_space(10.0);
                     ui.horizontal(|ui| {
-                        if ui.button("[Y] 确认").clicked() { self.rename_selected_file(); }
-                        if ui.button("[N] 取消").clicked() { self.show_rename_dialog = false; }
+                        if ui.button(RichText::new("✓ 确认").color(self.get_button_color("primary"))).clicked() { self.rename_selected_file(); }
+                        if ui.button(RichText::new("✗ 取消").color(self.get_button_color("secondary"))).clicked() { self.show_rename_dialog = false; }
                     });
                 });
         }
@@ -1211,8 +1303,8 @@ impl App for ConfigManagerApp {
                     ui.label("您确定要删除这个配置文件吗？此操作无法撤销。");
                     ui.add_space(10.0);
                     ui.horizontal(|ui| {
-                        if ui.button(RichText::new("[Y] 是, 删除").color(colors.red)).clicked() { self.delete_selected_file(); self.show_delete_confirmation = false; }
-                        if ui.button("[N] 取消").clicked() { self.show_delete_confirmation = false; }
+                        if ui.button(RichText::new("× 确认删除").color(colors.red)).clicked() { self.delete_selected_file(); self.show_delete_confirmation = false; }
+                        if ui.button(RichText::new("✗ 取消").color(self.get_button_color("secondary"))).clicked() { self.show_delete_confirmation = false; }
                     });
                 });
         }
@@ -1244,7 +1336,7 @@ impl App for ConfigManagerApp {
 
                                 ui.add_space(5.0);
                                 ui.horizontal(|ui| {
-                                    if ui.button(RichText::new("[F] 选择文件夹").color(colors.green)).clicked() {
+                                    if ui.button(RichText::new("□ 选择文件夹").color(colors.green)).clicked() {
                                         // 使用rfd打开文件夹选择对话框
                                         let current_dir = if self.config_dir.exists() {
                                             Some(self.config_dir.clone())
@@ -1262,7 +1354,7 @@ impl App for ConfigManagerApp {
                                         }
                                     }
 
-                                    if ui.button(RichText::new("[R] 重置为默认").color(self.get_button_color("reset"))).clicked() {
+                                    if ui.button(RichText::new("↻ 重置").color(self.get_button_color("reset"))).clicked() {
                                         if let Some(user_dirs) = UserDirs::new() {
                                             self.new_config_dir_input = user_dirs.home_dir().join(APP_DIR_NAME).to_string_lossy().to_string();
                                         }
@@ -1289,7 +1381,7 @@ impl App for ConfigManagerApp {
                                 });
 
                                 ui.add_space(5.0);
-                                if ui.button("[T] 切换主题").clicked() {
+                                if ui.button(RichText::new("◐ 切换主题").color(self.get_button_color("toggle"))).clicked() {
                                     self.toggle_theme(ctx);
                                 }
                             });
@@ -1299,7 +1391,7 @@ impl App for ConfigManagerApp {
 
                         // 按钮区域
                         ui.horizontal(|ui| {
-                            if ui.button(RichText::new("[A] 应用更改").color(colors.green)).clicked() {
+                            if ui.button(RichText::new("✓ 应用更改").color(colors.green)).clicked() {
                                 let new_path = PathBuf::from(&self.new_config_dir_input);
                                 if new_path != self.config_dir {
                                     self.change_config_directory(new_path);
@@ -1307,7 +1399,7 @@ impl App for ConfigManagerApp {
                                 self.show_settings_dialog = false;
                             }
 
-                            if ui.button("[C] 取消").clicked() {
+                            if ui.button(RichText::new("✗ 取消").color(self.get_button_color("secondary"))).clicked() {
                                 self.new_config_dir_input = self.config_dir.to_string_lossy().to_string();
                                 self.show_settings_dialog = false;
                             }
