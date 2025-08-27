@@ -529,16 +529,46 @@ impl ConfigManagerApp {
     }
 
     fn save_current_file(&mut self) {
-        if let Some(path) = &self.selected_file {
+        if let Some(path) = &self.selected_file.clone() {
             match from_str::<Value>(&self.editor_content) {
                 Ok(json_val) => {
                     let pretty_content = to_string_pretty(&json_val).unwrap_or_else(|_| self.editor_content.clone());
                     match fs::write(path, &pretty_content) {
                         Ok(_) => {
-                            self.show_toast(format!("成功保存 {}", path.file_name().unwrap().to_str().unwrap()), ToastKind::Success);
+                            let file_name = path.file_name().unwrap().to_str().unwrap().to_string();
+                            self.show_toast(format!("成功保存 {}", file_name), ToastKind::Success);
                             self.editor_content = pretty_content.clone();
-                            self.original_content = pretty_content;
+                            self.original_content = pretty_content.clone();
                             self.is_content_modified = false;
+                            
+                            // 如果保存的是默认配置文件，同时更新到 Claude 配置文件
+                            if self.app_settings.default_config_file == file_name {
+                                let claude_config_dir = if let Some(user_dirs) = UserDirs::new() {
+                                    user_dirs.home_dir().join(DEFAULT_CONFIG_DIR_NAME)
+                                } else {
+                                    PathBuf::from(DEFAULT_CONFIG_DIR_NAME)
+                                };
+                                
+                                // 确保 Claude 配置目录存在
+                                if !claude_config_dir.exists() {
+                                    if let Err(e) = fs::create_dir_all(&claude_config_dir) {
+                                        self.show_toast(format!("创建 Claude 配置目录时出错: {}", e), ToastKind::Error);
+                                        return;
+                                    }
+                                }
+                                
+                                let claude_settings_path = claude_config_dir.join(ACTIVE_CONFIG_NAME);
+                                
+                                // 将内容写入 Claude 配置文件
+                                match fs::write(&claude_settings_path, &pretty_content) {
+                                    Ok(_) => {
+                                        self.show_toast("已同步更新到 Claude 配置文件", ToastKind::Success);
+                                    }
+                                    Err(e) => {
+                                        self.show_toast(format!("同步到 Claude 配置文件时出错: {}", e), ToastKind::Error);
+                                    }
+                                }
+                            }
                         }
                         Err(e) => self.show_toast(format!("保存文件时出错: {}", e), ToastKind::Error),
                     }
