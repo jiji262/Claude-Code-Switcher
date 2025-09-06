@@ -865,23 +865,6 @@ impl App for ConfigManagerApp {
                 .exact_width(200.0)
                 .resizable(false)
                 .show_inside(ui, |ui| {
-                // 顶部标题栏 - 使用普通布局避免分隔线
-                egui::Frame::default()
-                    .inner_margin(egui::Margin::symmetric(12.0, 8.0))
-                    .fill(colors.crust)
-                    .stroke(egui::Stroke::NONE)
-                    .show(ui, |ui| {
-                        ui.horizontal(|ui| {
-                            ui.with_layout(Layout::left_to_right(Align::Center), |ui| {
-                                ui.label(RichText::new("◈ 配置文件").size(15.0).color(colors.text).strong());
-                            });
-                            ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                                // 添加透明占位按钮，确保与右侧面板高度一致
-                                ui.add_enabled(false, egui::Button::new(RichText::new("").size(12.0)).fill(egui::Color32::TRANSPARENT).stroke(egui::Stroke::NONE));
-                                ui.add_enabled(false, egui::Button::new(RichText::new("").size(12.0)).fill(egui::Color32::TRANSPARENT).stroke(egui::Stroke::NONE));
-                            });
-                        });
-                    });
 
                 // 文件列表区域（包含按钮）
                 let mut selection_changed = false;
@@ -889,7 +872,7 @@ impl App for ConfigManagerApp {
                 let mut actions_to_perform = Vec::new();
                 
                 // 新增配置和刷新按钮区域 - 在ScrollArea外面
-                ui.add_space(12.0); // 顶部间距
+                ui.add_space(24.0); // 顶部间距
                 ui.horizontal(|ui| {
                     ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
                         let total_width = ui.available_width();
@@ -920,6 +903,10 @@ impl App for ConfigManagerApp {
                     });
                 });
                 ui.add_space(12.0); // 底部间距
+                
+                // 文件列表上方的分隔线
+                ui.separator();
+        
                 
                 egui::ScrollArea::vertical().auto_shrink([false; 2]).show(ui, |ui| {
                     ui.vertical(|ui| {
