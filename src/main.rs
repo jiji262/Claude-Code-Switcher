@@ -860,25 +860,28 @@ impl App for ConfigManagerApp {
             SidePanel::left("file_list_panel")
                 .frame(egui::Frame::default()
                     .fill(colors.crust)
-                    .stroke(egui::Stroke::new(1.0, colors.surface0))
+                    .stroke(egui::Stroke::NONE)
                 )
                 .exact_width(200.0)
                 .resizable(false)
                 .show_inside(ui, |ui| {
-                // 顶部标题栏 - 与右侧高度保持一致
-                egui::TopBottomPanel::top("side_panel_title").frame(egui::Frame::default().inner_margin(egui::Margin::symmetric(12.0, 8.0)).outer_margin(egui::Margin::ZERO).fill(colors.crust).stroke(egui::Stroke::NONE)).show_inside(ui, |ui| {
-                    ui.horizontal(|ui| {
-                        ui.with_layout(Layout::left_to_right(Align::Center), |ui| {
-                            ui.label(RichText::new("◈ 配置文件").size(15.0).color(colors.text).strong());
-                        });
-                        ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                            // 添加透明占位按钮，确保与右侧面板高度一致
-                            ui.add_enabled(false, egui::Button::new(RichText::new("").size(12.0)).fill(egui::Color32::TRANSPARENT).stroke(egui::Stroke::NONE));
-                            ui.add_enabled(false, egui::Button::new(RichText::new("").size(12.0)).fill(egui::Color32::TRANSPARENT).stroke(egui::Stroke::NONE));
+                // 顶部标题栏 - 使用普通布局避免分隔线
+                egui::Frame::default()
+                    .inner_margin(egui::Margin::symmetric(12.0, 8.0))
+                    .fill(colors.crust)
+                    .stroke(egui::Stroke::NONE)
+                    .show(ui, |ui| {
+                        ui.horizontal(|ui| {
+                            ui.with_layout(Layout::left_to_right(Align::Center), |ui| {
+                                ui.label(RichText::new("◈ 配置文件").size(15.0).color(colors.text).strong());
+                            });
+                            ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                                // 添加透明占位按钮，确保与右侧面板高度一致
+                                ui.add_enabled(false, egui::Button::new(RichText::new("").size(12.0)).fill(egui::Color32::TRANSPARENT).stroke(egui::Stroke::NONE));
+                                ui.add_enabled(false, egui::Button::new(RichText::new("").size(12.0)).fill(egui::Color32::TRANSPARENT).stroke(egui::Stroke::NONE));
+                            });
                         });
                     });
-
-                });
 
                 // 文件列表区域（包含按钮）
                 let mut selection_changed = false;
@@ -917,15 +920,6 @@ impl App for ConfigManagerApp {
                     });
                 });
                 ui.add_space(12.0); // 底部间距
-                
-                // 自定义分隔线 - 完全占据整行
-                let line_rect = ui.allocate_response(egui::vec2(ui.available_width(), 1.0), egui::Sense::hover()).rect;
-                // 扩展到整个侧边栏宽度
-                let full_line_rect = egui::Rect::from_min_size(
-                    egui::pos2(0.0, line_rect.min.y),
-                    egui::vec2(200.0, 1.0) // 侧边栏宽度
-                );
-                ui.painter().rect_filled(full_line_rect, egui::Rounding::ZERO, colors.border);
                 
                 egui::ScrollArea::vertical().auto_shrink([false; 2]).show(ui, |ui| {
                     ui.vertical(|ui| {
@@ -1021,7 +1015,6 @@ impl App for ConfigManagerApp {
                     self.selected_file = selected_path;
                     self.load_file_content();
                 }
-
 
             });
             egui::CentralPanel::default().frame(egui::Frame::default().fill(colors.mantle)).show_inside(ui, |ui| {
