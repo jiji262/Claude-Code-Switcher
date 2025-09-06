@@ -307,14 +307,14 @@ impl ConfigManagerApp {
         style.spacing.menu_margin = egui::Margin::same(8.0);
         style.spacing.combo_width = 120.0;
         
-        // 现代化的圆角设计
-        let rounding = egui::Rounding::same(6.0);
+        // 正方形边框设计
+        let rounding = egui::Rounding::ZERO;
         style.visuals.widgets.noninteractive.rounding = rounding;
         style.visuals.widgets.inactive.rounding = rounding;
         style.visuals.widgets.hovered.rounding = rounding;
         style.visuals.widgets.active.rounding = rounding;
         style.visuals.menu_rounding = rounding;
-        style.visuals.window_rounding = egui::Rounding::same(8.0);
+        style.visuals.window_rounding = egui::Rounding::ZERO;
         
         // 文字大小调整
         style.override_text_style = Some(egui::TextStyle::Body);
@@ -389,7 +389,7 @@ impl ConfigManagerApp {
         };
         
         visuals.override_text_color = Some(colors.text);
-        visuals.window_rounding = egui::Rounding::same(8.0);
+        visuals.window_rounding = egui::Rounding::ZERO;
         visuals.window_stroke = egui::Stroke::new(1.0, colors.border);
         visuals.window_shadow = egui::epaint::Shadow {
             extrusion: 16.0,
@@ -399,7 +399,7 @@ impl ConfigManagerApp {
             },
         };
         
-        let rounding = egui::Rounding::same(6.0);
+        let rounding = egui::Rounding::ZERO;
         
         // 非交互元素
         visuals.widgets.noninteractive.rounding = rounding;
@@ -408,9 +408,12 @@ impl ConfigManagerApp {
         
         // 非激活状态
         visuals.widgets.inactive = egui::style::WidgetVisuals {
-            bg_fill: colors.surface0,
-            weak_bg_fill: colors.surface0,
-            bg_stroke: egui::Stroke::new(1.0, colors.border),
+            bg_fill: Color32::TRANSPARENT,  // 透明背景
+            weak_bg_fill: Color32::TRANSPARENT,
+            bg_stroke: egui::Stroke::new(1.0, match self.current_theme {
+                Theme::Dark => Color32::from_rgb(70, 70, 80),   // 深色主题下的边框
+                Theme::Light => Color32::from_rgb(180, 180, 190), // 浅色主题下的边框
+            }),
             fg_stroke: egui::Stroke::new(1.0, colors.text),
             rounding,
             expansion: 0.0,
@@ -419,29 +422,44 @@ impl ConfigManagerApp {
         // 悬停状态 - 更明显的效果
         visuals.widgets.hovered = egui::style::WidgetVisuals {
             bg_fill: match self.current_theme {
-                Theme::Dark => Color32::from_rgb(60, 60, 70),  // 更亮的悬停背景
-                Theme::Light => Color32::from_rgb(219, 234, 254), // 更明显的浅色悬停
+                Theme::Dark => Color32::from_rgb(45, 45, 55),     // 深色主题悬停背景
+                Theme::Light => Color32::from_rgb(240, 248, 255), // 浅色主题悬停背景
             },
-            weak_bg_fill: colors.surface1,
-            bg_stroke: egui::Stroke::new(2.0, colors.accent),
+            weak_bg_fill: match self.current_theme {
+                Theme::Dark => Color32::from_rgb(45, 45, 55),
+                Theme::Light => Color32::from_rgb(240, 248, 255),
+            },
+            bg_stroke: egui::Stroke::new(1.0, match self.current_theme {
+                Theme::Dark => Color32::from_rgb(100, 100, 120),  // 深色主题悬停边框
+                Theme::Light => Color32::from_rgb(120, 150, 200), // 浅色主题悬停边框
+            }),
             fg_stroke: egui::Stroke::new(1.0, colors.text),
-            rounding,
-            expansion: 2.0,  // 增加扩展效果
-        };
-        
-        // 激活状态
-        visuals.widgets.active = egui::style::WidgetVisuals {
-            bg_fill: colors.accent,
-            weak_bg_fill: colors.accent,
-            bg_stroke: egui::Stroke::new(2.0, colors.accent),
-            fg_stroke: egui::Stroke::new(1.0, colors.base),
             rounding,
             expansion: 0.0,
         };
         
-        // 选择样式
-        visuals.selection.bg_fill = colors.highlight;
-        visuals.selection.stroke = egui::Stroke::new(1.0, colors.accent);
+        // 激活状态
+        visuals.widgets.active = egui::style::WidgetVisuals {
+            bg_fill: match self.current_theme {
+                Theme::Dark => Color32::from_rgb(35, 35, 45),     // 深色主题激活背景
+                Theme::Light => Color32::from_rgb(220, 235, 250), // 浅色主题激活背景
+            },
+            weak_bg_fill: match self.current_theme {
+                Theme::Dark => Color32::from_rgb(35, 35, 45),
+                Theme::Light => Color32::from_rgb(220, 235, 250),
+            },
+            bg_stroke: egui::Stroke::new(1.0, colors.accent),
+            fg_stroke: egui::Stroke::new(1.0, colors.text),
+            rounding,
+            expansion: 0.0,
+        };
+        
+        // 选择样式 - 使用更柔和的圆角和颜色
+        visuals.selection.bg_fill = match self.current_theme {
+            Theme::Dark => Color32::from_rgb(60, 80, 120).linear_multiply(0.3),  // 深色主题选中背景
+            Theme::Light => Color32::from_rgb(100, 150, 250).linear_multiply(0.15), // 浅色主题选中背景
+        };
+        visuals.selection.stroke = egui::Stroke::new(0.0, Color32::TRANSPARENT); // 移除选中边框
         
         // 其他颜色
         visuals.hyperlink_color = colors.accent;
@@ -479,7 +497,17 @@ impl ConfigManagerApp {
                     self.config_files.sort_by(|a, b| {
                         let a_name = a.file_name().and_then(|s| s.to_str()).unwrap_or_default();
                         let b_name = b.file_name().and_then(|s| s.to_str()).unwrap_or_default();
-                        a_name.cmp(b_name)
+                        
+                        // 检查是否为默认配置文件
+                        let a_is_default = self.app_settings.default_config_file == a_name;
+                        let b_is_default = self.app_settings.default_config_file == b_name;
+                        
+                        // 默认配置文件置顶
+                        match (a_is_default, b_is_default) {
+                            (true, false) => std::cmp::Ordering::Less,    // a是默认，b不是 -> a在前
+                            (false, true) => std::cmp::Ordering::Greater, // b是默认，a不是 -> b在前
+                            _ => a_name.cmp(b_name) // 都是默认或都不是默认 -> 按字母顺序排序
+                        }
                     });
                 }
 
@@ -504,12 +532,23 @@ impl ConfigManagerApp {
             let mut ordered_files = Vec::new();
             let mut remaining_files = self.config_files.clone();
             
-            // 按原顺序添加存在的文件
-            for old_name in &current_order {
+            // 首先添加默认配置文件（如果存在）
+            if !self.app_settings.default_config_file.is_empty() {
                 if let Some(pos) = remaining_files.iter().position(|p| {
-                    p.file_name().and_then(|n| n.to_str()) == Some(old_name)
+                    p.file_name().and_then(|n| n.to_str()) == Some(&self.app_settings.default_config_file)
                 }) {
                     ordered_files.push(remaining_files.remove(pos));
+                }
+            }
+            
+            // 按原顺序添加其他存在的文件（除了已经添加的默认文件）
+            for old_name in &current_order {
+                if old_name != &self.app_settings.default_config_file {
+                    if let Some(pos) = remaining_files.iter().position(|p| {
+                        p.file_name().and_then(|n| n.to_str()) == Some(old_name)
+                    }) {
+                        ordered_files.push(remaining_files.remove(pos));
+                    }
                 }
             }
             
@@ -846,43 +885,50 @@ impl App for ConfigManagerApp {
                 let mut selected_path = self.selected_file.clone();
                 let mut actions_to_perform = Vec::new();
                 
+                // 新增配置和刷新按钮区域 - 在ScrollArea外面
+                ui.add_space(12.0); // 顶部间距
+                ui.horizontal(|ui| {
+                    ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
+                        let total_width = ui.available_width();
+                        let button_spacing = 8.0;
+                        let side_padding = 12.0;
+                        let usable_width = total_width - (2.0 * side_padding);
+                        let button_width = (usable_width - button_spacing) / 2.0;
+                        
+                        ui.add_space(side_padding); // 左边距
+                        
+                        if ui.add_sized([button_width, 36.0], 
+                            egui::Button::new(RichText::new("[N] 新增配置").color(self.get_button_color("add")).size(13.0))
+                        ).clicked() {
+                            self.add_new_config();
+                        }
+                        
+                        ui.add_space(button_spacing);
+                        
+                        if ui.add_sized([button_width, 36.0], 
+                            egui::Button::new(RichText::new("[R] 刷新列表").color(self.get_button_color("refresh")).size(13.0))
+                        ).clicked() {
+                            self.refresh_file_list();
+                            self.sync_with_claude_config();
+                            self.show_toast("文件列表已刷新", ToastKind::Success);
+                        }
+                        
+                        ui.add_space(side_padding); // 右边距
+                    });
+                });
+                ui.add_space(12.0); // 底部间距
+                
+                // 自定义分隔线 - 完全占据整行
+                let line_rect = ui.allocate_response(egui::vec2(ui.available_width(), 1.0), egui::Sense::hover()).rect;
+                // 扩展到整个侧边栏宽度
+                let full_line_rect = egui::Rect::from_min_size(
+                    egui::pos2(0.0, line_rect.min.y),
+                    egui::vec2(200.0, 1.0) // 侧边栏宽度
+                );
+                ui.painter().rect_filled(full_line_rect, egui::Rounding::ZERO, colors.border);
+                
                 egui::ScrollArea::vertical().auto_shrink([false; 2]).show(ui, |ui| {
                     ui.vertical(|ui| {
-                        // 新增配置和刷新按钮 - 使用最简单的方法
-                        ui.horizontal(|ui| {
-                            ui.spacing_mut().item_spacing.x = 0.0; // 移除水平间距
-                            
-                            // 背景色填充
-                            let (rect, _) = ui.allocate_exact_size(egui::vec2(ui.available_width(), 44.0), egui::Sense::hover());
-                            ui.painter().rect_filled(rect, egui::Rounding::ZERO, colors.crust);
-                            
-                            // 重新定位到矩形内部进行按钮布局
-                            ui.allocate_ui_at_rect(rect.shrink2(egui::vec2(12.0, 8.0)), |ui| {
-                                ui.horizontal(|ui| {
-                                    let button_width = (ui.available_width() - 8.0) / 2.0;
-                                    
-                                    if ui.add_sized([button_width, 28.0], 
-                                        egui::Button::new(RichText::new("+ 新建").color(self.get_button_color("add")).size(13.0))
-                                    ).clicked() {
-                                        self.add_new_config();
-                                    }
-                                    
-                                    ui.add_space(8.0);
-                                    
-                                    if ui.add_sized([button_width, 28.0], 
-                                        egui::Button::new(RichText::new("↻ 刷新").color(self.get_button_color("refresh")).size(13.0))
-                                    ).clicked() {
-                                        self.refresh_file_list();
-                                        self.sync_with_claude_config();
-                                        self.show_toast("文件列表已刷新", ToastKind::Success);
-                                    }
-                                });
-                            });
-                        });
-
-                        // 分隔线
-                        ui.add_space(8.0);
-                        ui.separator();
                         ui.add_space(8.0);
                         for (index, path) in self.config_files.iter().map(|p| p.as_path()).enumerate() {
                             let file_name = path.file_name().unwrap().to_str().unwrap();
@@ -893,8 +939,8 @@ impl App for ConfigManagerApp {
                                 colors.crust
                             } else {
                                 match self.current_theme {
-                                    Theme::Dark => Color32::from_rgb(32, 35, 42),  // 更深的对比色
-                                    Theme::Light => Color32::from_rgb(241, 245, 249), // 更明显的浅色
+                                    Theme::Dark => Color32::from_rgb(25, 28, 35),   // 更深的对比色，增强对比
+                                    Theme::Light => Color32::from_rgb(235, 240, 246), // 更明显的浅色对比
                                 }
                             };
 
@@ -929,15 +975,15 @@ impl App for ConfigManagerApp {
                                                     ui.add_space(padding);
                                                 }
                                                 
-                                                if ui.button(RichText::new("✎ 重命名").color(self.get_button_color("rename")).size(11.0)).clicked() {
+                                                if ui.button(RichText::new("[F2] 重命名").color(self.get_button_color("rename")).size(11.0)).clicked() {
                                                     actions_to_perform.push(('r', index));
                                                 }
                                                 ui.add_space(6.0);
-                                                if ui.button(RichText::new("× 删除").color(self.get_button_color("delete")).size(11.0)).clicked() {
+                                                if ui.button(RichText::new("[Del] 删除").color(self.get_button_color("delete")).size(11.0)).clicked() {
                                                     actions_to_perform.push(('d', index));
                                                 }
                                                 ui.add_space(6.0);
-                                                if ui.add_enabled(!is_default_file, egui::Button::new(RichText::new("★ 设为默认").color(self.get_button_color("default")).size(11.0))).clicked() {
+                                                if ui.add_enabled(!is_default_file, egui::Button::new(RichText::new("[D] 设为默认").color(self.get_button_color("default")).size(11.0))).clicked() {
                                                     actions_to_perform.push(('s', index));
                                                 }
                                             });
@@ -1008,14 +1054,14 @@ impl App for ConfigManagerApp {
                         });
                         ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                             // 添加设置按钮
-                            if ui.button(RichText::new("⚙ 设置").size(12.0).color(self.get_button_color("settings"))).clicked() {
+                            if ui.button(RichText::new("设置").size(12.0).color(self.get_button_color("settings"))).clicked() {
                                 self.show_settings_dialog = true;
                             }
                             ui.separator();
-                            if ui.add_enabled(self.selected_file.is_some(), egui::Button::new(RichText::new("💾 保存").color(self.get_button_color("save")).size(12.0))).clicked() {
+                            if ui.add_enabled(self.selected_file.is_some(), egui::Button::new(RichText::new("[S] 保存").color(self.get_button_color("save")).size(12.0))).clicked() {
                                 self.save_current_file();
                             }
-                            if ui.add_enabled(self.selected_file.is_some(), egui::Button::new(RichText::new("◊ 格式化").color(self.get_button_color("format")).size(12.0))).clicked() {
+                            if ui.add_enabled(self.selected_file.is_some(), egui::Button::new(RichText::new("格式化").color(self.get_button_color("format")).size(12.0))).clicked() {
                                 self.format_json();
                             }
                         });
@@ -1254,7 +1300,7 @@ impl App for ConfigManagerApp {
                         ToastKind::Error => ("[错误]", colors.red),
                         ToastKind::Warning => ("[警告]", colors.yellow),
                     };
-                    let frame = egui::Frame::default().inner_margin(8.0).rounding(6.0).fill(colors.crust).stroke(egui::Stroke::new(1.0, color));
+                    let frame = egui::Frame::default().inner_margin(8.0).rounding(egui::Rounding::ZERO).fill(colors.crust).stroke(egui::Stroke::new(1.0, color));
                     frame.show(ui, |ui| {
                         ui.horizontal(|ui| {
                             ui.label(RichText::new(label_text).color(color).strong());
@@ -1288,8 +1334,8 @@ impl App for ConfigManagerApp {
                     ui.text_edit_singleline(&mut self.new_file_name);
                     ui.add_space(10.0);
                     ui.horizontal(|ui| {
-                        if ui.button(RichText::new("✓ 确认").color(self.get_button_color("primary"))).clicked() { self.rename_selected_file(); }
-                        if ui.button(RichText::new("✗ 取消").color(self.get_button_color("secondary"))).clicked() { self.show_rename_dialog = false; }
+                        if ui.button(RichText::new("[Enter] 确认").color(self.get_button_color("primary"))).clicked() { self.rename_selected_file(); }
+                        if ui.button(RichText::new("[Esc] 取消").color(self.get_button_color("secondary"))).clicked() { self.show_rename_dialog = false; }
                     });
                 });
         }
@@ -1303,8 +1349,8 @@ impl App for ConfigManagerApp {
                     ui.label("您确定要删除这个配置文件吗？此操作无法撤销。");
                     ui.add_space(10.0);
                     ui.horizontal(|ui| {
-                        if ui.button(RichText::new("× 确认删除").color(colors.red)).clicked() { self.delete_selected_file(); self.show_delete_confirmation = false; }
-                        if ui.button(RichText::new("✗ 取消").color(self.get_button_color("secondary"))).clicked() { self.show_delete_confirmation = false; }
+                        if ui.button(RichText::new("[Enter] 确认删除").color(colors.red)).clicked() { self.delete_selected_file(); self.show_delete_confirmation = false; }
+                        if ui.button(RichText::new("[Esc] 取消").color(self.get_button_color("secondary"))).clicked() { self.show_delete_confirmation = false; }
                     });
                 });
         }
@@ -1336,7 +1382,7 @@ impl App for ConfigManagerApp {
 
                                 ui.add_space(5.0);
                                 ui.horizontal(|ui| {
-                                    if ui.button(RichText::new("□ 选择文件夹").color(colors.green)).clicked() {
+                                    if ui.button(RichText::new("[F] 选择文件夹").color(colors.green)).clicked() {
                                         // 使用rfd打开文件夹选择对话框
                                         let current_dir = if self.config_dir.exists() {
                                             Some(self.config_dir.clone())
@@ -1354,7 +1400,7 @@ impl App for ConfigManagerApp {
                                         }
                                     }
 
-                                    if ui.button(RichText::new("↻ 重置").color(self.get_button_color("reset"))).clicked() {
+                                    if ui.button(RichText::new("[R] 重置").color(self.get_button_color("reset"))).clicked() {
                                         if let Some(user_dirs) = UserDirs::new() {
                                             self.new_config_dir_input = user_dirs.home_dir().join(APP_DIR_NAME).to_string_lossy().to_string();
                                         }
@@ -1381,7 +1427,7 @@ impl App for ConfigManagerApp {
                                 });
 
                                 ui.add_space(5.0);
-                                if ui.button(RichText::new("◐ 切换主题").color(self.get_button_color("toggle"))).clicked() {
+                                if ui.button(RichText::new("[T] 切换主题").color(self.get_button_color("toggle"))).clicked() {
                                     self.toggle_theme(ctx);
                                 }
                             });
@@ -1391,7 +1437,7 @@ impl App for ConfigManagerApp {
 
                         // 按钮区域
                         ui.horizontal(|ui| {
-                            if ui.button(RichText::new("✓ 应用更改").color(colors.green)).clicked() {
+                            if ui.button(RichText::new("[Enter] 应用更改").color(colors.green)).clicked() {
                                 let new_path = PathBuf::from(&self.new_config_dir_input);
                                 if new_path != self.config_dir {
                                     self.change_config_directory(new_path);
@@ -1399,7 +1445,7 @@ impl App for ConfigManagerApp {
                                 self.show_settings_dialog = false;
                             }
 
-                            if ui.button(RichText::new("✗ 取消").color(self.get_button_color("secondary"))).clicked() {
+                            if ui.button(RichText::new("[Esc] 取消").color(self.get_button_color("secondary"))).clicked() {
                                 self.new_config_dir_input = self.config_dir.to_string_lossy().to_string();
                                 self.show_settings_dialog = false;
                             }
