@@ -125,7 +125,12 @@ struct ConfigManagerApp {
     // 新增字段
     is_content_modified: bool,
     original_content: String,
+    // 产品优化新增字段
+    hovered_config_index: Option<usize>,  // 当前悬停的配置项索引
+    search_query: String,                  // 搜索查询
+    last_modified_time: Option<std::time::SystemTime>,  // 上次修改时间
 }
+
 
 impl Default for ConfigManagerApp {
     fn default() -> Self {
@@ -154,9 +159,14 @@ impl Default for ConfigManagerApp {
             new_config_dir_input: String::new(),
             is_content_modified: false,
             original_content: String::new(),
+            // 产品优化新增字段初始化
+            hovered_config_index: None,
+            search_query: String::new(),
+            last_modified_time: None,
         }
     }
 }
+
 
 impl ConfigManagerApp {
     fn new(cc: &eframe::CreationContext<'_>) -> Self {
@@ -196,6 +206,16 @@ impl ConfigManagerApp {
                                 "Light" => Theme::Light,
                                 _ => Theme::Dark,
                             };
+
+                            // 验证默认配置文件是否仍然存在
+                            if !self.app_settings.default_config_file.is_empty() {
+                                let default_file_path = self.config_dir.join(SETTINGS_SUBDIR).join(&self.app_settings.default_config_file);
+                                if !default_file_path.exists() {
+                                    // 默认配置文件不存在了，清除设置
+                                    self.app_settings.default_config_file = String::new();
+                                    self.save_app_settings();
+                                }
+                            }
                         }
                         Err(e) => {
                             self.show_toast(format!("解析应用设置时出错: {}", e), ToastKind::Warning);
@@ -586,7 +606,22 @@ impl ConfigManagerApp {
             Err(_) => return,
         };
 
-        // 检查是否有配置文件与 Claude 配置相同
+        // 首先检查当前的默认配置文件是否与 Claude 配置相同
+        if !self.app_settings.default_config_file.is_empty() {
+            let default_file_path = self.config_dir.join(SETTINGS_SUBDIR).join(&self.app_settings.default_config_file);
+            if default_file_path.exists() {
+                if let Ok(content) = fs::read_to_string(&default_file_path) {
+                    if let Ok(json_val) = from_str::<Value>(&content) {
+                        if json_val == claude_json {
+                            // 当前的默认配置文件已经与 Claude 配置相同，无需更改
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+
+        // 检查是否有其他配置文件与 Claude 配置相同
         let mut found_matching_config = false;
         for file_path in &self.config_files {
             if let Ok(content) = fs::read_to_string(file_path) {
@@ -637,6 +672,10 @@ impl ConfigManagerApp {
                     self.editor_content = content.clone();
                     self.original_content = content;
                     self.is_content_modified = false;
+                    // 记录文件修改时间
+                    if let Ok(metadata) = fs::metadata(path) {
+                        self.last_modified_time = metadata.modified().ok();
+                    }
                     self.set_status(&format!("已加载 {}", path.file_name().unwrap_or_default().to_str().unwrap_or_default()));
                 },
                 Err(e) => {
@@ -644,14 +683,17 @@ impl ConfigManagerApp {
                     self.editor_content = String::new();
                     self.original_content = String::new();
                     self.is_content_modified = false;
+                    self.last_modified_time = None;
                 }
             }
         } else {
             self.editor_content = String::new();
             self.original_content = String::new();
             self.is_content_modified = false;
+            self.last_modified_time = None;
         }
     }
+
 
     fn save_current_file(&mut self) {
         if let Some(path) = &self.selected_file.clone() {
@@ -851,12 +893,55 @@ impl App for ConfigManagerApp {
         egui::CentralPanel::default().frame(egui::Frame::default().fill(colors.base)).show(ctx, |ui| {
             egui::TopBottomPanel::bottom("status_bar").frame(egui::Frame::default().inner_margin(egui::Margin::symmetric(10.0, 5.0)).fill(colors.crust)).show(ui.ctx(), |ui| {
                 ui.horizontal(|ui| {
-                    ui.label(&self.status_text);
+                    // 左侧：当前活动配置
+                    if !self.app_settings.default_config_file.is_empty() {
+                        ui.label(RichText::new("●").color(colors.green).size(10.0));
+                        ui.label(RichText::new(format!("当前: {}", self.app_settings.default_config_file)).color(colors.text).size(12.0));
+                        ui.separator();
+                    }
+                    
+                    // 修改状态
+                    if self.is_content_modified {
+                        ui.label(RichText::new("⚠ 未保存").color(colors.yellow).size(12.0));
+                    } else if self.selected_file.is_some() {
+                        ui.label(RichText::new("✓ 已保存").color(colors.green).size(12.0));
+                    }
+                    
                     ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                        ui.label(format!("字符: {}", self.char_count));
+                        // 右侧：字符数
+                        ui.label(RichText::new(format!("字符: {}", self.char_count)).size(12.0));
+                        ui.separator();
+                        
+                        // 上次修改时间
+                        if let Some(modified_time) = self.last_modified_time {
+                            if let Ok(duration) = modified_time.elapsed() {
+                                let time_str = if duration.as_secs() < 60 {
+                                    "刚刚".to_string()
+                                } else if duration.as_secs() < 3600 {
+                                    format!("{} 分钟前", duration.as_secs() / 60)
+                                } else if duration.as_secs() < 86400 {
+                                    format!("{} 小时前", duration.as_secs() / 3600)
+                                } else {
+                                    format!("{} 天前", duration.as_secs() / 86400)
+                                };
+                                ui.label(RichText::new(format!("修改: {}", time_str)).color(colors.muted).size(12.0));
+                                ui.separator();
+                            }
+                        }
+                        
+                        // JSON 状态
+                        if self.selected_file.is_some() {
+                            let is_valid_json = serde_json::from_str::<serde_json::Value>(&self.editor_content).is_ok();
+                            if is_valid_json {
+                                ui.label(RichText::new("JSON ✓").color(colors.green).size(12.0));
+                            } else {
+                                ui.label(RichText::new("JSON ✗").color(colors.red).size(12.0));
+                            }
+                        }
                     });
                 });
             });
+
             SidePanel::left("file_list_panel")
                 .frame(egui::Frame::default()
                     .fill(colors.crust)
@@ -902,80 +987,149 @@ impl App for ConfigManagerApp {
                         ui.add_space(side_padding); // 右边距
                     });
                 });
-                ui.add_space(12.0); // 底部间距
+                
+                // 搜索框
+                ui.add_space(8.0);
+                ui.horizontal(|ui| {
+                    ui.add_space(12.0);
+                    let search_response = ui.add(
+                        TextEdit::singleline(&mut self.search_query)
+                            .hint_text("🔍 搜索配置...")
+                            .desired_width(176.0)
+                    );
+                    if search_response.changed() {
+                        // 搜索时清除悬停状态
+                        self.hovered_config_index = None;
+                    }
+                });
+                ui.add_space(8.0);
                 
                 // 文件列表上方的分隔线
                 ui.separator();
         
+                // 过滤配置文件
+                let search_lower = self.search_query.to_lowercase();
+                let filtered_indices: Vec<usize> = self.config_files.iter()
+                    .enumerate()
+                    .filter(|(_, path)| {
+                        if self.search_query.is_empty() {
+                            true
+                        } else {
+                            path.file_name()
+                                .and_then(|n| n.to_str())
+                                .map(|n| n.to_lowercase().contains(&search_lower))
+                                .unwrap_or(false)
+                        }
+                    })
+                    .map(|(i, _)| i)
+                    .collect();
+                
+                // 记录当前悬停的配置索引
+                let mut new_hovered_index: Option<usize> = None;
                 
                 egui::ScrollArea::vertical().auto_shrink([false; 2]).show(ui, |ui| {
                     ui.vertical(|ui| {
                         ui.add_space(8.0);
-                        for (index, path) in self.config_files.iter().map(|p| p.as_path()).enumerate() {
+                        
+                        // 无配置或搜索无结果时的提示
+                        if filtered_indices.is_empty() {
+                            ui.add_space(20.0);
+                            ui.vertical_centered(|ui| {
+                                if self.config_files.is_empty() {
+                                    ui.label(RichText::new("📁").size(32.0));
+                                    ui.add_space(8.0);
+                                    ui.label(RichText::new("暂无配置文件").color(colors.muted).size(14.0));
+                                    ui.add_space(4.0);
+                                    ui.label(RichText::new("点击「新增配置」创建").color(colors.muted).size(12.0));
+                                } else {
+                                    ui.label(RichText::new("🔍").size(32.0));
+                                    ui.add_space(8.0);
+                                    ui.label(RichText::new("未找到匹配项").color(colors.muted).size(14.0));
+                                }
+                            });
+                        }
+                        
+                        for (display_index, &original_index) in filtered_indices.iter().enumerate() {
+                            let path = &self.config_files[original_index];
                             let file_name = path.file_name().unwrap().to_str().unwrap();
                             let is_default_file = self.app_settings.default_config_file == file_name;
+                            let is_hovered = self.hovered_config_index == Some(original_index);
+                            let is_selected = self.selected_file.as_ref().map(|p| p.as_path()) == Some(path.as_path());
 
                             // 隔行背景色 - 更明显的区分
-                            let bg_color = if index % 2 == 0 {
+                            let bg_color = if is_selected {
+                                match self.current_theme {
+                                    Theme::Dark => Color32::from_rgb(40, 50, 70),
+                                    Theme::Light => Color32::from_rgb(210, 225, 245),
+                                }
+                            } else if is_hovered {
+                                match self.current_theme {
+                                    Theme::Dark => Color32::from_rgb(32, 36, 45),
+                                    Theme::Light => Color32::from_rgb(225, 235, 250),
+                                }
+                            } else if display_index % 2 == 0 {
                                 colors.crust
                             } else {
                                 match self.current_theme {
-                                    Theme::Dark => Color32::from_rgb(25, 28, 35),   // 更深的对比色，增强对比
-                                    Theme::Light => Color32::from_rgb(235, 240, 246), // 更明显的浅色对比
+                                    Theme::Dark => Color32::from_rgb(25, 28, 35),
+                                    Theme::Light => Color32::from_rgb(235, 240, 246),
                                 }
                             };
 
                             // 文件项容器
-                            egui::Frame::default()
+                            let frame_response = egui::Frame::default()
                                 .fill(bg_color)
-                                .inner_margin(egui::Margin::symmetric(12.0, 8.0))
+                                .inner_margin(egui::Margin::symmetric(12.0, 10.0))
                                 .show(ui, |ui| {
                                     ui.vertical(|ui| {
-                                        // 文件名部分
-                                        let file_text = if is_default_file {
-                                            RichText::new(format!("★ {} (默认)", file_name)).color(self.get_button_color("default")).strong().size(13.5)
-                                        } else {
-                                            RichText::new(file_name).size(13.0).color(colors.text)
-                                        };
+                                        // 文件名行 - 水平布局
+                                        ui.horizontal(|ui| {
+                                            // 文件名部分
+                                            let file_text = if is_default_file {
+                                                RichText::new(format!("★ {}", file_name)).color(self.get_button_color("default")).strong().size(13.0)
+                                            } else {
+                                                RichText::new(file_name).size(13.0).color(colors.text)
+                                            };
 
-                                        if ui.selectable_label(self.selected_file.as_deref() == Some(path), file_text).clicked() {
-                                            selected_path = Some(path.to_path_buf());
-                                            selection_changed = true;
-                                        }
+                                            if ui.selectable_label(is_selected, file_text).clicked() {
+                                                selected_path = Some(path.to_path_buf());
+                                                selection_changed = true;
+                                            }
+                                        });
 
-                                        // 操作按钮区域 - 居中对齐
+                                        // 操作按钮 - 始终显示
                                         ui.add_space(6.0);
                                         ui.horizontal(|ui| {
-                                            ui.with_layout(Layout::left_to_right(Align::Center), |ui| {
-                                                // 使用可用空间来居中按钮
-                                                let total_button_width = 180.0; // 三个按钮的总宽度估算
-                                                let available_width = 200.0; // 固定面板宽度
-                                                let padding = (available_width - total_button_width) / 2.0;
-                                                
-                                                if padding > 0.0 {
-                                                    ui.add_space(padding);
+                                            if ui.small_button(RichText::new("重命名").size(10.0)).clicked() {
+                                                actions_to_perform.push(('r', original_index));
+                                            }
+                                            ui.add_space(4.0);
+                                            if ui.small_button(RichText::new("删除").color(colors.red).size(10.0)).clicked() {
+                                                actions_to_perform.push(('d', original_index));
+                                            }
+                                            if !is_default_file {
+                                                ui.add_space(4.0);
+                                                if ui.small_button(RichText::new("设为默认").color(self.get_button_color("default")).size(10.0)).clicked() {
+                                                    actions_to_perform.push(('s', original_index));
                                                 }
-                                                
-                                                if ui.button(RichText::new("[F2] 重命名").color(self.get_button_color("rename")).size(11.0)).clicked() {
-                                                    actions_to_perform.push(('r', index));
-                                                }
-                                                ui.add_space(6.0);
-                                                if ui.button(RichText::new("[Del] 删除").color(self.get_button_color("delete")).size(11.0)).clicked() {
-                                                    actions_to_perform.push(('d', index));
-                                                }
-                                                ui.add_space(6.0);
-                                                if ui.add_enabled(!is_default_file, egui::Button::new(RichText::new("[D] 设为默认").color(self.get_button_color("default")).size(11.0))).clicked() {
-                                                    actions_to_perform.push(('s', index));
-                                                }
-                                            });
+                                            }
                                         });
                                     });
                                 });
+                            
+                            // 检测悬停状态
+                            if frame_response.response.hovered() {
+                                new_hovered_index = Some(original_index);
+                            }
 
-                            ui.add_space(8.0); // 文件之间的间距
+                            ui.add_space(4.0); // 文件之间的间距
+
                         }
                     });
                 });
+                
+                // 更新悬停状态
+                self.hovered_config_index = new_hovered_index;
                 
                 // 处理收集的操作
                 for (action_type, index) in actions_to_perform {
@@ -997,6 +1151,7 @@ impl App for ConfigManagerApp {
                         }
                     }
                 }
+
                 
                 if selection_changed {
                     self.selected_file = selected_path;
