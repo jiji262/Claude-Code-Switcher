@@ -1,0 +1,190 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+      - "[0-9]+.[0-9]+.[0-9]+"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "可选：指定发布到哪个 Git Tag（例如 v2.0.0；留空则仅构建产物不发版）"
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build-macos:
+    name: Build macOS (${{ matrix.arch }})
+    runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: aarch64-apple-darwin
+            arch: arm64
+            run_tests: true
+          - target: x86_64-apple-darwin
+            arch: x64
+            run_tests: false
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain (${{ matrix.target }})
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Rust build cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          key: macos-${{ matrix.target }}
+
+      - name: Run unit tests
+        if: matrix.run_tests
+        run: cargo test
+
+      - name: Build release binary
+        run: cargo build --release --bin claude-code-switcher --target ${{ matrix.target }}
+
+      - name: Package signed .app bundle, .dmg, and .app.zip
+        shell: bash
+        run: |
+          set -euo pipefail
+          BIN_SRC="target/${{ matrix.target }}/release/claude-code-switcher"
+          STAGE_DIR="package-macos-${{ matrix.arch }}"
+          APP_DIR="${STAGE_DIR}/Claude Code Switcher.app"
+          CONTENTS_DIR="${APP_DIR}/Contents"
+          MACOS_DIR="${CONTENTS_DIR}/MacOS"
+          RESOURCES_DIR="${CONTENTS_DIR}/Resources"
+
+          rm -rf "${STAGE_DIR}" release-out
+          mkdir -p "${MACOS_DIR}" "${RESOURCES_DIR}" release-out
+
+          cp "${BIN_SRC}" "${MACOS_DIR}/claude-code-switcher"
+          chmod +x "${MACOS_DIR}/claude-code-switcher"
+          cp "resources/Info.plist" "${CONTENTS_DIR}/Info.plist"
+          cp "resources/icons/icon.icns" "${RESOURCES_DIR}/icon.icns"
+          cp "resources/icons/icon_1024.png" "${RESOURCES_DIR}/icon.png"
+
+          codesign --force --deep --sign - "${APP_DIR}"
+
+          # 1. Create .app.zip preserving macOS bundle metadata & signature
+          ditto -c -k --sequesterRsrc --keepParent \
+            "${APP_DIR}" \
+            "release-out/Claude-Code-Switcher-macOS-${{ matrix.arch }}.app.zip"
+
+          # 2. Create drag-and-drop .dmg with /Applications shortcut
+          DMG_STAGE="dmg-stage-${{ matrix.arch }}"
+          rm -rf "${DMG_STAGE}"
+          mkdir -p "${DMG_STAGE}"
+          cp -R "${APP_DIR}" "${DMG_STAGE}/"
+          ln -s /Applications "${DMG_STAGE}/Applications"
+
+          hdiutil create \
+            -volname "Claude Code Switcher" \
+            -srcfolder "${DMG_STAGE}" \
+            -ov \
+            -format UDZO \
+            "release-out/Claude-Code-Switcher-macOS-${{ matrix.arch }}.dmg"
+
+          ls -lh release-out/
+
+      - name: Upload macOS artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-${{ matrix.arch }}
+          path: release-out/*
+          if-no-files-found: error
+
+  build-windows:
+    name: Build Windows (x64)
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain (x86_64-pc-windows-msvc)
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+
+      - name: Rust build cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          key: windows-x86_64-pc-windows-msvc
+
+      - name: Run unit tests
+        run: cargo test
+
+      - name: Build release executable
+        run: cargo build --release --bin claude-code-switcher --target x86_64-pc-windows-msvc
+
+      - name: Package Windows .exe and .zip
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          New-Item -ItemType Directory -Force -Path "release-out" | Out-Null
+          New-Item -ItemType Directory -Force -Path "win-stage" | Out-Null
+
+          $bin = "target/x86_64-pc-windows-msvc/release/claude-code-switcher.exe"
+          Copy-Item $bin "release-out/Claude-Code-Switcher-Windows-x64.exe" -Force
+          Copy-Item $bin "win-stage/Claude Code Switcher.exe" -Force
+
+          Compress-Archive `
+            -Path "win-stage/Claude Code Switcher.exe" `
+            -DestinationPath "release-out/Claude-Code-Switcher-Windows-x64.zip" `
+            -Force
+
+          Get-ChildItem "release-out"
+
+      - name: Upload Windows artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-x64
+          path: release-out/*
+          if-no-files-found: error
+
+  publish-release:
+    name: Publish GitHub Release
+    needs: [build-macos, build-windows]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/') || (github.event_name == 'workflow_dispatch' && inputs.tag != '')
+
+    steps:
+      - name: Download all platform artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+          merge-multiple: true
+
+      - name: Generate SHA256SUMS.txt
+        working-directory: release-assets
+        run: |
+          sha256sum * > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+
+      - name: Resolve target release tag
+        id: meta
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" && -n "${{ inputs.tag }}" ]]; then
+            echo "tag=${{ inputs.tag }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create or update GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.meta.outputs.tag }}
+          name: Claude Code Switcher ${{ steps.meta.outputs.tag }}
+          generate_release_notes: true
+          files: release-assets/*

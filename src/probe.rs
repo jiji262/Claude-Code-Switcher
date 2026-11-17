@@ -75,7 +75,11 @@ fn probe_via_curl(url: &Url, api_key: &str, auth_token: &str) -> Option<ProbeRes
     cfg.push_str("silent\nshow-error\n");
     cfg.push_str("max-time = 6\nconnect-timeout = 4\n");
     cfg.push_str("write-out = \"%{http_code}\"\n");
+    #[cfg(windows)]
+    cfg.push_str("output = \"NUL\"\n");
+    #[cfg(not(windows))]
     cfg.push_str("output = \"/dev/null\"\n");
+
     cfg.push_str("header = \"anthropic-version: 2023-06-01\"\n");
 
     if !auth_token.trim().is_empty() {
@@ -91,14 +95,26 @@ fn probe_via_curl(url: &Url, api_key: &str, auth_token: &str) -> Option<ProbeRes
     }
 
     let start = Instant::now();
-    let mut child = Command::new("curl")
-        .arg("-K")
+    #[cfg(windows)]
+    let curl_bin = "curl.exe";
+    #[cfg(not(windows))]
+    let curl_bin = "curl";
+
+    let mut cmd = Command::new(curl_bin);
+    cmd.arg("-K")
         .arg("-")
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()
-        .ok()?;
+        .stderr(Stdio::piped());
+
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+        cmd.creation_flags(CREATE_NO_WINDOW);
+    }
+
+    let mut child = cmd.spawn().ok()?;
 
     if let Some(mut stdin) = child.stdin.take() {
         let _ = stdin.write_all(cfg.as_bytes());

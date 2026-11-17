@@ -1,4 +1,4 @@
-// build.rs — Track UI assets and platform icon resources
+// build.rs — Track embedded UI assets and embed Windows .exe icon resource
 
 use std::env;
 use std::path::Path;
@@ -7,12 +7,13 @@ fn main() {
     if env::var("CARGO_CFG_TARGET_OS").unwrap_or_default() == "windows" {
         let icon_path = Path::new("resources/icons/icon.ico");
         if icon_path.exists() {
-            println!("cargo:rustc-link-arg-bins=/SUBSYSTEM:WINDOWS");
-            println!("cargo:rustc-link-arg-bins=/ENTRY:mainCRTStartup");
-
-            let rc_path = Path::new("resources/app.rc");
-            if rc_path.exists() {
-                println!("cargo:rerun-if-changed=resources/app.rc");
+            #[cfg(windows)]
+            {
+                let mut res = winresource::WindowsResource::new();
+                res.set_icon("resources/icons/icon.ico");
+                if let Err(err) = res.compile() {
+                    println!("cargo:warning=Failed to embed Windows icon resource: {}", err);
+                }
             }
         }
     }

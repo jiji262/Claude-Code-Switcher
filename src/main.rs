@@ -13,7 +13,7 @@ use std::path::Path;
 use std::process::Command;
 use std::sync::{Arc, Mutex};
 use tao::{
-    dpi::{LogicalPosition, LogicalSize},
+    dpi::LogicalSize,
     event::{Event, WindowEvent},
     event_loop::{ControlFlow, EventLoopBuilder},
     window::{Icon, WindowBuilder},
@@ -25,7 +25,7 @@ use wry::{
 };
 
 #[cfg(target_os = "macos")]
-use tao::platform::macos::WindowBuilderExtMacOS;
+use tao::{dpi::LogicalPosition, platform::macos::WindowBuilderExtMacOS};
 
 const ASSET_INDEX_HTML: &[u8] = include_bytes!("../ui/index.html");
 const ASSET_TOKENS_CSS: &[u8] = include_bytes!("../ui/styles/tokens.css");
@@ -53,7 +53,23 @@ enum UserEvent {
     },
 }
 
+#[cfg(windows)]
+fn attach_windows_parent_console_if_cli() {
+    if std::env::args().len() > 1 {
+        extern "system" {
+            fn AttachConsole(dw_process_id: u32) -> i32;
+        }
+        const ATTACH_PARENT_PROCESS: u32 = 0xFFFF_FFFF;
+        unsafe {
+            let _ = AttachConsole(ATTACH_PARENT_PROCESS);
+        }
+    }
+}
+
 fn main() {
+    #[cfg(windows)]
+    attach_windows_parent_console_if_cli();
+
     if let Some(code) = state::run_cli_if_requested() {
         std::process::exit(code);
     }
