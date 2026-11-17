@@ -1,0 +1,80 @@
+{
+  "$schema": "https://design-tokens.github.io/community-group/format/",
+  "meta": {
+    "name": "Claude Code Switcher Design System",
+    "version": "2.0.0",
+    "direction": "Editorial Warm Precision"
+  },
+  "primitive": {
+    "color": {
+      "stone-950": "#131311",
+      "stone-900": "#1A1917",
+      "stone-850": "#21201D",
+      "stone-800": "#2A2824",
+      "stone-700": "#38352F",
+      "stone-600": "#57534A",
+      "stone-500": "#7C766B",
+      "stone-400": "#B2ACA0",
+      "stone-200": "#E3DED4",
+      "stone-150": "#ECE8DF",
+      "stone-100": "#F1EEE7",
+      "stone-50": "#FAF8F4",
+      "white": "#FFFFFF",
+      "clay-600": "#B34E2E",
+      "clay-500": "#C65D3B",
+      "clay-400": "#D97757",
+      "clay-300": "#E89A7E",
+      "emerald-600": "#1F845A",
+      "emerald-400": "#3ECF8E",
+      "amber-600": "#B56A10",
+      "amber-400": "#E6A23C",
+      "crimson-600": "#C43B33",
+      "crimson-400": "#F06A63"
+    },
+    "space": {
+      "1": "4px",
+      "2": "8px",
+      "3": "12px",
+      "4": "16px",
+      "5": "20px",
+      "6": "24px",
+      "8": "32px",
+      "10": "40px"
+    },
+    "radius": {
+      "xs": "5px",
+      "sm": "7px",
+      "md": "10px",
+      "lg": "14px",
+      "pill": "999px"
+    }
+  },
+  "semantic": {
+    "dark": {
+      "bg-canvas": "{primitive.color.stone-950}",
+      "bg-rail": "{primitive.color.stone-900}",
+      "bg-surface": "{primitive.color.stone-850}",
+      "bg-elevated": "{primitive.color.stone-800}",
+      "text-primary": "#F2EFE9",
+      "text-secondary": "{primitive.color.stone-400}",
+      "text-tertiary": "#878176",
+      "accent": "{primitive.color.clay-400}",
+      "signal-live": "{primitive.color.emerald-400}",
+      "signal-warn": "{primitive.color.amber-400}",
+      "signal-danger": "{primitive.color.crimson-400}"
+    },
+    "light": {
+      "bg-canvas": "{primitive.color.stone-50}",
+      "bg-rail": "{primitive.color.stone-100}",
+      "bg-surface": "{primitive.color.white}",
+      "bg-elevated": "{primitive.color.white}",
+      "text-primary": "#181715",
+      "text-secondary": "{primitive.color.stone-600}",
+      "text-tertiary": "{primitive.color.stone-500}",
+      "accent": "{primitive.color.clay-500}",
+      "signal-live": "{primitive.color.emerald-600}",
+      "signal-warn": "{primitive.color.amber-600}",
+      "signal-danger": "{primitive.color.crimson-600}"
+    }
+  }
+}

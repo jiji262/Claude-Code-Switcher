@@ -1,41 +1,50 @@
 <svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
-  <!-- 背景 -->
-  <rect width="1024" height="1024" rx="180" ry="180" fill="#2E3440"/>
-  
-  <!-- 渐变定义 -->
   <defs>
-    <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#5E81AC;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#81A1C1;stop-opacity:1" />
+    <linearGradient id="bgShell" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#23211E"/>
+      <stop offset="100%" stop-color="#131210"/>
     </linearGradient>
-    <linearGradient id="grad2" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#A3BE8C;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#8FBCBB;stop-opacity:1" />
+    <linearGradient id="rimStroke" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#423E37"/>
+      <stop offset="100%" stop-color="#211F1C"/>
+    </linearGradient>
+    <linearGradient id="clayTrack" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#E38363"/>
+      <stop offset="100%" stop-color="#C45A38"/>
+    </linearGradient>
+    <linearGradient id="ivoryKnob" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#EAE5DC"/>
+    </linearGradient>
+    <linearGradient id="slateTrack" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#2A2824"/>
+      <stop offset="100%" stop-color="#22201D"/>
     </linearGradient>
   </defs>
-  
-  <!-- 主要图标元素 - 代码符号 -->
-  <g transform="translate(512, 512)">
-    <!-- 外圆 -->
-    <circle cx="0" cy="0" r="280" fill="url(#grad1)" opacity="0.9"/>
-    
-    <!-- 代码括号 -->
-    <path d="M -120,-100 L -180,-50 L -180,50 L -120,100" 
-          stroke="white" stroke-width="40" fill="none" stroke-linecap="round"/>
-    <path d="M 120,-100 L 180,-50 L 180,50 L 120,100" 
-          stroke="white" stroke-width="40" fill="none" stroke-linecap="round"/>
-    
-    <!-- 斜杠 -->
-    <path d="M -60,-120 L 60,120" 
-          stroke="url(#grad2)" stroke-width="35" fill="none" stroke-linecap="round"/>
-    
-    <!-- 中心点 -->
-    <circle cx="0" cy="0" r="15" fill="white"/>
-  </g>
-  
-  <!-- 装饰性圆点 -->
-  <circle cx="150" cy="150" r="25" fill="#A3BE8C" opacity="0.7"/>
-  <circle cx="874" cy="150" r="25" fill="#B48EAD" opacity="0.7"/>
-  <circle cx="150" cy="874" r="25" fill="#EBCB8B" opacity="0.7"/>
-  <circle cx="874" cy="874" r="25" fill="#D08770" opacity="0.7"/>
+
+  <!-- macOS Optical Squircle Base (840x840 centered with 92px Dock margin) -->
+  <rect x="92" y="92" width="840" height="840" rx="192" ry="192" fill="url(#bgShell)" stroke="url(#rimStroke)" stroke-width="8"/>
+
+  <!-- Subtle Recessed Instrument Faceplate -->
+  <rect x="140" y="140" width="744" height="744" rx="148" ry="148" fill="#171614" stroke="#282622" stroke-width="3"/>
+
+  <!-- Top Active Switch Rail (Claude Terracotta) -->
+  <rect x="222" y="276" width="580" height="204" rx="102" ry="102" fill="url(#clayTrack)"/>
+  <!-- Code Prompt Chevron on Active Rail -->
+  <path d="M 318 344 L 362 378 L 318 412" fill="none" stroke="#FAF8F4" stroke-width="26" stroke-linecap="round" stroke-linejoin="round" opacity="0.92"/>
+  <line x1="392" y1="412" x2="452" y2="412" stroke="#FAF8F4" stroke-width="24" stroke-linecap="round" opacity="0.85"/>
+  <!-- Active Tactile Knob (Right / Engaged) -->
+  <circle cx="700" cy="378" r="78" fill="url(#ivoryKnob)"/>
+  <!-- Live Signal Pin Inside Active Knob -->
+  <circle cx="700" cy="378" r="20" fill="#279663"/>
+
+  <!-- Bottom Standby Switch Rail (Obsidian Stone) -->
+  <rect x="222" y="544" width="580" height="204" rx="102" ry="102" fill="url(#slateTrack)" stroke="#35322C" stroke-width="6"/>
+  <!-- Standby Tactile Knob (Left) -->
+  <circle cx="324" cy="646" r="74" fill="#3B3832"/>
+  <circle cx="324" cy="646" r="18" fill="#8A8377"/>
+  <!-- Code Brackets on Standby Rail -->
+  <path d="M 556 612 L 516 646 L 556 680" fill="none" stroke="#9C9588" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M 664 612 L 704 646 L 664 680" fill="none" stroke="#9C9588" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"/>
+  <line x1="624" y1="604" x2="596" y2="688" stroke="#D97757" stroke-width="20" stroke-linecap="round"/>
 </svg>

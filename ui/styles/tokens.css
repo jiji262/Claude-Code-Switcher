@@ -1,0 +1,219 @@
+/* ==========================================================================
+   Claude Code Switcher v2.0 — Three-Layer Design Tokens
+   Direction: Editorial Warm Precision (Obsidian Studio & Warm Parchment)
+   ========================================================================== */
+
+:root {
+  /* --- Layer 1: Primitive Color Tokens --- */
+  --p-stone-950: #121210;
+  --p-stone-925: #171614;
+  --p-stone-900: #1C1B18;
+  --p-stone-850: #22211E;
+  --p-stone-800: #2A2824;
+  --p-stone-750: #33302B;
+  --p-stone-700: #3E3A34;
+  --p-stone-600: #59544B;
+  --p-stone-500: #7D776C;
+  --p-stone-400: #A8A195;
+  --p-stone-300: #CFC9BE;
+  --p-stone-200: #E3DED4;
+  --p-stone-150: #ECE8DF;
+  --p-stone-100: #F3F0E8;
+  --p-stone-50:  #FAF8F4;
+  --p-white:     #FFFFFF;
+
+  /* Claude Terracotta Scale */
+  --p-clay-700: #9E4326;
+  --p-clay-600: #B85030;
+  --p-clay-500: #CC6240;
+  --p-clay-400: #D97757;
+  --p-clay-300: #E7967B;
+  --p-clay-glow-dark: rgba(217, 119, 87, 0.15);
+  --p-clay-glow-light: rgba(204, 98, 64, 0.11);
+
+  /* Instrument Signal Scales */
+  --p-emerald-600: #1E8255;
+  --p-emerald-500: #279663;
+  --p-emerald-400: #3ECF8E;
+  --p-emerald-soft-dark: rgba(62, 207, 142, 0.13);
+  --p-emerald-soft-light: rgba(30, 130, 85, 0.10);
+
+  --p-amber-600: #B2680E;
+  --p-amber-400: #E6A23C;
+  --p-amber-soft-dark: rgba(230, 162, 60, 0.14);
+  --p-amber-soft-light: rgba(178, 104, 14, 0.11);
+
+  --p-crimson-600: #C23A32;
+  --p-crimson-400: #F06A63;
+  --p-crimson-soft-dark: rgba(240, 106, 99, 0.14);
+  --p-crimson-soft-light: rgba(194, 58, 50, 0.10);
+
+  --p-sky-600: #2563EB;
+  --p-sky-400: #6BA3FF;
+
+  /* Diff Highlight Primitives */
+  --p-diff-add-bg-dark: rgba(62, 207, 142, 0.11);
+  --p-diff-add-fg-dark: #7CE5B4;
+  --p-diff-del-bg-dark: rgba(240, 106, 99, 0.12);
+  --p-diff-del-fg-dark: #F79893;
+
+  --p-diff-add-bg-light: rgba(30, 130, 85, 0.10);
+  --p-diff-add-fg-light: #166541;
+  --p-diff-del-bg-light: rgba(194, 58, 50, 0.09);
+  --p-diff-del-fg-light: #9E2A23;
+
+  /* --- Layer 1: Primitive Spacing, Typography & Motion --- */
+  --space-1: 4px;
+  --space-1-5: 6px;
+  --space-2: 8px;
+  --space-2-5: 10px;
+  --space-3: 12px;
+  --space-3-5: 14px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+
+  --radius-xs: 5px;
+  --radius-sm: 7px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-pill: 999px;
+
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei UI", system-ui, sans-serif;
+  --font-display: "Iowan Old Style", "Newsreader", "Georgia", "Songti SC", serif;
+  --font-mono: "SF Mono", "JetBrains Mono", "Menlo", "Monaco", "Consolas", ui-monospace, monospace;
+
+  --text-2xs: 11px;
+  --text-xs: 12px;
+  --text-sm: 13px;
+  --text-base: 14px;
+  --text-md: 15px;
+  --text-lg: 18px;
+  --text-xl: 21px;
+
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur-fast: 140ms;
+  --dur-med: 220ms;
+
+  /* --- Layer 3: Layout & Component Dimensions --- */
+  --rail-width: 298px;
+  --titlebar-height: 46px;
+  --statusbar-height: 29px;
+  --traffic-inset-width: 74px;
+  --control-sm: 28px;
+  --control-md: 34px;
+  --control-lg: 38px;
+}
+
+/* --- Layer 2: Semantic Tokens — Obsidian Studio (Dark Default) --- */
+:root,
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --bg-canvas: var(--p-stone-950);
+  --bg-rail: var(--p-stone-925);
+  --bg-surface: var(--p-stone-900);
+  --bg-elevated: var(--p-stone-850);
+  --bg-inset: #0E0E0C;
+  --bg-hover: var(--p-stone-850);
+  --bg-active: var(--p-stone-800);
+  --bg-selected: rgba(217, 119, 87, 0.12);
+  --bg-backdrop: rgba(8, 8, 7, 0.66);
+
+  --border-subtle: #262420;
+  --border-default: #312E29;
+  --border-strong: #433F38;
+  --border-focus: var(--p-clay-400);
+
+  --text-primary: #F3F0E9;
+  --text-secondary: #B4AEA2;
+  --text-tertiary: #847E72;
+  --text-on-accent: #FAF8F4;
+
+  --accent: var(--p-clay-400);
+  --accent-hover: var(--p-clay-300);
+  --accent-pressed: var(--p-clay-500);
+  --accent-soft: var(--p-clay-glow-dark);
+
+  --signal-live: var(--p-emerald-400);
+  --signal-live-soft: var(--p-emerald-soft-dark);
+  --signal-warn: var(--p-amber-400);
+  --signal-warn-soft: var(--p-amber-soft-dark);
+  --signal-danger: var(--p-crimson-400);
+  --signal-danger-soft: var(--p-crimson-soft-dark);
+  --signal-info: var(--p-sky-400);
+
+  --diff-add-bg: var(--p-diff-add-bg-dark);
+  --diff-add-fg: var(--p-diff-add-fg-dark);
+  --diff-del-bg: var(--p-diff-del-bg-dark);
+  --diff-del-fg: var(--p-diff-del-fg-dark);
+
+  --syntax-key: #E7967B;
+  --syntax-str: #8FD9A8;
+  --syntax-num: #E6B46A;
+  --syntax-bool: #8AB4F8;
+  --syntax-punc: #7D776C;
+
+  --shadow-overlay: 0 18px 48px rgba(0, 0, 0, 0.52), 0 4px 12px rgba(0, 0, 0, 0.34);
+  --shadow-toast: 0 10px 28px rgba(0, 0, 0, 0.45);
+  --selection-bg: rgba(217, 119, 87, 0.28);
+  --scrollbar-thumb: #36332D;
+  --scrollbar-thumb-hover: #4A463E;
+}
+
+/* --- Layer 2: Semantic Tokens — Warm Parchment (Light) --- */
+[data-theme="light"] {
+  color-scheme: light;
+
+  --bg-canvas: var(--p-stone-50);
+  --bg-rail: var(--p-stone-100);
+  --bg-surface: var(--p-white);
+  --bg-elevated: var(--p-white);
+  --bg-inset: #F4F1EA;
+  --bg-hover: #EAE6DC;
+  --bg-active: #E1DCD0;
+  --bg-selected: rgba(204, 98, 64, 0.10);
+  --bg-backdrop: rgba(24, 23, 21, 0.36);
+
+  --border-subtle: #E5E0D5;
+  --border-default: #D7D1C4;
+  --border-strong: #BEB7A8;
+  --border-focus: var(--p-clay-500);
+
+  --text-primary: #191816;
+  --text-secondary: #575248;
+  --text-tertiary: #7A7367;
+  --text-on-accent: #FFFFFF;
+
+  --accent: var(--p-clay-500);
+  --accent-hover: var(--p-clay-600);
+  --accent-pressed: var(--p-clay-700);
+  --accent-soft: var(--p-clay-glow-light);
+
+  --signal-live: var(--p-emerald-600);
+  --signal-live-soft: var(--p-emerald-soft-light);
+  --signal-warn: var(--p-amber-600);
+  --signal-warn-soft: var(--p-amber-soft-light);
+  --signal-danger: var(--p-crimson-600);
+  --signal-danger-soft: var(--p-crimson-soft-light);
+  --signal-info: var(--p-sky-600);
+
+  --diff-add-bg: var(--p-diff-add-bg-light);
+  --diff-add-fg: var(--p-diff-add-fg-light);
+  --diff-del-bg: var(--p-diff-del-bg-light);
+  --diff-del-fg: var(--p-diff-del-fg-light);
+
+  --syntax-key: #A84424;
+  --syntax-str: #1B6E46;
+  --syntax-num: #9A5B0A;
+  --syntax-bool: #1D4ED8;
+  --syntax-punc: #7A7367;
+
+  --shadow-overlay: 0 18px 44px rgba(25, 24, 22, 0.16), 0 4px 12px rgba(25, 24, 22, 0.08);
+  --shadow-toast: 0 8px 24px rgba(25, 24, 22, 0.13);
+  --selection-bg: rgba(204, 98, 64, 0.20);
+  --scrollbar-thumb: #CFC9BE;
+  --scrollbar-thumb-hover: #B5AEA0;
+}

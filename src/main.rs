@@ -1,1681 +1,490 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-// Final, fully-corrected version of the Claude Code Switcher.
-// This version is self-contained, stable, and implements all requested features.
+mod probe;
+mod state;
 
-use eframe::{egui, App, Frame};
-use serde_json::{from_str, to_string_pretty, Value};
-use std::fs;
-use std::path::PathBuf;
-use directories::UserDirs;
-use egui::{Color32, Id, TextEdit, RichText, Layout, Align, SidePanel};
-use std::collections::VecDeque;
-use std::time::{Duration, Instant};
-use serde::{Deserialize, Serialize};
-
-const DEFAULT_CONFIG_DIR_NAME: &str = ".claude";  // Claude AI 配置目录
-const ACTIVE_CONFIG_NAME: &str = "settings.json";
-const APP_SETTINGS_NAME: &str = "app_settings.json";
-const APP_DIR_NAME: &str = ".claude-code-switcher";  // 应用程序目录
-
-const SETTINGS_SUBDIR: &str = "settings";  // 配置文件子目录
-
-// --- Custom Toast Notification System ---
-#[derive(Clone)]
-enum ToastKind { Success, Error, Warning }
-
-#[derive(Clone)]
-struct Toast {
-    kind: ToastKind,
-    content: String,
-    spawn_time: Instant,
-    duration_secs: f32,
-}
-
-// --- 主题颜色定义 ---
-#[derive(Clone, Copy)]
-struct ThemeColors {
-    base: Color32, mantle: Color32, crust: Color32, surface0: Color32, surface1: Color32,
-    text: Color32, lavender: Color32, green: Color32, red: Color32, yellow: Color32,
-    // 新增颜色用于更精致的UI
-    accent: Color32, muted: Color32, border: Color32, highlight: Color32,
-}
-
-const CLAUDE_DARK: ThemeColors = ThemeColors {
-    base: Color32::from_rgb(18, 18, 23),       // 更亮的深色背景
-    crust: Color32::from_rgb(28, 28, 35),      // 侧边栏背景 - 更亮
-    mantle: Color32::from_rgb(22, 22, 28),     // 编辑器背景 - 更亮
-    surface0: Color32::from_rgb(40, 40, 48),   // 非交互元素 - 更亮
-    surface1: Color32::from_rgb(50, 50, 60),   // 悬停状态 - 更亮
-    text: Color32::from_rgb(248, 250, 252),    // 更亮的白色文字
-    lavender: Color32::from_rgb(167, 139, 250), // 更亮的紫色主色调
-    green: Color32::from_rgb(52, 211, 153),    // 更亮的绿色
-    red: Color32::from_rgb(248, 113, 113),     // 更亮的红色
-    yellow: Color32::from_rgb(251, 191, 36),   // 更亮的黄色
-    accent: Color32::from_rgb(124, 126, 251),  // 更亮的强调色
-    muted: Color32::from_rgb(156, 163, 175),   // 次要文字色
-    border: Color32::from_rgb(75, 85, 99),     // 更亮的边框色
-    highlight: Color32::from_rgb(45, 55, 72),  // 更亮的高亮背景
+use probe::{probe_gateway, ProbeResult};
+use resvg::usvg::{self, TreeParsing};
+use serde::Deserialize;
+use serde_json::Value;
+use state::WorkspaceManager;
+use std::borrow::Cow;
+use std::path::Path;
+use std::process::Command;
+use std::sync::{Arc, Mutex};
+use tao::{
+    dpi::{LogicalPosition, LogicalSize},
+    event::{Event, WindowEvent},
+    event_loop::{ControlFlow, EventLoopBuilder},
+    window::{Icon, WindowBuilder},
+};
+use tiny_skia::Pixmap;
+use wry::{
+    http::{header::CONTENT_TYPE, Request, Response},
+    WebViewBuilder,
 };
 
-const CLAUDE_LIGHT: ThemeColors = ThemeColors {
-    base: Color32::from_rgb(255, 255, 255),    // 纯白背景
-    crust: Color32::from_rgb(248, 250, 252),   // 侧边栏背景 - 更亮的浅灰
-    mantle: Color32::from_rgb(255, 255, 255),  // 编辑器背景 - 纯白
-    surface0: Color32::from_rgb(241, 245, 249), // 非交互元素 - 更亮
-    surface1: Color32::from_rgb(226, 232, 240), // 悬停状态 - 更明显
-    text: Color32::from_rgb(15, 23, 42),       // 更深的文字色
-    lavender: Color32::from_rgb(139, 92, 246), // 鲜艳紫色
-    green: Color32::from_rgb(34, 197, 94),     // 鲜艳绿色
-    red: Color32::from_rgb(239, 68, 68),       // 鲜艳红色
-    yellow: Color32::from_rgb(245, 158, 11),   // 鲜艳黄色
-    accent: Color32::from_rgb(99, 102, 241),   // 鲜艳强调色
-    muted: Color32::from_rgb(100, 116, 139),   // 更深的次要文字色
-    border: Color32::from_rgb(203, 213, 225),  // 更明显的边框色
-    highlight: Color32::from_rgb(219, 234, 254), // 更明显的高亮背景
-};
+#[cfg(target_os = "macos")]
+use tao::platform::macos::WindowBuilderExtMacOS;
 
-#[derive(Clone, Copy, PartialEq)]
-enum Theme {
-    Dark,
-    Light,
+const ASSET_INDEX_HTML: &[u8] = include_bytes!("../ui/index.html");
+const ASSET_TOKENS_CSS: &[u8] = include_bytes!("../ui/styles/tokens.css");
+const ASSET_APP_CSS: &[u8] = include_bytes!("../ui/styles/app.css");
+const ASSET_ICONS_JS: &[u8] = include_bytes!("../ui/scripts/icons.js");
+const ASSET_PRESETS_JS: &[u8] = include_bytes!("../ui/scripts/presets.js");
+const ASSET_DIFF_JS: &[u8] = include_bytes!("../ui/scripts/diff.js");
+const ASSET_APP_JS: &[u8] = include_bytes!("../ui/scripts/app.js");
+const ASSET_ICON_SVG: &[u8] = include_bytes!("../resources/icons/icon.svg");
+
+#[derive(Debug, Deserialize)]
+struct IpcEnvelope {
+    id: u64,
+    cmd: String,
+    #[serde(default)]
+    payload: Value,
 }
 
-// --- 应用设置结构 ---
-#[derive(Serialize, Deserialize, Clone)]
-struct AppSettings {
-    config_directory: PathBuf,
-    theme: String,
-    default_config_file: String,
+enum UserEvent {
+    IpcRequest(IpcEnvelope),
+    ProbeFinished {
+        id: u64,
+        file_name: String,
+        result: ProbeResult,
+    },
 }
 
-impl Default for AppSettings {
-    fn default() -> Self {
-        let default_dir = if let Some(user_dirs) = UserDirs::new() {
-            user_dirs.home_dir().join(APP_DIR_NAME)
-        } else {
-            PathBuf::from(APP_DIR_NAME)
-        };
+fn main() {
+    if let Some(code) = state::run_cli_if_requested() {
+        std::process::exit(code);
+    }
 
-        Self {
-            config_directory: default_dir,
-            theme: "Dark".to_string(),
-            default_config_file: String::new(),
-        }
+    if let Err(e) = run_desktop_app() {
+        eprintln!("Claude Code Switcher 启动失败: {}", e);
+        std::process::exit(1);
     }
 }
 
-struct ConfigManagerApp {
-    config_files: Vec<PathBuf>,
-    selected_file: Option<PathBuf>,
-    editor_content: String,
-    config_dir: PathBuf,
-    show_delete_confirmation: bool,
-    char_count: usize,
-    toasts: VecDeque<Toast>,
-    status_text: String,
-    show_rename_dialog: bool,
-    new_file_name: String,
-    current_theme: Theme,
-    // 设置相关字段
-    app_settings: AppSettings,
-    app_settings_path: PathBuf,
-    show_settings_dialog: bool,
-    new_config_dir_input: String,
-    // 新增字段
-    is_content_modified: bool,
-    original_content: String,
-    // 产品优化新增字段
-    hovered_config_index: Option<usize>,  // 当前悬停的配置项索引
-    search_query: String,                  // 搜索查询
-    last_modified_time: Option<std::time::SystemTime>,  // 上次修改时间
-}
+fn run_desktop_app() -> wry::Result<()> {
+    let manager = Arc::new(Mutex::new(WorkspaceManager::new_default()));
+    let event_loop = EventLoopBuilder::<UserEvent>::with_user_event().build();
+    let proxy = event_loop.create_proxy();
 
+    #[cfg(target_os = "macos")]
+    let _menu = build_macos_native_menu();
 
-impl Default for ConfigManagerApp {
-    fn default() -> Self {
-        let app_settings = AppSettings::default();
-        let app_settings_path = if let Some(user_dirs) = UserDirs::new() {
-            user_dirs.home_dir().join(APP_DIR_NAME).join(APP_SETTINGS_NAME)
-        } else {
-            PathBuf::from(APP_DIR_NAME).join(APP_SETTINGS_NAME)
-        };
+    let mut win_builder = WindowBuilder::new()
+        .with_title("Claude Code Switcher")
+        .with_inner_size(LogicalSize::new(1060.0, 720.0))
+        .with_min_inner_size(LogicalSize::new(760.0, 520.0))
+        .with_window_icon(load_window_icon(ASSET_ICON_SVG));
 
-        Self {
-            config_files: Vec::new(),
-            selected_file: None,
-            editor_content: String::new(),
-            status_text: "欢迎使用 Claude 配置管理器!".to_string(),
-            config_dir: app_settings.config_directory.clone(),
-            show_delete_confirmation: false,
-            char_count: 0,
-            toasts: VecDeque::new(),
-            show_rename_dialog: false,
-            new_file_name: String::new(),
-            current_theme: Theme::Dark,
-            app_settings,
-            app_settings_path,
-            show_settings_dialog: false,
-            new_config_dir_input: String::new(),
-            is_content_modified: false,
-            original_content: String::new(),
-            // 产品优化新增字段初始化
-            hovered_config_index: None,
-            search_query: String::new(),
-            last_modified_time: None,
-        }
-    }
-}
-
-
-impl ConfigManagerApp {
-    fn new(cc: &eframe::CreationContext<'_>) -> Self {
-        let mut fonts = egui::FontDefinitions::default();
-        fonts.font_data.insert("my_font".to_owned(), egui::FontData::from_static(include_bytes!("font.ttf")));
-        if let Some(family) = fonts.families.get_mut(&egui::FontFamily::Proportional) { family.insert(0, "my_font".to_owned()); }
-        if let Some(family) = fonts.families.get_mut(&egui::FontFamily::Monospace) { family.insert(0, "my_font".to_owned()); }
-        cc.egui_ctx.set_fonts(fonts);
-
-        let mut app = Self::default();
-        app.load_app_settings();
-        app.update_theme_style(cc);
-
-        app.ensure_config_directory();
-        app.new_config_dir_input = app.config_dir.to_string_lossy().to_string();
-        app.refresh_file_list();
-        app.sync_with_claude_config();
-        app
+    #[cfg(target_os = "macos")]
+    {
+        win_builder = win_builder
+            .with_titlebar_transparent(true)
+            .with_title_hidden(true)
+            .with_fullsize_content_view(true)
+            .with_traffic_light_inset(LogicalPosition::new(15.0, 15.0))
+            .with_automatic_window_tabbing(false);
     }
 
-    fn show_toast(&mut self, content: impl Into<String>, kind: ToastKind) {
-        self.toasts.push_back(Toast { kind, content: content.into(), spawn_time: Instant::now(), duration_secs: 3.0 });
-    }
-    fn set_status(&mut self, text: impl Into<String>) { self.status_text = text.into(); }
+    let window = win_builder.build(&event_loop).expect("创建应用窗口失败");
 
-    // --- 应用设置相关方法 ---
-    fn load_app_settings(&mut self) {
-        if self.app_settings_path.exists() {
-            match fs::read_to_string(&self.app_settings_path) {
-                Ok(content) => {
-                    match from_str::<AppSettings>(&content) {
-                        Ok(settings) => {
-                            self.app_settings = settings;
-                            self.config_dir = self.app_settings.config_directory.clone();
-                            // 根据保存的主题设置更新当前主题
-                            self.current_theme = match self.app_settings.theme.as_str() {
-                                "Light" => Theme::Light,
-                                _ => Theme::Dark,
-                            };
+    let ipc_proxy = proxy.clone();
+    let webview_builder = WebViewBuilder::new()
+        .with_background_color((18, 18, 16, 255))
+        .with_accept_first_mouse(true)
+        .with_custom_protocol("ccs".into(), move |_webview_id, request| {
+            serve_embedded_asset(request)
+        })
+        .with_ipc_handler(move |req: Request<String>| {
+            if let Ok(env) = serde_json::from_str::<IpcEnvelope>(req.body()) {
+                let _ = ipc_proxy.send_event(UserEvent::IpcRequest(env));
+            }
+        })
+        .with_url("ccs://localhost/index.html");
 
-                            // 验证默认配置文件是否仍然存在
-                            if !self.app_settings.default_config_file.is_empty() {
-                                let default_file_path = self.config_dir.join(SETTINGS_SUBDIR).join(&self.app_settings.default_config_file);
-                                if !default_file_path.exists() {
-                                    // 默认配置文件不存在了，清除设置
-                                    self.app_settings.default_config_file = String::new();
-                                    self.save_app_settings();
-                                }
+    #[cfg(any(
+        target_os = "windows",
+        target_os = "macos",
+        target_os = "ios",
+        target_os = "android"
+    ))]
+    let webview = webview_builder.build(&window)?;
+
+    #[cfg(not(any(
+        target_os = "windows",
+        target_os = "macos",
+        target_os = "ios",
+        target_os = "android"
+    )))]
+    let webview = {
+        use tao::platform::unix::WindowExtUnix;
+        use wry::WebViewBuilderExtUnix;
+        let vbox = window.default_vbox().expect("GTK vbox unavailable");
+        webview_builder.build_gtk(vbox)?
+    };
+
+    let mut webview_slot = Some(webview);
+
+    event_loop.run(move |event, _, control_flow| {
+        *control_flow = ControlFlow::Wait;
+
+        match event {
+            Event::WindowEvent {
+                event: WindowEvent::CloseRequested,
+                ..
+            } => {
+                let _ = webview_slot.take();
+                *control_flow = ControlFlow::Exit;
+            }
+            Event::UserEvent(user_ev) => match user_ev {
+                UserEvent::IpcRequest(env) => {
+                    if env.cmd == "window_action" {
+                        let act = env
+                            .payload
+                            .get("action")
+                            .and_then(|v| v.as_str())
+                            .unwrap_or("");
+                        match act {
+                            "drag" => {
+                                let _ = window.drag_window();
                             }
-                        }
-                        Err(e) => {
-                            self.show_toast(format!("解析应用设置时出错: {}", e), ToastKind::Warning);
-                        }
-                    }
-                }
-                Err(_) => {
-                    // 设置文件不存在或无法读取，使用默认设置
-                    self.save_app_settings();
-                }
-            }
-        } else {
-            // 首次运行，保存默认设置
-            self.save_app_settings();
-        }
-    }
-
-    fn save_app_settings(&mut self) {
-        // 更新设置中的主题
-        self.app_settings.theme = match self.current_theme {
-            Theme::Dark => "Dark".to_string(),
-            Theme::Light => "Light".to_string(),
-        };
-
-        match to_string_pretty(&self.app_settings) {
-            Ok(content) => {
-                if let Err(e) = fs::write(&self.app_settings_path, content) {
-                    self.show_toast(format!("保存应用设置时出错: {}", e), ToastKind::Error);
-                }
-            }
-            Err(e) => {
-                self.show_toast(format!("序列化应用设置时出错: {}", e), ToastKind::Error);
-            }
-        }
-    }
-
-    fn ensure_config_directory(&mut self) {
-        // 确保主配置目录存在
-        if !self.config_dir.exists() {
-            if let Err(e) = fs::create_dir_all(&self.config_dir) {
-                self.show_toast(format!("创建配置目录时出错: {}", e), ToastKind::Error);
-                return;
-            }
-        }
-
-        // 确保 settings 子目录存在
-        let settings_subdir = self.config_dir.join(SETTINGS_SUBDIR);
-        if !settings_subdir.exists() {
-            if let Err(e) = fs::create_dir_all(&settings_subdir) {
-                self.show_toast(format!("创建 settings 子目录时出错: {}", e), ToastKind::Error);
-                return;
-            }
-        }
-
-        // 确保应用设置文件的父目录存在
-        if let Some(parent) = self.app_settings_path.parent() {
-            if !parent.exists() {
-                if let Err(e) = fs::create_dir_all(parent) {
-                    self.show_toast(format!("创建应用设置目录时出错: {}", e), ToastKind::Error);
-                }
-            }
-        }
-
-        // 创建默认的 settings.json 文件在 settings 子目录中
-        let settings_path = settings_subdir.join(ACTIVE_CONFIG_NAME);
-        if !settings_path.exists() {
-            let default_content = "{\n\t\"env\": {\n\t\t\"ANTHROPIC_API_KEY\": \"sk-ant-XXX\",\n\t\t\"ANTHROPIC_BASE_URL\": \"https://api.anthropic.com\"\n\t}\n}";
-            if let Err(e) = fs::write(&settings_path, default_content) {
-                self.show_toast(format!("创建默认 settings.json 时出错: {}", e), ToastKind::Error);
-            }
-        }
-    }
-
-    fn change_config_directory(&mut self, new_dir: PathBuf) {
-        self.config_dir = new_dir.clone();
-        self.app_settings.config_directory = new_dir;
-        self.ensure_config_directory();
-        self.refresh_file_list();
-        self.selected_file = None;
-        self.editor_content = String::new();
-        self.save_app_settings();
-        self.show_toast("配置目录已更改", ToastKind::Success);
-    }
-    
-    fn get_theme_colors(&self) -> ThemeColors {
-        match self.current_theme {
-            Theme::Dark => CLAUDE_DARK,
-            Theme::Light => CLAUDE_LIGHT,
-        }
-    }
-    
-    fn toggle_theme(&mut self, ctx: &egui::Context) {
-        self.current_theme = match self.current_theme {
-            Theme::Dark => Theme::Light,
-            Theme::Light => Theme::Dark,
-        };
-        self.update_theme_style_with_ctx(ctx);
-        self.save_app_settings(); // 保存主题设置
-    }
-    
-    fn create_custom_style(&self) -> egui::Style {
-        let mut style = egui::Style::default();
-        style.visuals = self.get_custom_visuals();
-        
-        // 更现代的间距设置
-        style.spacing.item_spacing = egui::vec2(12.0, 8.0);
-        style.spacing.button_padding = egui::vec2(16.0, 8.0);
-        style.spacing.indent = 20.0;
-        style.spacing.menu_margin = egui::Margin::same(8.0);
-        style.spacing.combo_width = 120.0;
-        
-        // 正方形边框设计
-        let rounding = egui::Rounding::ZERO;
-        style.visuals.widgets.noninteractive.rounding = rounding;
-        style.visuals.widgets.inactive.rounding = rounding;
-        style.visuals.widgets.hovered.rounding = rounding;
-        style.visuals.widgets.active.rounding = rounding;
-        style.visuals.menu_rounding = rounding;
-        style.visuals.window_rounding = egui::Rounding::ZERO;
-        
-        // 文字大小调整
-        style.override_text_style = Some(egui::TextStyle::Body);
-        
-        style
-    }
-
-    fn update_theme_style(&self, cc: &eframe::CreationContext<'_>) {
-        cc.egui_ctx.set_style(self.create_custom_style());
-    }
-
-    fn update_theme_style_with_ctx(&self, ctx: &egui::Context) {
-        ctx.set_style(self.create_custom_style());
-    }
-    
-    fn get_button_color(&self, button_type: &str) -> Color32 {
-        let colors = self.get_theme_colors();
-        match button_type {
-            "add" | "new" => colors.green,
-            "save" => colors.accent,
-            "rename" | "refresh" => colors.accent,
-            "warning" | "format" | "settings" | "reset" => colors.yellow,
-            "delete" | "danger" => colors.red,
-            "switch" | "toggle" => colors.lavender,
-            "default" => Color32::from_rgb(245, 158, 11), // 金色，突出重要性
-            "primary" => colors.accent,
-            "secondary" => colors.muted,
-            _ => colors.muted,
-        }
-    }
-
-    // 新增：获取按钮背景色的方法
-    fn get_button_bg_color(&self, button_type: &str, is_hovered: bool, is_active: bool) -> Color32 {
-        let colors = self.get_theme_colors();
-        let base_color = self.get_button_color(button_type);
-        
-        if is_active {
-            // 激活状态：颜色更深
-            Color32::from_rgb(
-                (base_color.r() as f32 * 0.8) as u8,
-                (base_color.g() as f32 * 0.8) as u8,
-                (base_color.b() as f32 * 0.8) as u8,
-            )
-        } else if is_hovered {
-            // 悬停状态：颜色稍浅
-            match self.current_theme {
-                Theme::Dark => Color32::from_rgb(
-                    (base_color.r() as f32 * 0.2 + colors.surface1.r() as f32 * 0.8) as u8,
-                    (base_color.g() as f32 * 0.2 + colors.surface1.g() as f32 * 0.8) as u8,
-                    (base_color.b() as f32 * 0.2 + colors.surface1.b() as f32 * 0.8) as u8,
-                ),
-                Theme::Light => Color32::from_rgb(
-                    (base_color.r() as f32 * 0.1 + colors.surface1.r() as f32 * 0.9) as u8,
-                    (base_color.g() as f32 * 0.1 + colors.surface1.g() as f32 * 0.9) as u8,
-                    (base_color.b() as f32 * 0.1 + colors.surface1.b() as f32 * 0.9) as u8,
-                ),
-            }
-        } else {
-            // 默认状态：透明背景
-            match self.current_theme {
-                Theme::Dark => colors.surface0,
-                Theme::Light => colors.base,
-            }
-        }
-    }
-
-    fn get_custom_visuals(&self) -> egui::Visuals {
-        let colors = self.get_theme_colors();
-        let mut visuals = match self.current_theme {
-            Theme::Dark => egui::Visuals::dark(),
-            Theme::Light => egui::Visuals::light(),
-        };
-        
-        visuals.override_text_color = Some(colors.text);
-        visuals.window_rounding = egui::Rounding::ZERO;
-        visuals.window_stroke = egui::Stroke::new(1.0, colors.border);
-        visuals.window_shadow = egui::epaint::Shadow {
-            extrusion: 16.0,
-            color: match self.current_theme {
-                Theme::Dark => Color32::from_black_alpha(100),
-                Theme::Light => Color32::from_black_alpha(25),
-            },
-        };
-        
-        let rounding = egui::Rounding::ZERO;
-        
-        // 非交互元素
-        visuals.widgets.noninteractive.rounding = rounding;
-        visuals.widgets.noninteractive.bg_fill = colors.surface0;
-        visuals.widgets.noninteractive.bg_stroke = egui::Stroke::new(1.0, colors.border);
-        
-        // 非激活状态
-        visuals.widgets.inactive = egui::style::WidgetVisuals {
-            bg_fill: Color32::TRANSPARENT,  // 透明背景
-            weak_bg_fill: Color32::TRANSPARENT,
-            bg_stroke: egui::Stroke::new(1.0, match self.current_theme {
-                Theme::Dark => Color32::from_rgb(70, 70, 80),   // 深色主题下的边框
-                Theme::Light => Color32::from_rgb(180, 180, 190), // 浅色主题下的边框
-            }),
-            fg_stroke: egui::Stroke::new(1.0, colors.text),
-            rounding,
-            expansion: 0.0,
-        };
-        
-        // 悬停状态 - 更明显的效果
-        visuals.widgets.hovered = egui::style::WidgetVisuals {
-            bg_fill: match self.current_theme {
-                Theme::Dark => Color32::from_rgb(45, 45, 55),     // 深色主题悬停背景
-                Theme::Light => Color32::from_rgb(240, 248, 255), // 浅色主题悬停背景
-            },
-            weak_bg_fill: match self.current_theme {
-                Theme::Dark => Color32::from_rgb(45, 45, 55),
-                Theme::Light => Color32::from_rgb(240, 248, 255),
-            },
-            bg_stroke: egui::Stroke::new(1.0, match self.current_theme {
-                Theme::Dark => Color32::from_rgb(100, 100, 120),  // 深色主题悬停边框
-                Theme::Light => Color32::from_rgb(120, 150, 200), // 浅色主题悬停边框
-            }),
-            fg_stroke: egui::Stroke::new(1.0, colors.text),
-            rounding,
-            expansion: 0.0,
-        };
-        
-        // 激活状态
-        visuals.widgets.active = egui::style::WidgetVisuals {
-            bg_fill: match self.current_theme {
-                Theme::Dark => Color32::from_rgb(35, 35, 45),     // 深色主题激活背景
-                Theme::Light => Color32::from_rgb(220, 235, 250), // 浅色主题激活背景
-            },
-            weak_bg_fill: match self.current_theme {
-                Theme::Dark => Color32::from_rgb(35, 35, 45),
-                Theme::Light => Color32::from_rgb(220, 235, 250),
-            },
-            bg_stroke: egui::Stroke::new(1.0, colors.accent),
-            fg_stroke: egui::Stroke::new(1.0, colors.text),
-            rounding,
-            expansion: 0.0,
-        };
-        
-        // 选择样式 - 使用更柔和的圆角和颜色
-        visuals.selection.bg_fill = match self.current_theme {
-            Theme::Dark => Color32::from_rgb(60, 80, 120).linear_multiply(0.3),  // 深色主题选中背景
-            Theme::Light => Color32::from_rgb(100, 150, 250).linear_multiply(0.15), // 浅色主题选中背景
-        };
-        visuals.selection.stroke = egui::Stroke::new(0.0, Color32::TRANSPARENT); // 移除选中边框
-        
-        // 其他颜色
-        visuals.hyperlink_color = colors.accent;
-        visuals.error_fg_color = colors.red;
-        visuals.warn_fg_color = colors.yellow;
-        visuals.extreme_bg_color = colors.base;
-        visuals.code_bg_color = colors.surface0;
-        
-        visuals
-    }
-
-
-
-    fn refresh_file_list(&mut self) {
-        self.refresh_file_list_with_sort(true);
-    }
-
-    fn refresh_file_list_with_sort(&mut self, should_sort: bool) {
-        self.config_files.clear();
-        let settings_subdir = self.config_dir.join(SETTINGS_SUBDIR);
-        
-        if settings_subdir.exists() {
-            if let Ok(entries) = fs::read_dir(&settings_subdir) {
-                self.config_files = entries
-                    .filter_map(Result::ok)
-                    .map(|e| e.path())
-                    .filter(|p| {
-                        p.is_file() &&
-                        p.extension().map_or(false, |ext| ext == "json") &&
-                        p.file_name().and_then(|s| s.to_str()).unwrap_or_default() != ACTIVE_CONFIG_NAME
-                    })
-                    .collect();
-
-                if should_sort {
-                    self.config_files.sort_by(|a, b| {
-                        let a_name = a.file_name().and_then(|s| s.to_str()).unwrap_or_default();
-                        let b_name = b.file_name().and_then(|s| s.to_str()).unwrap_or_default();
-                        
-                        // 检查是否为默认配置文件
-                        let a_is_default = self.app_settings.default_config_file == a_name;
-                        let b_is_default = self.app_settings.default_config_file == b_name;
-                        
-                        // 默认配置文件置顶
-                        match (a_is_default, b_is_default) {
-                            (true, false) => std::cmp::Ordering::Less,    // a是默认，b不是 -> a在前
-                            (false, true) => std::cmp::Ordering::Greater, // b是默认，a不是 -> b在前
-                            _ => a_name.cmp(b_name) // 都是默认或都不是默认 -> 按字母顺序排序
-                        }
-                    });
-                }
-
-            } else {
-                self.show_toast("无法读取配置目录。", ToastKind::Error);
-            }
-        }
-    }
-
-    // 保持当前文件顺序的刷新方法
-    fn refresh_file_list_preserve_order(&mut self) {
-        let current_order: Vec<String> = self.config_files
-            .iter()
-            .filter_map(|p| p.file_name().and_then(|n| n.to_str()).map(|s| s.to_string()))
-            .collect();
-        
-        // 先获取所有文件
-        self.refresh_file_list_with_sort(false);
-        
-        // 如果有之前的顺序，尝试保持
-        if !current_order.is_empty() {
-            let mut ordered_files = Vec::new();
-            let mut remaining_files = self.config_files.clone();
-            
-            // 首先添加默认配置文件（如果存在）
-            if !self.app_settings.default_config_file.is_empty() {
-                if let Some(pos) = remaining_files.iter().position(|p| {
-                    p.file_name().and_then(|n| n.to_str()) == Some(&self.app_settings.default_config_file)
-                }) {
-                    ordered_files.push(remaining_files.remove(pos));
-                }
-            }
-            
-            // 按原顺序添加其他存在的文件（除了已经添加的默认文件）
-            for old_name in &current_order {
-                if old_name != &self.app_settings.default_config_file {
-                    if let Some(pos) = remaining_files.iter().position(|p| {
-                        p.file_name().and_then(|n| n.to_str()) == Some(old_name)
-                    }) {
-                        ordered_files.push(remaining_files.remove(pos));
-                    }
-                }
-            }
-            
-            // 添加新文件到末尾
-            ordered_files.extend(remaining_files);
-            
-            self.config_files = ordered_files;
-        }
-    }
-
-    fn sync_with_claude_config(&mut self) {
-        // 获取 Claude 配置文件路径
-        let claude_config_dir = if let Some(user_dirs) = UserDirs::new() {
-            user_dirs.home_dir().join(DEFAULT_CONFIG_DIR_NAME)
-        } else {
-            PathBuf::from(DEFAULT_CONFIG_DIR_NAME)
-        };
-
-        let claude_settings_path = claude_config_dir.join(ACTIVE_CONFIG_NAME);
-
-        // 如果 Claude 配置文件不存在，跳过同步
-        if !claude_settings_path.exists() {
-            return;
-        }
-
-        // 读取 Claude 配置文件内容
-        let claude_content = match fs::read_to_string(&claude_settings_path) {
-            Ok(content) => content,
-            Err(_) => return,
-        };
-
-        // 解析 Claude 配置为 JSON
-        let claude_json: Value = match from_str(&claude_content) {
-            Ok(json) => json,
-            Err(_) => return,
-        };
-
-        // 首先检查当前的默认配置文件是否与 Claude 配置相同
-        if !self.app_settings.default_config_file.is_empty() {
-            let default_file_path = self.config_dir.join(SETTINGS_SUBDIR).join(&self.app_settings.default_config_file);
-            if default_file_path.exists() {
-                if let Ok(content) = fs::read_to_string(&default_file_path) {
-                    if let Ok(json_val) = from_str::<Value>(&content) {
-                        if json_val == claude_json {
-                            // 当前的默认配置文件已经与 Claude 配置相同，无需更改
-                            return;
-                        }
-                    }
-                }
-            }
-        }
-
-        // 检查是否有其他配置文件与 Claude 配置相同
-        let mut found_matching_config = false;
-        for file_path in &self.config_files {
-            if let Ok(content) = fs::read_to_string(file_path) {
-                if let Ok(json_val) = from_str::<Value>(&content) {
-                    if json_val == claude_json {
-                        // 找到匹配的配置，设为默认
-                        let file_name = file_path.file_name().unwrap().to_str().unwrap().to_string();
-                        self.app_settings.default_config_file = file_name;
-                        self.save_app_settings();
-                        found_matching_config = true;
-                        self.show_toast("已找到与 Claude 配置匹配的文件并设为默认", ToastKind::Success);
-                        break;
-                    }
-                }
-            }
-        }
-
-        // 如果没有找到匹配的配置，创建新的配置文件
-        if !found_matching_config {
-            let settings_subdir = self.config_dir.join(SETTINGS_SUBDIR);
-            let mut new_path = settings_subdir.join("Claude默认配置.json");
-            let mut i = 1;
-            while new_path.exists() {
-                new_path = settings_subdir.join(format!("Claude默认配置_{}.json", i));
-                i += 1;
-            }
-
-            // 创建新配置文件，内容为 Claude 的配置
-            match fs::write(&new_path, &claude_content) {
-                Ok(_) => {
-                    let file_name = new_path.file_name().unwrap().to_str().unwrap().to_string();
-                    self.app_settings.default_config_file = file_name.clone();
-                    self.save_app_settings();
-                    self.refresh_file_list();
-                    self.show_toast(format!("已创建新配置文件 '{}' 并设为默认", file_name), ToastKind::Success);
-                }
-                Err(e) => {
-                    self.show_toast(format!("创建配置文件时出错: {}", e), ToastKind::Error);
-                }
-            }
-        }
-    }
-
-    fn load_file_content(&mut self) {
-        if let Some(path) = &self.selected_file {
-            match fs::read_to_string(path) {
-                Ok(content) => {
-                    self.editor_content = content.clone();
-                    self.original_content = content;
-                    self.is_content_modified = false;
-                    // 记录文件修改时间
-                    if let Ok(metadata) = fs::metadata(path) {
-                        self.last_modified_time = metadata.modified().ok();
-                    }
-                    self.set_status(&format!("已加载 {}", path.file_name().unwrap_or_default().to_str().unwrap_or_default()));
-                },
-                Err(e) => {
-                    self.show_toast(format!("读取文件时出错: {}", e), ToastKind::Error);
-                    self.editor_content = String::new();
-                    self.original_content = String::new();
-                    self.is_content_modified = false;
-                    self.last_modified_time = None;
-                }
-            }
-        } else {
-            self.editor_content = String::new();
-            self.original_content = String::new();
-            self.is_content_modified = false;
-            self.last_modified_time = None;
-        }
-    }
-
-
-    fn save_current_file(&mut self) {
-        if let Some(path) = &self.selected_file.clone() {
-            match from_str::<Value>(&self.editor_content) {
-                Ok(json_val) => {
-                    let pretty_content = to_string_pretty(&json_val).unwrap_or_else(|_| self.editor_content.clone());
-                    match fs::write(path, &pretty_content) {
-                        Ok(_) => {
-                            let file_name = path.file_name().unwrap().to_str().unwrap().to_string();
-                            self.show_toast(format!("成功保存 {}", file_name), ToastKind::Success);
-                            self.editor_content = pretty_content.clone();
-                            self.original_content = pretty_content.clone();
-                            self.is_content_modified = false;
-                            
-                            // 如果保存的是默认配置文件，同时更新到 Claude 配置文件
-                            if self.app_settings.default_config_file == file_name {
-                                let claude_config_dir = if let Some(user_dirs) = UserDirs::new() {
-                                    user_dirs.home_dir().join(DEFAULT_CONFIG_DIR_NAME)
-                                } else {
-                                    PathBuf::from(DEFAULT_CONFIG_DIR_NAME)
-                                };
-                                
-                                // 确保 Claude 配置目录存在
-                                if !claude_config_dir.exists() {
-                                    if let Err(e) = fs::create_dir_all(&claude_config_dir) {
-                                        self.show_toast(format!("创建 Claude 配置目录时出错: {}", e), ToastKind::Error);
-                                        return;
-                                    }
-                                }
-                                
-                                let claude_settings_path = claude_config_dir.join(ACTIVE_CONFIG_NAME);
-                                
-                                // 将内容写入 Claude 配置文件
-                                match fs::write(&claude_settings_path, &pretty_content) {
-                                    Ok(_) => {
-                                        self.show_toast("已同步更新到 Claude 配置文件", ToastKind::Success);
-                                    }
-                                    Err(e) => {
-                                        self.show_toast(format!("同步到 Claude 配置文件时出错: {}", e), ToastKind::Error);
-                                    }
-                                }
+                            "toggle_maximize" => {
+                                window.set_maximized(!window.is_maximized());
                             }
-                        }
-                        Err(e) => self.show_toast(format!("保存文件时出错: {}", e), ToastKind::Error),
-                    }
-                }
-                Err(_e) => self.show_toast("JSON 格式无效.", ToastKind::Error),
-            }
-        }
-    }
-
-    fn format_json(&mut self) {
-        if self.editor_content.trim().is_empty() {
-            self.show_toast("编辑器内容为空", ToastKind::Warning);
-            return;
-        }
-
-        match from_str::<Value>(&self.editor_content) {
-            Ok(json_val) => {
-                match to_string_pretty(&json_val) {
-                    Ok(formatted) => {
-                        self.editor_content = formatted;
-                        self.show_toast("JSON 格式化成功", ToastKind::Success);
-                    }
-                    Err(e) => {
-                        self.show_toast(format!("格式化失败: {}", e), ToastKind::Error);
-                    }
-                }
-            }
-            Err(e) => {
-                self.show_toast(format!("JSON 格式无效: {}", e), ToastKind::Error);
-            }
-        }
-    }
-
-    fn add_new_config(&mut self) {
-        let settings_subdir = self.config_dir.join(SETTINGS_SUBDIR);
-        let mut new_path = settings_subdir.join("新配置.json");
-        let mut i = 1;
-        while new_path.exists() {
-            new_path = settings_subdir.join(format!("新配置_{}.json", i));
-            i += 1;
-        }
-
-        match fs::write(&new_path, "{\n\t\"env\": {\n\t\t\"ANTHROPIC_API_KEY\": \"sk-ant-XXX\",\n\t\t\"ANTHROPIC_BASE_URL\": \"https://api.anthropic.com\"\n\t}\n}") {
-            Ok(_) => {
-                let file_name = new_path.file_name().unwrap().to_str().unwrap().to_string();
-                self.show_toast(format!("已创建新文件: {}", file_name), ToastKind::Success);
-                self.refresh_file_list();
-                self.selected_file = Some(new_path);
-                self.load_file_content();
-            }
-            Err(e) => self.show_toast(format!("创建新文件时出错: {}", e), ToastKind::Error),
-        }
-    }
-
-    fn delete_selected_file(&mut self) {
-        if let Some(path) = self.selected_file.clone() {
-            let file_name = path.file_name().unwrap().to_str().unwrap();
-            match fs::remove_file(&path) {
-                Ok(_) => {
-                    // 如果删除的是默认配置文件，清除默认设置
-                    if self.app_settings.default_config_file == file_name {
-                        self.app_settings.default_config_file = String::new();
-                        self.save_app_settings();
-                    }
-                    self.show_toast(format!("已删除 {}", file_name), ToastKind::Success);
-                    self.selected_file = None;
-                    self.editor_content = String::new();
-                    self.refresh_file_list();
-                }
-                Err(e) => self.show_toast(format!("删除文件时出错: {}", e), ToastKind::Error),
-            }
-        }
-    }
-
-    fn rename_selected_file(&mut self) {
-        if let Some(selected_path) = self.selected_file.clone() {
-            let old_file_name = selected_path.file_name().unwrap().to_str().unwrap();
-            let mut new_name = self.new_file_name.trim().to_string();
-            if !new_name.ends_with(".json") { new_name.push_str(".json"); }
-            if new_name.is_empty() || new_name == ".json" { self.show_toast("文件名不能为空.", ToastKind::Error); return; }
-
-            // 新路径需要在同一个 settings 子目录中
-            let new_path = selected_path.parent().unwrap().join(&new_name);
-            if new_path.exists() { self.show_toast("文件名已存在.", ToastKind::Error); return; }
-            match fs::rename(&selected_path, &new_path) {
-                Ok(_) => {
-                    // 如果重命名的是默认配置文件，更新默认设置
-                    if self.app_settings.default_config_file == old_file_name {
-                        self.app_settings.default_config_file = new_name.clone();
-                        self.save_app_settings();
-                    }
-                    self.show_toast(format!("文件已重命名为 \"{}\"", new_name), ToastKind::Success);
-                    self.selected_file = Some(new_path);
-                    self.show_rename_dialog = false;
-                    self.refresh_file_list_preserve_order();
-                }
-                Err(e) => self.show_toast(format!("重命名文件时出错: {}", e), ToastKind::Error),
-            }
-        }
-    }
-
-
-
-    fn set_as_default(&mut self, file_path: PathBuf) {
-        let file_name = file_path.file_name().unwrap().to_str().unwrap().to_string();
-        
-        // 更新应用设置中的默认配置文件
-        self.app_settings.default_config_file = file_name.clone();
-        self.save_app_settings();
-        
-        // 将配置文件内容复制到 Claude 配置文件
-        let claude_config_dir = if let Some(user_dirs) = UserDirs::new() {
-            user_dirs.home_dir().join(DEFAULT_CONFIG_DIR_NAME)
-        } else {
-            PathBuf::from(DEFAULT_CONFIG_DIR_NAME)
-        };
-        
-        // 确保 Claude 配置目录存在
-        if !claude_config_dir.exists() {
-            if let Err(e) = fs::create_dir_all(&claude_config_dir) {
-                self.show_toast(format!("创建 Claude 配置目录时出错: {}", e), ToastKind::Error);
-                return;
-            }
-        }
-        
-        let claude_settings_path = claude_config_dir.join(ACTIVE_CONFIG_NAME);
-        
-        // 从 settings 子目录读取配置文件
-        match fs::read_to_string(&file_path) {
-            Ok(content) => {
-                match fs::write(&claude_settings_path, &content) {
-                    Ok(_) => {
-                        self.show_toast(format!("已将 '{}' 设为默认配置并复制到 Claude 配置文件", file_name), ToastKind::Success);
-                        self.refresh_file_list();
-                    }
-                    Err(e) => self.show_toast(format!("写入 Claude 配置文件时出错: {}", e), ToastKind::Error),
-                }
-            }
-            Err(e) => self.show_toast(format!("读取配置文件时出错: {}", e), ToastKind::Error),
-        }
-    }
-}
-
-impl App for ConfigManagerApp {
-    fn update(&mut self, ctx: &egui::Context, _frame: &mut Frame) {
-        let colors = self.get_theme_colors();
-
-        // 处理快捷键
-        if ctx.input(|i| i.key_pressed(egui::Key::S) && i.modifiers.command) {
-            if self.selected_file.is_some() {
-                self.save_current_file();
-            }
-        }
-
-        egui::CentralPanel::default().frame(egui::Frame::default().fill(colors.base)).show(ctx, |ui| {
-            egui::TopBottomPanel::bottom("status_bar").frame(egui::Frame::default().inner_margin(egui::Margin::symmetric(10.0, 5.0)).fill(colors.crust)).show(ui.ctx(), |ui| {
-                ui.horizontal(|ui| {
-                    // 左侧：当前活动配置
-                    if !self.app_settings.default_config_file.is_empty() {
-                        ui.label(RichText::new("●").color(colors.green).size(10.0));
-                        ui.label(RichText::new(format!("当前: {}", self.app_settings.default_config_file)).color(colors.text).size(12.0));
-                        ui.separator();
-                    }
-                    
-                    // 修改状态
-                    if self.is_content_modified {
-                        ui.label(RichText::new("⚠ 未保存").color(colors.yellow).size(12.0));
-                    } else if self.selected_file.is_some() {
-                        ui.label(RichText::new("✓ 已保存").color(colors.green).size(12.0));
-                    }
-                    
-                    ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                        // 右侧：字符数
-                        ui.label(RichText::new(format!("字符: {}", self.char_count)).size(12.0));
-                        ui.separator();
-                        
-                        // 上次修改时间
-                        if let Some(modified_time) = self.last_modified_time {
-                            if let Ok(duration) = modified_time.elapsed() {
-                                let time_str = if duration.as_secs() < 60 {
-                                    "刚刚".to_string()
-                                } else if duration.as_secs() < 3600 {
-                                    format!("{} 分钟前", duration.as_secs() / 60)
-                                } else if duration.as_secs() < 86400 {
-                                    format!("{} 小时前", duration.as_secs() / 3600)
-                                } else {
-                                    format!("{} 天前", duration.as_secs() / 86400)
-                                };
-                                ui.label(RichText::new(format!("修改: {}", time_str)).color(colors.muted).size(12.0));
-                                ui.separator();
+                            "minimize" => {
+                                window.set_minimized(true);
                             }
-                        }
-                        
-                        // JSON 状态
-                        if self.selected_file.is_some() {
-                            let is_valid_json = serde_json::from_str::<serde_json::Value>(&self.editor_content).is_ok();
-                            if is_valid_json {
-                                ui.label(RichText::new("JSON ✓").color(colors.green).size(12.0));
-                            } else {
-                                ui.label(RichText::new("JSON ✗").color(colors.red).size(12.0));
-                            }
-                        }
-                    });
-                });
-            });
-
-            SidePanel::left("file_list_panel")
-                .frame(egui::Frame::default()
-                    .fill(colors.crust)
-                    .stroke(egui::Stroke::NONE)
-                )
-                .exact_width(200.0)
-                .resizable(false)
-                .show_inside(ui, |ui| {
-
-                // 文件列表区域（包含按钮）
-                let mut selection_changed = false;
-                let mut selected_path = self.selected_file.clone();
-                let mut actions_to_perform = Vec::new();
-                
-                // 新增配置和刷新按钮区域 - 在ScrollArea外面
-                ui.add_space(24.0); // 顶部间距
-                ui.horizontal(|ui| {
-                    ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
-                        let total_width = ui.available_width();
-                        let button_spacing = 8.0;
-                        let side_padding = 12.0;
-                        let usable_width = total_width - (2.0 * side_padding);
-                        let button_width = (usable_width - button_spacing) / 2.0;
-                        
-                        ui.add_space(side_padding); // 左边距
-                        
-                        if ui.add_sized([button_width, 36.0], 
-                            egui::Button::new(RichText::new("[N] 新增配置").color(self.get_button_color("add")).size(13.0))
-                        ).clicked() {
-                            self.add_new_config();
-                        }
-                        
-                        ui.add_space(button_spacing);
-                        
-                        if ui.add_sized([button_width, 36.0], 
-                            egui::Button::new(RichText::new("[R] 刷新列表").color(self.get_button_color("refresh")).size(13.0))
-                        ).clicked() {
-                            self.refresh_file_list();
-                            self.sync_with_claude_config();
-                            self.show_toast("文件列表已刷新", ToastKind::Success);
-                        }
-                        
-                        ui.add_space(side_padding); // 右边距
-                    });
-                });
-                
-                // 搜索框
-                ui.add_space(8.0);
-                ui.horizontal(|ui| {
-                    ui.add_space(12.0);
-                    let search_response = ui.add(
-                        TextEdit::singleline(&mut self.search_query)
-                            .hint_text("🔍 搜索配置...")
-                            .desired_width(176.0)
-                    );
-                    if search_response.changed() {
-                        // 搜索时清除悬停状态
-                        self.hovered_config_index = None;
-                    }
-                });
-                ui.add_space(8.0);
-                
-                // 文件列表上方的分隔线
-                ui.separator();
-        
-                // 过滤配置文件
-                let search_lower = self.search_query.to_lowercase();
-                let filtered_indices: Vec<usize> = self.config_files.iter()
-                    .enumerate()
-                    .filter(|(_, path)| {
-                        if self.search_query.is_empty() {
-                            true
-                        } else {
-                            path.file_name()
-                                .and_then(|n| n.to_str())
-                                .map(|n| n.to_lowercase().contains(&search_lower))
-                                .unwrap_or(false)
-                        }
-                    })
-                    .map(|(i, _)| i)
-                    .collect();
-                
-                // 记录当前悬停的配置索引
-                let mut new_hovered_index: Option<usize> = None;
-                
-                egui::ScrollArea::vertical().auto_shrink([false; 2]).show(ui, |ui| {
-                    ui.vertical(|ui| {
-                        ui.add_space(8.0);
-                        
-                        // 无配置或搜索无结果时的提示
-                        if filtered_indices.is_empty() {
-                            ui.add_space(20.0);
-                            ui.vertical_centered(|ui| {
-                                if self.config_files.is_empty() {
-                                    ui.label(RichText::new("📁").size(32.0));
-                                    ui.add_space(8.0);
-                                    ui.label(RichText::new("暂无配置文件").color(colors.muted).size(14.0));
-                                    ui.add_space(4.0);
-                                    ui.label(RichText::new("点击「新增配置」创建").color(colors.muted).size(12.0));
-                                } else {
-                                    ui.label(RichText::new("🔍").size(32.0));
-                                    ui.add_space(8.0);
-                                    ui.label(RichText::new("未找到匹配项").color(colors.muted).size(14.0));
-                                }
-                            });
-                        }
-                        
-                        for (display_index, &original_index) in filtered_indices.iter().enumerate() {
-                            let path = &self.config_files[original_index];
-                            let file_name = path.file_name().unwrap().to_str().unwrap();
-                            let is_default_file = self.app_settings.default_config_file == file_name;
-                            let is_hovered = self.hovered_config_index == Some(original_index);
-                            let is_selected = self.selected_file.as_ref().map(|p| p.as_path()) == Some(path.as_path());
-
-                            // 隔行背景色 - 更明显的区分
-                            let bg_color = if is_selected {
-                                match self.current_theme {
-                                    Theme::Dark => Color32::from_rgb(40, 50, 70),
-                                    Theme::Light => Color32::from_rgb(210, 225, 245),
-                                }
-                            } else if is_hovered {
-                                match self.current_theme {
-                                    Theme::Dark => Color32::from_rgb(32, 36, 45),
-                                    Theme::Light => Color32::from_rgb(225, 235, 250),
-                                }
-                            } else if display_index % 2 == 0 {
-                                colors.crust
-                            } else {
-                                match self.current_theme {
-                                    Theme::Dark => Color32::from_rgb(25, 28, 35),
-                                    Theme::Light => Color32::from_rgb(235, 240, 246),
-                                }
-                            };
-
-                            // 文件项容器
-                            let frame_response = egui::Frame::default()
-                                .fill(bg_color)
-                                .inner_margin(egui::Margin::symmetric(12.0, 10.0))
-                                .show(ui, |ui| {
-                                    ui.vertical(|ui| {
-                                        // 文件名行 - 水平布局
-                                        ui.horizontal(|ui| {
-                                            // 文件名部分
-                                            let file_text = if is_default_file {
-                                                RichText::new(format!("★ {}", file_name)).color(self.get_button_color("default")).strong().size(13.0)
-                                            } else {
-                                                RichText::new(file_name).size(13.0).color(colors.text)
-                                            };
-
-                                            if ui.selectable_label(is_selected, file_text).clicked() {
-                                                selected_path = Some(path.to_path_buf());
-                                                selection_changed = true;
-                                            }
-                                        });
-
-                                        // 操作按钮 - 始终显示
-                                        ui.add_space(6.0);
-                                        ui.horizontal(|ui| {
-                                            if ui.small_button(RichText::new("重命名").size(10.0)).clicked() {
-                                                actions_to_perform.push(('r', original_index));
-                                            }
-                                            ui.add_space(4.0);
-                                            if ui.small_button(RichText::new("删除").color(colors.red).size(10.0)).clicked() {
-                                                actions_to_perform.push(('d', original_index));
-                                            }
-                                            if !is_default_file {
-                                                ui.add_space(4.0);
-                                                if ui.small_button(RichText::new("设为默认").color(self.get_button_color("default")).size(10.0)).clicked() {
-                                                    actions_to_perform.push(('s', original_index));
-                                                }
-                                            }
-                                        });
-                                    });
-                                });
-                            
-                            // 检测悬停状态
-                            if frame_response.response.hovered() {
-                                new_hovered_index = Some(original_index);
-                            }
-
-                            ui.add_space(4.0); // 文件之间的间距
-
-                        }
-                    });
-                });
-                
-                // 更新悬停状态
-                self.hovered_config_index = new_hovered_index;
-                
-                // 处理收集的操作
-                for (action_type, index) in actions_to_perform {
-                    if let Some(path) = self.config_files.get(index) {
-                        match action_type {
-                            'd' => {
-                                self.selected_file = Some(path.clone());
-                                self.show_delete_confirmation = true;
-                            }
-                            'r' => {
-                                self.selected_file = Some(path.clone());
-                                self.new_file_name = path.file_name().unwrap().to_str().unwrap().to_string();
-                                self.show_rename_dialog = true;
-                            }
-                            's' => {
-                                self.set_as_default(path.clone());
+                            "close" => {
+                                let _ = webview_slot.take();
+                                *control_flow = ControlFlow::Exit;
+                                return;
                             }
                             _ => {}
                         }
+                        if let Some(wv) = webview_slot.as_ref() {
+                            resolve_ipc(wv, env.id, Ok(serde_json::json!({"ok": true})));
+                        }
+                        return;
                     }
-                }
 
-                
-                if selection_changed {
-                    self.selected_file = selected_path;
-                    self.load_file_content();
-                }
+                    if env.cmd == "probe_endpoint" {
+                        let file_name = str_field(&env.payload, "fileName");
+                        let base_url = str_field(&env.payload, "baseUrl");
+                        let api_key = str_field(&env.payload, "apiKey");
+                        let auth_token = str_field(&env.payload, "authToken");
+                        let thread_proxy = proxy.clone();
+                        let req_id = env.id;
 
-            });
-            egui::CentralPanel::default().frame(egui::Frame::default().fill(colors.mantle)).show_inside(ui, |ui| {
-                // 顶部标题栏 - 与左侧高度保持一致
-                egui::TopBottomPanel::top("editor_title_panel")
-                    .frame(egui::Frame::default()
-                        .inner_margin(egui::Margin::symmetric(12.0, 8.0))
-                        .fill(colors.crust)
-                        .stroke(egui::Stroke::NONE)
-                    )
-                    .show_inside(ui, |ui| {
-                    ui.horizontal(|ui| {
-                        ui.with_layout(Layout::left_to_right(Align::Center), |ui| {
-                            if let Some(path) = &self.selected_file {
-                                let file_name = path.file_name().unwrap().to_str().unwrap();
-                                let display_text = if self.is_content_modified {
-                                    format!("◉ {} (未保存)", file_name)
-                                } else {
-                                    format!("◇ {}", file_name)
-                                };
-                                let text_color = if self.is_content_modified {
-                                    self.get_button_color("warning")
-                                } else {
-                                    colors.text
-                                };
-                                ui.label(RichText::new(display_text).size(15.0).color(text_color).strong());
-                            } else {
-                                ui.label(RichText::new("请选择文件").size(14.0).color(colors.text));
-                            }
-                        });
-                        ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                            // 添加设置按钮
-                            if ui.button(RichText::new("设置").size(12.0).color(self.get_button_color("settings"))).clicked() {
-                                self.show_settings_dialog = true;
-                            }
-                            ui.separator();
-                            if ui.add_enabled(self.selected_file.is_some(), egui::Button::new(RichText::new("[S] 保存").color(self.get_button_color("save")).size(12.0))).clicked() {
-                                self.save_current_file();
-                            }
-                            if ui.add_enabled(self.selected_file.is_some(), egui::Button::new(RichText::new("格式化").color(self.get_button_color("format")).size(12.0))).clicked() {
-                                self.format_json();
-                            }
-                        });
-
-                    });
-                });
-
-                // 编辑器内容区域
-                egui::CentralPanel::default().frame(egui::Frame::default().fill(colors.mantle).inner_margin(egui::Margin { left: 12.0, right: 12.0, top: 10.0, bottom: 10.0 })).show_inside(ui, |ui| {
-                    if self.selected_file.is_some() {
-                        // 使用水平布局来分离行号和编辑器
-                        ui.horizontal_top(|ui| {
-                            // 计算行数和行号宽度
-                            let line_count = self.editor_content.lines().count().max(1);
-                            let line_number_width = 48.0;  // 调整为原来的80% (60 * 0.8 = 48)
-
-                            // 行号区域 - 固定宽度
-                            ui.allocate_ui_with_layout(
-                                egui::Vec2::new(line_number_width, ui.available_height()),
-                                egui::Layout::top_down(egui::Align::RIGHT),
-                                |ui| {
-                                    // 行号背景 - 与代码区域背景一致
-                                    let rect = ui.available_rect_before_wrap();
-                                    ui.painter().rect_filled(rect, egui::Rounding::ZERO, colors.mantle);
-
-                                    // 简单的行号显示，不使用滚动区域
-                                    ui.add_space(10.0);
-                                    for line_num in 1..=line_count {
-                                        ui.with_layout(egui::Layout::right_to_left(egui::Align::TOP), |ui| {
-                                            ui.add_space(8.0);
-                                            ui.label(
-                                                RichText::new(format!("{}", line_num))
-                                                    .font(egui::FontId::monospace(13.0))
-                                                    .color(Color32::from_rgb(120, 120, 120))
-                                            );
-                                        });
-                                    }
-                                }
-                            );
-
-                            // 编辑器区域
-                            ui.allocate_ui_with_layout(
-                                egui::Vec2::new(ui.available_width(), ui.available_height()),
-                                egui::Layout::top_down(egui::Align::LEFT),
-                                |ui| {
-                                    let scroll_area = egui::ScrollArea::vertical()
-                                        .auto_shrink([false; 2])
-                                        .id_source("main_editor_scroll");
-
-                                    scroll_area.show(ui, |ui| {
-
-                                        // 自定义JSON语法高亮（不包含行号）
-                                        let mut layouter = |ui: &egui::Ui, string: &str, wrap_width: f32| {
-                                            let mut job = egui::text::LayoutJob::default();
-                                            job.wrap.max_width = wrap_width;
-
-                                            // 定义颜色
-                                            let (key_color, string_color, number_color, keyword_color, punctuation_color) =
-                                                if matches!(self.current_theme, Theme::Dark) {
-                                                    (
-                                                        Color32::from_rgb(156, 220, 254), // 浅蓝色 - 键名
-                                                        Color32::from_rgb(206, 145, 120), // 橙色 - 字符串值
-                                                        Color32::from_rgb(181, 206, 168), // 浅绿色 - 数字
-                                                        Color32::from_rgb(197, 134, 192), // 紫色 - 关键字
-                                                        Color32::from_rgb(212, 212, 212), // 浅灰色 - 标点
-                                                    )
-                                                } else {
-                                                    (
-                                                        Color32::from_rgb(0, 92, 197),    // 深蓝色 - 键名
-                                                        Color32::from_rgb(163, 21, 21),   // 深红色 - 字符串值
-                                                        Color32::from_rgb(9, 134, 88),    // 深绿色 - 数字
-                                                        Color32::from_rgb(111, 66, 193),  // 深紫色 - 关键字
-                                                        Color32::from_rgb(80, 80, 80),    // 深灰色 - 标点
-                                                    )
-                                                };
-
-                                            let mut chars = string.char_indices().peekable();
-                                            let mut in_string = false;
-                                            let mut in_key = false;
-                                            let mut current_start = 0;
-                                            let mut current_color = colors.text;
-
-                                            while let Some((i, ch)) = chars.next() {
-                                                match ch {
-                                                    '"' => {
-                                                        // 添加当前段落
-                                                        if i > current_start {
-                                                            job.append(&string[current_start..i], 0.0, egui::TextFormat {
-                                                                color: current_color,
-                                                                font_id: egui::FontId::monospace(14.0),
-                                                                ..Default::default()
-                                                            });
-                                                        }
-
-                                                        if !in_string {
-                                                            // 开始字符串，检查是否是键名
-                                                            in_string = true;
-                                                            // 向前查找冒号来判断是否是键名
-                                                            let rest_of_string = &string[i..];
-                                                            if let Some(quote_end) = rest_of_string[1..].find('"') {
-                                                                let after_quote = &rest_of_string[quote_end + 2..];
-                                                                in_key = after_quote.trim_start().starts_with(':');
-                                                            }
-                                                            current_color = if in_key { key_color } else { string_color };
-                                                        } else {
-                                                            // 结束字符串
-                                                            in_string = false;
-                                                            in_key = false;
-                                                            current_color = colors.text;
-                                                        }
-
-                                                        // 添加引号
-                                                        job.append(&ch.to_string(), 0.0, egui::TextFormat {
-                                                            color: current_color,
-                                                            font_id: egui::FontId::monospace(14.0),
-                                                            ..Default::default()
-                                                        });
-
-                                                        current_start = i + ch.len_utf8();
-                                                    }
-                                                    '{' | '}' | '[' | ']' | ',' | ':' if !in_string => {
-                                                        // 添加当前段落
-                                                        if i > current_start {
-                                                            job.append(&string[current_start..i], 0.0, egui::TextFormat {
-                                                                color: current_color,
-                                                                font_id: egui::FontId::monospace(14.0),
-                                                                ..Default::default()
-                                                            });
-                                                        }
-
-                                                        // 添加标点符号
-                                                        job.append(&ch.to_string(), 0.0, egui::TextFormat {
-                                                            color: punctuation_color,
-                                                            font_id: egui::FontId::monospace(14.0),
-                                                            ..Default::default()
-                                                        });
-
-                                                        current_start = i + ch.len_utf8();
-                                                        current_color = colors.text;
-                                                    }
-                                                    _ if !in_string && (ch.is_ascii_digit() || ch == '-') => {
-                                                        // 数字开始
-                                                        if current_color != number_color {
-                                                            // 添加当前段落
-                                                            if i > current_start {
-                                                                job.append(&string[current_start..i], 0.0, egui::TextFormat {
-                                                                    color: current_color,
-                                                                    font_id: egui::FontId::monospace(14.0),
-                                                                    ..Default::default()
-                                                                });
-                                                            }
-                                                            current_start = i;
-                                                            current_color = number_color;
-                                                        }
-                                                    }
-                                                    _ if !in_string && ch.is_ascii_alphabetic() => {
-                                                        // 检查关键字 (true, false, null)
-                                                        let word_start = i;
-                                                        let mut word_end = i + ch.len_utf8();
-
-                                                        // 找到单词结束
-                                                        let remaining = &string[word_end..];
-                                                        for (_offset, next_ch) in remaining.char_indices() {
-                                                            if next_ch.is_ascii_alphanumeric() {
-                                                                word_end += next_ch.len_utf8();
-                                                            } else {
-                                                                break;
-                                                            }
-                                                        }
-
-                                                        let word = &string[word_start..word_end];
-                                                        let is_keyword = matches!(word, "true" | "false" | "null");
-
-                                                        if is_keyword && current_color != keyword_color {
-                                                            // 添加当前段落
-                                                            if i > current_start {
-                                                                job.append(&string[current_start..i], 0.0, egui::TextFormat {
-                                                                    color: current_color,
-                                                                    font_id: egui::FontId::monospace(14.0),
-                                                                    ..Default::default()
-                                                                });
-                                                            }
-                                                            current_start = i;
-                                                            current_color = keyword_color;
-                                                        }
-                                                    }
-                                                    _ => {}
-                                                }
-                                            }
-
-                                            // 添加剩余部分
-                                            if current_start < string.len() {
-                                                job.append(&string[current_start..], 0.0, egui::TextFormat {
-                                                    color: current_color,
-                                                    font_id: egui::FontId::monospace(14.0),
-                                                    ..Default::default()
-                                                });
-                                            }
-
-                                            ui.fonts(|f| f.layout_job(job))
-                                        };
-
-                                        ui.add_space(10.0);
-                                        let editor = TextEdit::multiline(&mut self.editor_content)
-                                            .id(Id::new("main_editor"))
-                                            .font(egui::FontId::monospace(14.0))
-                                            .code_editor()
-                                            .desired_width(f32::INFINITY)
-                                            .frame(false)
-                                            .layouter(&mut layouter);
-                                        let response = ui.add(editor);
-
-                                        // 检测内容是否修改
-                                        if response.changed() {
-                                            self.is_content_modified = self.editor_content != self.original_content;
-                                        }
-                                    });
-                                }
-                            );
-                        });
-
-                        self.char_count = self.editor_content.chars().count();
-                    } else {
-                        ui.centered_and_justified(|ui| {
-                            ui.label(RichText::new("请选择一个配置文件进行编辑").size(16.0).color(colors.text.linear_multiply(0.7)));
-                        });
-                    }
-                });
-            });
-
-            egui::Area::new("toast_area").anchor(egui::Align2::RIGHT_BOTTOM, egui::vec2(-10.0, -10.0)).show(ctx, |ui| {
-                self.toasts.retain(|toast| toast.spawn_time.elapsed().as_secs_f32() < toast.duration_secs);
-                for toast in self.toasts.iter() {
-                    let (label_text, color) = match toast.kind {
-                        ToastKind::Success => ("[成功]", colors.green),
-                        ToastKind::Error => ("[错误]", colors.red),
-                        ToastKind::Warning => ("[警告]", colors.yellow),
-                    };
-                    let frame = egui::Frame::default().inner_margin(8.0).rounding(egui::Rounding::ZERO).fill(colors.crust).stroke(egui::Stroke::new(1.0, color));
-                    frame.show(ui, |ui| {
-                        ui.horizontal(|ui| {
-                            ui.label(RichText::new(label_text).color(color).strong());
-                            ui.add_space(5.0);
-                            ui.label(&toast.content);
-                        });
-                    });
-                    ui.add_space(5.0);
-                }
-            });
-            ctx.request_repaint_after(Duration::from_millis(100));
-        });
-
-        // 模态弹框 - 简单有效的方案
-        if self.show_rename_dialog || self.show_delete_confirmation || self.show_settings_dialog {
-            // 全屏半透明背景
-            ctx.layer_painter(egui::LayerId::background()).rect_filled(
-                ctx.screen_rect(),
-                egui::Rounding::ZERO,
-                egui::Color32::from_black_alpha(100)
-            );
-        }
-
-        if self.show_rename_dialog {
-            egui::Window::new("重命名文件")
-                .collapsible(false)
-                .resizable(false)
-                .anchor(egui::Align2::CENTER_CENTER, egui::Vec2::ZERO)
-                .show(ctx, |ui| {
-                    ui.label("请输入新的文件名:");
-                    ui.text_edit_singleline(&mut self.new_file_name);
-                    ui.add_space(10.0);
-                    ui.horizontal(|ui| {
-                        if ui.button(RichText::new("[Enter] 确认").color(self.get_button_color("primary"))).clicked() { self.rename_selected_file(); }
-                        if ui.button(RichText::new("[Esc] 取消").color(self.get_button_color("secondary"))).clicked() { self.show_rename_dialog = false; }
-                    });
-                });
-        }
-
-        if self.show_delete_confirmation {
-            egui::Window::new("确认删除")
-                .collapsible(false)
-                .resizable(false)
-                .anchor(egui::Align2::CENTER_CENTER, egui::Vec2::ZERO)
-                .show(ctx, |ui| {
-                    ui.label("您确定要删除这个配置文件吗？此操作无法撤销。");
-                    ui.add_space(10.0);
-                    ui.horizontal(|ui| {
-                        if ui.button(RichText::new("[Enter] 确认删除").color(colors.red)).clicked() { self.delete_selected_file(); self.show_delete_confirmation = false; }
-                        if ui.button(RichText::new("[Esc] 取消").color(self.get_button_color("secondary"))).clicked() { self.show_delete_confirmation = false; }
-                    });
-                });
-        }
-
-        if self.show_settings_dialog {
-            egui::Window::new("应用设置")
-                .collapsible(false)
-                .resizable(false)
-                .anchor(egui::Align2::CENTER_CENTER, egui::Vec2::ZERO)
-                .default_width(400.0)
-                .show(ctx, |ui| {
-                    ui.vertical(|ui| {
-                        ui.add_space(5.0);
-
-                        // 配置目录设置
-                        ui.group(|ui| {
-                            ui.vertical(|ui| {
-                                ui.label(RichText::new("配置文件目录").strong());
-                                ui.add_space(5.0);
-
-                                ui.horizontal(|ui| {
-                                    ui.label("当前目录:");
-                                    ui.label(RichText::new(self.config_dir.to_string_lossy()).color(colors.lavender));
-                                });
-
-                                ui.add_space(5.0);
-                                ui.label("新目录路径:");
-                                ui.text_edit_singleline(&mut self.new_config_dir_input);
-
-                                ui.add_space(5.0);
-                                ui.horizontal(|ui| {
-                                    if ui.button(RichText::new("[F] 选择文件夹").color(colors.green)).clicked() {
-                                        // 使用rfd打开文件夹选择对话框
-                                        let current_dir = if self.config_dir.exists() {
-                                            Some(self.config_dir.clone())
-                                        } else if let Some(user_dirs) = UserDirs::new() {
-                                            Some(user_dirs.home_dir().to_path_buf())
-                                        } else {
-                                            None
-                                        };
-
-                                        if let Some(folder) = rfd::FileDialog::new()
-                                            .set_title("选择配置文件目录")
-                                            .set_directory(current_dir.unwrap_or_else(|| PathBuf::from(".")))
-                                            .pick_folder() {
-                                            self.new_config_dir_input = folder.to_string_lossy().to_string();
-                                        }
-                                    }
-
-                                    if ui.button(RichText::new("[R] 重置").color(self.get_button_color("reset"))).clicked() {
-                                        if let Some(user_dirs) = UserDirs::new() {
-                                            self.new_config_dir_input = user_dirs.home_dir().join(APP_DIR_NAME).to_string_lossy().to_string();
-                                        }
-                                    }
-                                });
+                        std::thread::spawn(move || {
+                            let result = probe_gateway(&base_url, &api_key, &auth_token);
+                            let _ = thread_proxy.send_event(UserEvent::ProbeFinished {
+                                id: req_id,
+                                file_name,
+                                result,
                             });
                         });
+                        return;
+                    }
 
-                        ui.add_space(10.0);
-
-                        // 主题设置
-                        ui.group(|ui| {
-                            ui.vertical(|ui| {
-                                ui.label(RichText::new("主题设置").strong());
-                                ui.add_space(5.0);
-
-                                ui.horizontal(|ui| {
-                                    ui.label("当前主题:");
-                                    let theme_name = match self.current_theme {
-                                        Theme::Dark => "深色主题",
-                                        Theme::Light => "浅色主题",
-                                    };
-                                    ui.label(RichText::new(theme_name).color(colors.lavender));
-                                });
-
-                                ui.add_space(5.0);
-                                if ui.button(RichText::new("[T] 切换主题").color(self.get_button_color("toggle"))).clicked() {
-                                    self.toggle_theme(ctx);
-                                }
-                            });
-                        });
-
-                        ui.add_space(15.0);
-
-                        // 按钮区域
-                        ui.horizontal(|ui| {
-                            if ui.button(RichText::new("[Enter] 应用更改").color(colors.green)).clicked() {
-                                let new_path = PathBuf::from(&self.new_config_dir_input);
-                                if new_path != self.config_dir {
-                                    self.change_config_directory(new_path);
-                                }
-                                self.show_settings_dialog = false;
-                            }
-
-                            if ui.button(RichText::new("[Esc] 取消").color(self.get_button_color("secondary"))).clicked() {
-                                self.new_config_dir_input = self.config_dir.to_string_lossy().to_string();
-                                self.show_settings_dialog = false;
-                            }
-                        });
-                    });
-                });
-        }
-    }
-}
-
-fn main() -> Result<(), eframe::Error> {
-    // 加载应用图标
-    let icon_data = include_bytes!("../resources/icons/icon.svg");
-    let icon_image = load_icon_from_svg(icon_data);
-
-    let options = eframe::NativeOptions {
-        viewport: egui::ViewportBuilder::default()
-            .with_inner_size([900.0, 600.0])
-            .with_min_inner_size([600.0, 400.0])
-            .with_icon(icon_image),
-        ..Default::default()
-    };
-    eframe::run_native("Claude Code Switcher", options, Box::new(|cc| Box::new(ConfigManagerApp::new(cc))))
-}
-
-// 从 SVG 数据加载图标
-fn load_icon_from_svg(svg_data: &[u8]) -> egui::IconData {
-    use resvg::usvg::{self, TreeParsing};
-    use tiny_skia::Pixmap;
-
-    let size = 64; // 使用 64x64 像素的图标
-
-    // 尝试解析 SVG 并渲染为位图
-    if let Ok(svg_str) = std::str::from_utf8(svg_data) {
-        let options = usvg::Options::default();
-        if let Ok(usvg_tree) = usvg::Tree::from_str(svg_str, &options) {
-            if let Some(mut pixmap) = Pixmap::new(size, size) {
-                let transform = tiny_skia::Transform::from_scale(
-                    size as f32 / usvg_tree.size.width(),
-                    size as f32 / usvg_tree.size.height(),
-                );
-
-                let resvg_tree = resvg::Tree::from_usvg(&usvg_tree);
-                resvg_tree.render(transform, &mut pixmap.as_mut());
-
-                // 转换为 RGBA 格式
-                let pixels = pixmap.data();
-                let mut rgba = Vec::with_capacity(pixels.len());
-
-                // tiny-skia 使用 BGRA 格式，需要转换为 RGBA
-                for chunk in pixels.chunks_exact(4) {
-                    rgba.push(chunk[2]); // R
-                    rgba.push(chunk[1]); // G
-                    rgba.push(chunk[0]); // B
-                    rgba.push(chunk[3]); // A
+                    let outcome = handle_sync_ipc(&manager, &env.cmd, &env.payload);
+                    if let Some(wv) = webview_slot.as_ref() {
+                        resolve_ipc(wv, env.id, outcome);
+                    }
                 }
+                UserEvent::ProbeFinished {
+                    id,
+                    file_name,
+                    result,
+                } => {
+                    if let Ok(mut mgr) = manager.lock() {
+                        mgr.record_probe_result(
+                            &file_name,
+                            result.latency_ms,
+                            result.reachable,
+                            &result.detail,
+                        );
+                    }
+                    if let Some(wv) = webview_slot.as_ref() {
+                        let val = serde_json::to_value(&result).unwrap_or(Value::Null);
+                        resolve_ipc(wv, id, Ok(val));
+                    }
+                }
+            },
+            _ => {}
+        }
+    });
+}
 
-                return egui::IconData {
-                    rgba,
-                    width: size,
-                    height: size,
-                };
+fn handle_sync_ipc(
+    manager: &Arc<Mutex<WorkspaceManager>>,
+    cmd: &str,
+    payload: &Value,
+) -> Result<Value, String> {
+    if cmd == "pick_directory" {
+        let initial_dir = manager
+            .lock()
+            .ok()
+            .map(|m| m.app_settings.config_directory.clone());
+        let mut dlg = rfd::FileDialog::new().set_title("选择配置文件存储目录");
+        if let Some(dir) = initial_dir {
+            if dir.exists() {
+                dlg = dlg.set_directory(dir);
             }
         }
+        let chosen = dlg
+            .pick_folder()
+            .map(|p| p.to_string_lossy().to_string());
+        return Ok(serde_json::json!({ "path": chosen }));
     }
 
-    // 如果 SVG 解析失败，创建一个简单的备用图标
-    create_fallback_icon(size)
+    let mut mgr = manager
+        .lock()
+        .map_err(|_| "内部状态锁繁忙".to_string())?;
+
+    match cmd {
+        "get_state" => serde_json::to_value(mgr.build_workspace_state()).map_err(|e| e.to_string()),
+        "create_profile" => {
+            let st = mgr.create_profile(
+                &str_field(payload, "name"),
+                &str_field(payload, "content"),
+                &str_field(payload, "provider"),
+                &str_field(payload, "description"),
+                &str_field(payload, "syncMode"),
+                bool_field(payload, "pinned", false),
+                bool_field(payload, "activateNow", true),
+            )?;
+            serde_json::to_value(st).map_err(|e| e.to_string())
+        }
+        "save_profile" => {
+            let st = mgr.save_profile(
+                &str_field(payload, "fileName"),
+                &str_field(payload, "content"),
+                opt_str_field(payload, "provider"),
+                opt_str_field(payload, "description"),
+                opt_str_field(payload, "syncMode"),
+                payload.get("pinned").and_then(|v| v.as_bool()),
+            )?;
+            serde_json::to_value(st).map_err(|e| e.to_string())
+        }
+        "activate_profile" => {
+            let mode_override = opt_str_field(payload, "syncModeOverride");
+            let st = mgr.activate_profile(
+                &str_field(payload, "fileName"),
+                mode_override.as_deref(),
+            )?;
+            serde_json::to_value(st).map_err(|e| e.to_string())
+        }
+        "toggle_pin" => {
+            let st = mgr.toggle_pin(&str_field(payload, "fileName"))?;
+            serde_json::to_value(st).map_err(|e| e.to_string())
+        }
+        "duplicate_profile" => {
+            let st = mgr.duplicate_profile(&str_field(payload, "fileName"))?;
+            serde_json::to_value(st).map_err(|e| e.to_string())
+        }
+        "rename_profile" => {
+            let st = mgr.rename_profile(
+                &str_field(payload, "oldFileName"),
+                &str_field(payload, "newName"),
+            )?;
+            serde_json::to_value(st).map_err(|e| e.to_string())
+        }
+        "delete_profile" => {
+            let st = mgr.delete_profile(&str_field(payload, "fileName"))?;
+            serde_json::to_value(st).map_err(|e| e.to_string())
+        }
+        "import_live_config" => {
+            let name = opt_str_field(payload, "name");
+            let st = mgr.import_live_config(&str_field(payload, "mode"), name.as_deref())?;
+            serde_json::to_value(st).map_err(|e| e.to_string())
+        }
+        "list_backups" => serde_json::to_value(mgr.list_backups()).map_err(|e| e.to_string()),
+        "restore_backup" => {
+            let st = mgr.restore_backup(&str_field(payload, "id"))?;
+            serde_json::to_value(st).map_err(|e| e.to_string())
+        }
+        "delete_backup" => {
+            let list = mgr.delete_backup(&str_field(payload, "id"));
+            serde_json::to_value(list).map_err(|e| e.to_string())
+        }
+        "update_settings" => {
+            let st = mgr.update_settings(
+                opt_str_field(payload, "theme"),
+                opt_str_field(payload, "configDirectory"),
+                opt_str_field(payload, "defaultSyncMode"),
+                payload.get("autoBackup").and_then(|v| v.as_bool()),
+            )?;
+            serde_json::to_value(st).map_err(|e| e.to_string())
+        }
+        "reveal_path" => {
+            let target = str_field(payload, "target");
+            let path = match target.as_str() {
+                "claude_config" => mgr.claude_settings_path.clone(),
+                "backups_dir" => mgr.backups_subdir(),
+                _ => mgr.settings_subdir(),
+            };
+            reveal_in_file_manager(&path);
+            Ok(serde_json::json!({ "ok": true }))
+        }
+        other => Err(format!("未知 IPC 指令: {}", other)),
+    }
 }
 
-// 创建备用图标
-fn create_fallback_icon(size: u32) -> egui::IconData {
-    let mut rgba = vec![0u8; (size * size * 4) as usize];
+fn resolve_ipc(webview: &wry::WebView, id: u64, outcome: Result<Value, String>) {
+    let script = match outcome {
+        Ok(val) => {
+            let serialized = serde_json::to_string(&val).unwrap_or_else(|_| "null".to_string());
+            format!("window.__ccs_resolve({}, true, {});", id, serialized)
+        }
+        Err(err) => {
+            let serialized = serde_json::to_string(&err).unwrap_or_else(|_| "\"Error\"".to_string());
+            format!("window.__ccs_resolve({}, false, {});", id, serialized)
+        }
+    };
+    let _ = webview.evaluate_script(&script);
+}
 
-    // 创建一个简单的渐变图标
-    for y in 0..size {
-        for x in 0..size {
-            let i = ((y * size + x) * 4) as usize;
-            let center_x = size as f32 / 2.0;
-            let center_y = size as f32 / 2.0;
-            let distance = ((x as f32 - center_x).powi(2) + (y as f32 - center_y).powi(2)).sqrt();
-            let max_distance = (center_x.powi(2) + center_y.powi(2)).sqrt();
-            let intensity = (1.0 - distance / max_distance).max(0.0);
+fn serve_embedded_asset(request: Request<Vec<u8>>) -> Response<Cow<'static, [u8]>> {
+    let path = request.uri().path();
+    let (bytes, mime) = match path {
+        "/" | "/index.html" => (ASSET_INDEX_HTML, "text/html; charset=utf-8"),
+        "/styles/tokens.css" => (ASSET_TOKENS_CSS, "text/css; charset=utf-8"),
+        "/styles/app.css" => (ASSET_APP_CSS, "text/css; charset=utf-8"),
+        "/scripts/icons.js" => (ASSET_ICONS_JS, "text/javascript; charset=utf-8"),
+        "/scripts/presets.js" => (ASSET_PRESETS_JS, "text/javascript; charset=utf-8"),
+        "/scripts/diff.js" => (ASSET_DIFF_JS, "text/javascript; charset=utf-8"),
+        "/scripts/app.js" => (ASSET_APP_JS, "text/javascript; charset=utf-8"),
+        "/icon.svg" => (ASSET_ICON_SVG, "image/svg+xml"),
+        _ => {
+            return Response::builder()
+                .status(404)
+                .header(CONTENT_TYPE, "text/plain; charset=utf-8")
+                .body(Cow::Borrowed(b"Not Found" as &[u8]))
+                .unwrap();
+        }
+    };
 
-            // 使用类似 SVG 中的颜色 (#2E3440 到 #5E81AC)
-            rgba[i] = (46 as f32 * (1.0 - intensity) + 94 as f32 * intensity) as u8; // R
-            rgba[i + 1] = (52 as f32 * (1.0 - intensity) + 129 as f32 * intensity) as u8; // G
-            rgba[i + 2] = (64 as f32 * (1.0 - intensity) + 172 as f32 * intensity) as u8; // B
-            rgba[i + 3] = 255; // A
+    Response::builder()
+        .status(200)
+        .header(CONTENT_TYPE, mime)
+        .body(Cow::Borrowed(bytes))
+        .unwrap()
+}
+
+fn str_field(v: &Value, key: &str) -> String {
+    v.get(key)
+        .and_then(|x| x.as_str())
+        .unwrap_or("")
+        .to_string()
+}
+
+fn opt_str_field(v: &Value, key: &str) -> Option<String> {
+    v.get(key).and_then(|x| x.as_str()).map(|s| s.to_string())
+}
+
+fn bool_field(v: &Value, key: &str, default_val: bool) -> bool {
+    v.get(key).and_then(|x| x.as_bool()).unwrap_or(default_val)
+}
+
+fn reveal_in_file_manager(path: &Path) {
+    #[cfg(target_os = "macos")]
+    {
+        if path.is_file() {
+            let _ = Command::new("open").arg("-R").arg(path).spawn();
+        } else {
+            let _ = Command::new("open").arg(path).spawn();
         }
     }
-
-    egui::IconData {
-        rgba,
-        width: size,
-        height: size,
+    #[cfg(target_os = "windows")]
+    {
+        if path.is_file() {
+            let _ = Command::new("explorer")
+                .arg(format!("/select,{}", path.display()))
+                .spawn();
+        } else {
+            let _ = Command::new("explorer").arg(path).spawn();
+        }
     }
+    #[cfg(all(unix, not(target_os = "macos")))]
+    {
+        let dir = if path.is_file() {
+            path.parent().unwrap_or(path)
+        } else {
+            path
+        };
+        let _ = Command::new("xdg-open").arg(dir).spawn();
+    }
+}
+
+#[cfg(target_os = "macos")]
+fn build_macos_native_menu() -> muda::Menu {
+    use muda::{AboutMetadata, Menu, PredefinedMenuItem, Submenu};
+
+    let menu = Menu::new();
+
+    let app_menu = Submenu::new("Claude Code Switcher", true);
+    let _ = app_menu.append_items(&[
+        &PredefinedMenuItem::about(
+            None,
+            Some(AboutMetadata {
+                name: Some("Claude Code Switcher".to_string()),
+                version: Some(state::APP_VERSION.to_string()),
+                comments: Some("Claude Code 环境、网关与模型路由切换台".to_string()),
+                ..Default::default()
+            }),
+        ),
+        &PredefinedMenuItem::separator(),
+        &PredefinedMenuItem::services(None),
+        &PredefinedMenuItem::separator(),
+        &PredefinedMenuItem::hide(None),
+        &PredefinedMenuItem::hide_others(None),
+        &PredefinedMenuItem::show_all(None),
+        &PredefinedMenuItem::separator(),
+        &PredefinedMenuItem::quit(None),
+    ]);
+
+    let edit_menu = Submenu::new("编辑", true);
+    let _ = edit_menu.append_items(&[
+        &PredefinedMenuItem::undo(None),
+        &PredefinedMenuItem::redo(None),
+        &PredefinedMenuItem::separator(),
+        &PredefinedMenuItem::cut(None),
+        &PredefinedMenuItem::copy(None),
+        &PredefinedMenuItem::paste(None),
+        &PredefinedMenuItem::select_all(None),
+    ]);
+
+    let window_menu = Submenu::new("窗口", true);
+    let _ = window_menu.append_items(&[
+        &PredefinedMenuItem::minimize(None),
+        &PredefinedMenuItem::maximize(None),
+        &PredefinedMenuItem::fullscreen(None),
+        &PredefinedMenuItem::separator(),
+        &PredefinedMenuItem::close_window(None),
+    ]);
+
+    let _ = menu.append_items(&[&app_menu, &edit_menu, &window_menu]);
+    menu.init_for_nsapp();
+    menu
+}
+
+fn load_window_icon(svg_data: &[u8]) -> Option<Icon> {
+    let size = 64u32;
+    let svg_str = std::str::from_utf8(svg_data).ok()?;
+    let options = usvg::Options::default();
+    let usvg_tree = usvg::Tree::from_str(svg_str, &options).ok()?;
+    let mut pixmap = Pixmap::new(size, size)?;
+
+    let transform = tiny_skia::Transform::from_scale(
+        size as f32 / usvg_tree.size.width(),
+        size as f32 / usvg_tree.size.height(),
+    );
+    let resvg_tree = resvg::Tree::from_usvg(&usvg_tree);
+    resvg_tree.render(transform, &mut pixmap.as_mut());
+
+    // tiny-skia Pixmap already stores premultiplied RGBA bytes
+    let rgba = pixmap.data().to_vec();
+    Icon::from_rgba(rgba, size, size).ok()
 }
