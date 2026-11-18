@@ -16,7 +16,7 @@ use tao::{
     dpi::LogicalSize,
     event::{Event, WindowEvent},
     event_loop::{ControlFlow, EventLoopBuilder},
-    window::{Icon, WindowBuilder},
+    window::{Icon, Theme, WindowBuilder},
 };
 use tiny_skia::Pixmap;
 use wry::{
@@ -53,6 +53,14 @@ enum UserEvent {
     },
 }
 
+fn tao_theme_from_setting(theme: &str) -> Option<Theme> {
+    match theme.trim().to_ascii_lowercase().as_str() {
+        "light" => Some(Theme::Light),
+        "dark" => Some(Theme::Dark),
+        _ => None, // "System" follows OS native appearance
+    }
+}
+
 #[cfg(windows)]
 fn attach_windows_parent_console_if_cli() {
     if std::env::args().len() > 1 {
@@ -82,6 +90,12 @@ fn main() {
 
 fn run_desktop_app() -> wry::Result<()> {
     let manager = Arc::new(Mutex::new(WorkspaceManager::new_default()));
+    let initial_theme_pref = manager
+        .lock()
+        .map(|m| m.app_settings.theme.clone())
+        .unwrap_or_else(|_| "Dark".to_string());
+    let initial_tao_theme = tao_theme_from_setting(&initial_theme_pref);
+
     let event_loop = EventLoopBuilder::<UserEvent>::with_user_event().build();
     let proxy = event_loop.create_proxy();
 
@@ -92,6 +106,7 @@ fn run_desktop_app() -> wry::Result<()> {
         .with_title("Claude Code Switcher")
         .with_inner_size(LogicalSize::new(1060.0, 720.0))
         .with_min_inner_size(LogicalSize::new(760.0, 520.0))
+        .with_theme(initial_tao_theme)
         .with_window_icon(load_window_icon(ASSET_ICON_SVG));
 
     #[cfg(target_os = "macos")]
@@ -106,9 +121,20 @@ fn run_desktop_app() -> wry::Result<()> {
 
     let window = win_builder.build(&event_loop).expect("创建应用窗口失败");
 
+    let resolved_light = match initial_tao_theme {
+        Some(Theme::Light) => true,
+        Some(_) => false,
+        None => matches!(window.theme(), Theme::Light),
+    };
+    let initial_bg = if resolved_light {
+        (248, 246, 241, 255)
+    } else {
+        (21, 22, 26, 255)
+    };
+
     let ipc_proxy = proxy.clone();
     let webview_builder = WebViewBuilder::new()
-        .with_background_color((18, 18, 16, 255))
+        .with_background_color(initial_bg)
         .with_accept_first_mouse(true)
         .with_custom_protocol("ccs".into(), move |_webview_id, request| {
             serve_embedded_asset(request)
@@ -172,6 +198,10 @@ fn run_desktop_app() -> wry::Result<()> {
                             "minimize" => {
                                 window.set_minimized(true);
                             }
+                            "set_theme" => {
+                                let theme_str = str_field(&env.payload, "theme");
+                                window.set_theme(tao_theme_from_setting(&theme_str));
+                            }
                             "close" => {
                                 let _ = webview_slot.take();
                                 *control_flow = ControlFlow::Exit;
@@ -206,7 +236,13 @@ fn run_desktop_app() -> wry::Result<()> {
                         return;
                     }
 
+                    let is_update_settings = env.cmd == "update_settings";
                     let outcome = handle_sync_ipc(&manager, &env.cmd, &env.payload);
+                    if is_update_settings && outcome.is_ok() {
+                        if let Ok(mgr) = manager.lock() {
+                            window.set_theme(tao_theme_from_setting(&mgr.app_settings.theme));
+                        }
+                    }
                     if let Some(wv) = webview_slot.as_ref() {
                         resolve_ipc(wv, env.id, outcome);
                     }

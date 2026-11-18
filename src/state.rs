@@ -1045,7 +1045,12 @@ impl WorkspaceManager {
             }
         }
         if let Some(t) = theme {
-            self.app_settings.theme = t;
+            let normalized = match t.trim().to_ascii_lowercase().as_str() {
+                "light" => "Light",
+                "system" | "auto" => "System",
+                _ => "Dark",
+            };
+            self.app_settings.theme = normalized.to_string();
         }
         if let Some(m) = default_sync_mode {
             self.app_settings.default_sync_mode = m;

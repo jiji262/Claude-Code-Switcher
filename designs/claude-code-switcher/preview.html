@@ -7,69 +7,58 @@
   <style>
 /* ==========================================================================
    Claude Code Switcher v2.0 — Three-Layer Design Tokens
-   Direction: Editorial Warm Precision (Obsidian Studio & Warm Parchment)
+   Dual Flagship Themes:
+   - Obsidian Studio (Dark)  : Layered architectural graphite + warm specular catchlights
+   - Warm Alabaster  (Light) : Crisp pure paper cards on warm linen + soft ambient shadows
    ========================================================================== */
 
 :root {
-  /* --- Layer 1: Primitive Color Tokens --- */
-  --p-stone-950: #121210;
-  --p-stone-925: #171614;
-  --p-stone-900: #1C1B18;
-  --p-stone-850: #22211E;
-  --p-stone-800: #2A2824;
-  --p-stone-750: #33302B;
-  --p-stone-700: #3E3A34;
-  --p-stone-600: #59544B;
-  --p-stone-500: #7D776C;
-  --p-stone-400: #A8A195;
-  --p-stone-300: #CFC9BE;
-  --p-stone-200: #E3DED4;
-  --p-stone-150: #ECE8DF;
-  --p-stone-100: #F3F0E8;
-  --p-stone-50:  #FAF8F4;
-  --p-white:     #FFFFFF;
+  /* --- Layer 1: Primitive Color Scales --- */
+  /* Obsidian Graphite Scale (Dark Surfaces) */
+  --p-obsidian-975: #0B0C0E;
+  --p-obsidian-950: #111215;
+  --p-obsidian-925: #15161A;
+  --p-obsidian-900: #1C1E23;
+  --p-obsidian-850: #23262D;
+  --p-obsidian-800: #2C3038;
+  --p-obsidian-750: #363A44;
 
-  /* Claude Terracotta Scale */
-  --p-clay-700: #9E4326;
-  --p-clay-600: #B85030;
-  --p-clay-500: #CC6240;
-  --p-clay-400: #D97757;
-  --p-clay-300: #E7967B;
-  --p-clay-glow-dark: rgba(217, 119, 87, 0.15);
-  --p-clay-glow-light: rgba(204, 98, 64, 0.11);
+  /* Warm Alabaster & Linen Scale (Light Surfaces & Ink) */
+  --p-paper-white:  #FFFFFF;
+  --p-alabaster-25: #FCFBF8;
+  --p-alabaster-50: #F8F6F1;
+  --p-linen-100:    #EFECE4;
+  --p-linen-150:    #E8E3D9;
+  --p-linen-200:    #DED8CC;
+  --p-linen-300:    #CBC3B4;
+  --p-ink-950:      #171614;
+  --p-ink-700:      #4E4940;
+  --p-ink-500:      #797266;
+  --p-chalk-100:    #F4F2EC;
+  --p-chalk-300:    #ADA89D;
+  --p-chalk-500:    #7B766C;
+
+  /* Claude Terracotta Accent Scale */
+  --p-clay-700: #9B3E22;
+  --p-clay-600: #B44B2B;
+  --p-clay-500: #C65937;
+  --p-clay-400: #DE7856;
+  --p-clay-300: #EA8D6E;
 
   /* Instrument Signal Scales */
-  --p-emerald-600: #1E8255;
-  --p-emerald-500: #279663;
-  --p-emerald-400: #3ECF8E;
-  --p-emerald-soft-dark: rgba(62, 207, 142, 0.13);
-  --p-emerald-soft-light: rgba(30, 130, 85, 0.10);
+  --p-emerald-600: #147A4B;
+  --p-emerald-400: #3BD18D;
 
-  --p-amber-600: #B2680E;
-  --p-amber-400: #E6A23C;
-  --p-amber-soft-dark: rgba(230, 162, 60, 0.14);
-  --p-amber-soft-light: rgba(178, 104, 14, 0.11);
+  --p-amber-600:   #A65D08;
+  --p-amber-400:   #EEAB42;
 
-  --p-crimson-600: #C23A32;
-  --p-crimson-400: #F06A63;
-  --p-crimson-soft-dark: rgba(240, 106, 99, 0.14);
-  --p-crimson-soft-light: rgba(194, 58, 50, 0.10);
+  --p-crimson-600: #BD3129;
+  --p-crimson-400: #F26B64;
 
-  --p-sky-600: #2563EB;
-  --p-sky-400: #6BA3FF;
+  --p-sky-600:     #245EE0;
+  --p-sky-400:     #6DA4FF;
 
-  /* Diff Highlight Primitives */
-  --p-diff-add-bg-dark: rgba(62, 207, 142, 0.11);
-  --p-diff-add-fg-dark: #7CE5B4;
-  --p-diff-del-bg-dark: rgba(240, 106, 99, 0.12);
-  --p-diff-del-fg-dark: #F79893;
-
-  --p-diff-add-bg-light: rgba(30, 130, 85, 0.10);
-  --p-diff-add-fg-light: #166541;
-  --p-diff-del-bg-light: rgba(194, 58, 50, 0.09);
-  --p-diff-del-fg-light: #9E2A23;
-
-  /* --- Layer 1: Primitive Spacing, Typography & Motion --- */
+  /* --- Layer 1: Spacing, Radius, Typography & Motion --- */
   --space-1: 4px;
   --space-1-5: 6px;
   --space-2: 8px;
@@ -83,9 +72,9 @@
   --space-10: 40px;
 
   --radius-xs: 5px;
-  --radius-sm: 7px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
+  --radius-sm: 8px;
+  --radius-md: 11px;
+  --radius-lg: 15px;
   --radius-pill: 999px;
 
   --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei UI", system-ui, sans-serif;
@@ -114,120 +103,174 @@
   --control-lg: 38px;
 }
 
-/* --- Layer 2: Semantic Tokens — Obsidian Studio (Dark Default) --- */
+/* ==========================================================================
+   Layer 2: Semantic Tokens — Obsidian Studio (Dark Theme)
+   ========================================================================== */
 :root,
 [data-theme="dark"] {
   color-scheme: dark;
 
-  --bg-canvas: var(--p-stone-950);
-  --bg-rail: var(--p-stone-925);
-  --bg-surface: var(--p-stone-900);
-  --bg-elevated: var(--p-stone-850);
-  --bg-inset: #0E0E0C;
-  --bg-hover: var(--p-stone-850);
-  --bg-active: var(--p-stone-800);
-  --bg-selected: rgba(217, 119, 87, 0.12);
-  --bg-backdrop: rgba(8, 8, 7, 0.66);
+  /* Surfaces (4 distinct depth planes) */
+  --bg-inset:       var(--p-obsidian-975);
+  --bg-rail:        var(--p-obsidian-950);
+  --bg-canvas:      var(--p-obsidian-925);
+  --bg-surface:     var(--p-obsidian-900);
+  --bg-subtle-card: #181A1F;
+  --bg-elevated:    var(--p-obsidian-850);
+  --bg-hover:       rgba(255, 250, 240, 0.055);
+  --bg-active:      rgba(255, 250, 240, 0.095);
+  --bg-selected:    rgba(222, 120, 86, 0.13);
+  --bg-backdrop:    rgba(6, 7, 9, 0.68);
+  --canvas-ambient: radial-gradient(920px 320px at 50% -110px, rgba(222, 120, 86, 0.065), transparent 70%);
 
-  --border-subtle: #262420;
-  --border-default: #312E29;
-  --border-strong: #433F38;
-  --border-focus: var(--p-clay-400);
+  /* Hairlines & Focus */
+  --border-subtle:  rgba(255, 250, 242, 0.075);
+  --border-default: rgba(255, 250, 242, 0.125);
+  --border-strong:  rgba(255, 250, 242, 0.21);
+  --border-focus:   var(--p-clay-400);
+  --focus-ring:     rgba(222, 120, 86, 0.22);
 
-  --text-primary: #F3F0E9;
-  --text-secondary: #B4AEA2;
-  --text-tertiary: #847E72;
-  --text-on-accent: #FAF8F4;
+  /* Typography */
+  --text-primary:   var(--p-chalk-100);
+  --text-secondary: var(--p-chalk-300);
+  --text-tertiary:  var(--p-chalk-500);
+  --text-on-accent: #FFFFFF;
 
-  --accent: var(--p-clay-400);
-  --accent-hover: var(--p-clay-300);
+  /* Accent */
+  --accent:         var(--p-clay-400);
+  --accent-hover:   var(--p-clay-300);
   --accent-pressed: var(--p-clay-500);
-  --accent-soft: var(--p-clay-glow-dark);
+  --accent-soft:    rgba(222, 120, 86, 0.14);
+  --accent-border:  rgba(222, 120, 86, 0.42);
 
-  --signal-live: var(--p-emerald-400);
-  --signal-live-soft: var(--p-emerald-soft-dark);
-  --signal-warn: var(--p-amber-400);
-  --signal-warn-soft: var(--p-amber-soft-dark);
-  --signal-danger: var(--p-crimson-400);
-  --signal-danger-soft: var(--p-crimson-soft-dark);
+  /* Semantic Signals */
+  --signal-live:        var(--p-emerald-400);
+  --signal-live-soft:   rgba(59, 209, 141, 0.13);
+  --signal-live-border: rgba(59, 209, 141, 0.28);
+
+  --signal-warn:        var(--p-amber-400);
+  --signal-warn-soft:   rgba(238, 171, 66, 0.14);
+  --signal-warn-border: rgba(238, 171, 66, 0.30);
+
+  --signal-danger:        var(--p-crimson-400);
+  --signal-danger-soft:   rgba(242, 107, 100, 0.14);
+  --signal-danger-border: rgba(242, 107, 100, 0.30);
+
   --signal-info: var(--p-sky-400);
 
-  --diff-add-bg: var(--p-diff-add-bg-dark);
-  --diff-add-fg: var(--p-diff-add-fg-dark);
-  --diff-del-bg: var(--p-diff-del-bg-dark);
-  --diff-del-fg: var(--p-diff-del-fg-dark);
+  /* Diff & Code Surfaces */
+  --code-gutter-bg: #101114;
+  --diff-add-bg:    rgba(59, 209, 141, 0.11);
+  --diff-add-fg:    #82E8BA;
+  --diff-del-bg:    rgba(242, 107, 100, 0.12);
+  --diff-del-fg:    #F99D98;
 
-  --syntax-key: #E7967B;
-  --syntax-str: #8FD9A8;
-  --syntax-num: #E6B46A;
-  --syntax-bool: #8AB4F8;
-  --syntax-punc: #7D776C;
+  /* Elevations, Sheens & Controls */
+  --surface-sheen:  inset 0 1px 0 rgba(255, 255, 255, 0.045);
+  --inset-shadow:   inset 0 1px 2px rgba(0, 0, 0, 0.35);
+  --shadow-xs:      0 1px 2px rgba(0, 0, 0, 0.32);
+  --shadow-card:    0 1px 2px rgba(0, 0, 0, 0.36), 0 6px 18px rgba(0, 0, 0, 0.16);
+  --shadow-btn:     0 1px 2px rgba(0, 0, 0, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.055);
+  --shadow-primary: 0 1px 2px rgba(0, 0, 0, 0.42), 0 4px 14px rgba(217, 119, 87, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.20);
+  --shadow-seg:     0 1px 3px rgba(0, 0, 0, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  --shadow-overlay: 0 22px 56px rgba(0, 0, 0, 0.62), 0 6px 16px rgba(0, 0, 0, 0.38);
+  --shadow-toast:   0 12px 32px rgba(0, 0, 0, 0.50);
 
-  --shadow-overlay: 0 18px 48px rgba(0, 0, 0, 0.52), 0 4px 12px rgba(0, 0, 0, 0.34);
-  --shadow-toast: 0 10px 28px rgba(0, 0, 0, 0.45);
-  --selection-bg: rgba(217, 119, 87, 0.28);
-  --scrollbar-thumb: #36332D;
-  --scrollbar-thumb-hover: #4A463E;
+  --kbd-bg:         rgba(255, 255, 255, 0.065);
+  --kbd-border:     rgba(255, 255, 255, 0.11);
+  --kbd-shadow:     rgba(0, 0, 0, 0.35);
+  --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23ADA89D' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+
+  --selection-bg:          rgba(222, 120, 86, 0.30);
+  --scrollbar-thumb:       rgba(255, 250, 240, 0.14);
+  --scrollbar-thumb-hover: rgba(255, 250, 240, 0.25);
 }
 
-/* --- Layer 2: Semantic Tokens — Warm Parchment (Light) --- */
+/* ==========================================================================
+   Layer 2: Semantic Tokens — Warm Alabaster (Light Theme)
+   ========================================================================== */
 [data-theme="light"] {
   color-scheme: light;
 
-  --bg-canvas: var(--p-stone-50);
-  --bg-rail: var(--p-stone-100);
-  --bg-surface: var(--p-white);
-  --bg-elevated: var(--p-white);
-  --bg-inset: #F4F1EA;
-  --bg-hover: #EAE6DC;
-  --bg-active: #E1DCD0;
-  --bg-selected: rgba(204, 98, 64, 0.10);
-  --bg-backdrop: rgba(24, 23, 21, 0.36);
+  /* Surfaces (Crisp pure white studio cards over warm alabaster & linen) */
+  --bg-inset:       var(--p-alabaster-25);
+  --bg-rail:        var(--p-linen-100);
+  --bg-canvas:      var(--p-alabaster-50);
+  --bg-surface:     var(--p-paper-white);
+  --bg-subtle-card: #FAF8F4;
+  --bg-elevated:    var(--p-paper-white);
+  --bg-hover:       rgba(32, 28, 22, 0.048);
+  --bg-active:      rgba(32, 28, 22, 0.085);
+  --bg-selected:    rgba(198, 89, 55, 0.09);
+  --bg-backdrop:    rgba(24, 22, 18, 0.32);
+  --canvas-ambient: radial-gradient(920px 320px at 50% -120px, rgba(198, 89, 55, 0.055), transparent 70%);
 
-  --border-subtle: #E5E0D5;
-  --border-default: #D7D1C4;
-  --border-strong: #BEB7A8;
-  --border-focus: var(--p-clay-500);
+  /* Hairlines & Focus */
+  --border-subtle:  #E5DFD3;
+  --border-default: #D5CEC0;
+  --border-strong:  #B9B09F;
+  --border-focus:   var(--p-clay-500);
+  --focus-ring:     rgba(198, 89, 55, 0.16);
 
-  --text-primary: #191816;
-  --text-secondary: #575248;
-  --text-tertiary: #7A7367;
+  /* Typography */
+  --text-primary:   var(--p-ink-950);
+  --text-secondary: var(--p-ink-700);
+  --text-tertiary:  var(--p-ink-500);
   --text-on-accent: #FFFFFF;
 
-  --accent: var(--p-clay-500);
-  --accent-hover: var(--p-clay-600);
+  /* Accent */
+  --accent:         var(--p-clay-500);
+  --accent-hover:   var(--p-clay-600);
   --accent-pressed: var(--p-clay-700);
-  --accent-soft: var(--p-clay-glow-light);
+  --accent-soft:    rgba(198, 89, 55, 0.09);
+  --accent-border:  rgba(198, 89, 55, 0.36);
 
-  --signal-live: var(--p-emerald-600);
-  --signal-live-soft: var(--p-emerald-soft-light);
-  --signal-warn: var(--p-amber-600);
-  --signal-warn-soft: var(--p-amber-soft-light);
-  --signal-danger: var(--p-crimson-600);
-  --signal-danger-soft: var(--p-crimson-soft-light);
+  /* Semantic Signals */
+  --signal-live:        var(--p-emerald-600);
+  --signal-live-soft:   rgba(20, 122, 75, 0.095);
+  --signal-live-border: rgba(20, 122, 75, 0.24);
+
+  --signal-warn:        var(--p-amber-600);
+  --signal-warn-soft:   rgba(166, 93, 8, 0.10);
+  --signal-warn-border: rgba(166, 93, 8, 0.25);
+
+  --signal-danger:        var(--p-crimson-600);
+  --signal-danger-soft:   rgba(189, 49, 41, 0.09);
+  --signal-danger-border: rgba(189, 49, 41, 0.25);
+
   --signal-info: var(--p-sky-600);
 
-  --diff-add-bg: var(--p-diff-add-bg-light);
-  --diff-add-fg: var(--p-diff-add-fg-light);
-  --diff-del-bg: var(--p-diff-del-bg-light);
-  --diff-del-fg: var(--p-diff-del-fg-light);
+  /* Diff & Code Surfaces */
+  --code-gutter-bg: #F2EFE7;
+  --diff-add-bg:    rgba(20, 122, 75, 0.095);
+  --diff-add-fg:    #115E39;
+  --diff-del-bg:    rgba(189, 49, 41, 0.09);
+  --diff-del-fg:    #99221B;
 
-  --syntax-key: #A84424;
-  --syntax-str: #1B6E46;
-  --syntax-num: #9A5B0A;
-  --syntax-bool: #1D4ED8;
-  --syntax-punc: #7A7367;
+  /* Elevations, Sheens & Controls */
+  --surface-sheen:  inset 0 1px 0 rgba(255, 255, 255, 0.90);
+  --inset-shadow:   inset 0 1px 2px rgba(24, 22, 18, 0.045);
+  --shadow-xs:      0 1px 2px rgba(28, 25, 20, 0.05);
+  --shadow-card:    0 1px 2px rgba(28, 25, 20, 0.045), 0 5px 16px rgba(28, 25, 20, 0.035);
+  --shadow-btn:     0 1px 2px rgba(28, 25, 20, 0.055), inset 0 1px 0 rgba(255, 255, 255, 0.92);
+  --shadow-primary: 0 1px 2px rgba(155, 62, 34, 0.26), 0 4px 12px rgba(198, 89, 55, 0.20), inset 0 1px 0 rgba(255, 255, 255, 0.24);
+  --shadow-seg:     0 1px 3px rgba(28, 25, 20, 0.09), 0 1px 1px rgba(28, 25, 20, 0.05);
+  --shadow-overlay: 0 20px 52px rgba(24, 22, 18, 0.16), 0 4px 14px rgba(24, 22, 18, 0.07);
+  --shadow-toast:   0 10px 28px rgba(24, 22, 18, 0.13);
 
-  --shadow-overlay: 0 18px 44px rgba(25, 24, 22, 0.16), 0 4px 12px rgba(25, 24, 22, 0.08);
-  --shadow-toast: 0 8px 24px rgba(25, 24, 22, 0.13);
-  --selection-bg: rgba(204, 98, 64, 0.20);
-  --scrollbar-thumb: #CFC9BE;
-  --scrollbar-thumb-hover: #B5AEA0;
+  --kbd-bg:         #F2EFE8;
+  --kbd-border:     #DCD5C7;
+  --kbd-shadow:     rgba(28, 25, 20, 0.08);
+  --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%234E4940' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+
+  --selection-bg:          rgba(198, 89, 55, 0.18);
+  --scrollbar-thumb:       rgba(28, 25, 20, 0.18);
+  --scrollbar-thumb-hover: rgba(28, 25, 20, 0.30);
 }
 
 /* ==========================================================================
    Claude Code Switcher v2.0 — Application Stylesheet
-   Craft Floor: Zero `transition: all`, optical tracking, themed browser surfaces
+   Craft Floor: Dual-Theme Elevation, Tactile Hairlines, Zero `transition: all`
    ========================================================================== */
 
 *, *::before, *::after {
@@ -312,7 +355,7 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 var(--space-3) 0 var(--space-3);
+  padding: 0 var(--space-3);
   border-bottom: 1px solid var(--border-subtle);
   flex-shrink: 0;
 }
@@ -331,9 +374,10 @@ html, body {
 .brand-mark {
   width: 22px;
   height: 22px;
-  border-radius: var(--radius-xs);
+  border-radius: 6px;
   background: var(--accent);
   color: var(--text-on-accent);
+  box-shadow: var(--shadow-primary);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -347,7 +391,7 @@ html, body {
 
 .brand-title {
   font-size: var(--text-sm);
-  font-weight: 600;
+  font-weight: 620;
   letter-spacing: -0.02em;
   color: var(--text-primary);
   white-space: nowrap;
@@ -363,11 +407,12 @@ html, body {
 
 /* --- Live Claude Status Card --- */
 .live-card {
-  margin: var(--space-3) var(--space-3) var(--space-2);
+  margin: var(--space-3) var(--space-3) var(--space-2-5);
   padding: var(--space-2-5) var(--space-3);
   background: var(--bg-surface);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
+  box-shadow: var(--shadow-xs), var(--surface-sheen);
   display: flex;
   flex-direction: column;
   gap: var(--space-1-5);
@@ -383,35 +428,41 @@ html, body {
 .live-pill {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   font-size: var(--text-2xs);
   font-weight: 600;
   padding: 2px 8px;
   border-radius: var(--radius-pill);
+  border: 1px solid transparent;
 }
 
 .live-pill.is-synced {
   background: var(--signal-live-soft);
+  border-color: var(--signal-live-border);
   color: var(--signal-live);
 }
 .live-pill.is-drifted {
   background: var(--signal-warn-soft);
+  border-color: var(--signal-warn-border);
   color: var(--signal-warn);
 }
 .live-pill.is-corrupted {
   background: var(--signal-danger-soft);
+  border-color: var(--signal-danger-border);
   color: var(--signal-danger);
 }
 .live-pill.is-missing {
   background: var(--bg-active);
+  border-color: var(--border-subtle);
   color: var(--text-secondary);
 }
 
 .snap-badge-orig {
   display: inline-flex;
   align-items: center;
-  padding: 1px 6px;
+  padding: 1px 7px;
   border-radius: var(--radius-pill);
+  border: 1px solid var(--accent-border);
   font-size: 10px;
   font-weight: 600;
   background: var(--accent-soft);
@@ -472,8 +523,8 @@ html, body {
   left: 9px;
   top: 50%;
   transform: translateY(-50%);
-  width: 14px;
-  height: 14px;
+  width: 13.5px;
+  height: 13.5px;
   color: var(--text-tertiary);
   pointer-events: none;
 }
@@ -483,12 +534,13 @@ html, body {
   height: var(--control-sm);
   padding: 0 26px 0 28px;
   background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--border-default);
   border-radius: var(--radius-sm);
+  box-shadow: var(--inset-shadow);
   color: var(--text-primary);
   font-family: var(--font-sans);
   font-size: var(--text-xs);
-  transition: border-color var(--dur-fast) var(--ease-out-expo), background-color var(--dur-fast) var(--ease-out-expo);
+  transition: border-color var(--dur-fast) var(--ease-out-expo), box-shadow var(--dur-fast) var(--ease-out-expo), background-color var(--dur-fast) var(--ease-out-expo);
 }
 .search-input::placeholder {
   color: var(--text-tertiary);
@@ -496,6 +548,7 @@ html, body {
 .search-input:focus {
   outline: none;
   border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px var(--focus-ring);
   background: var(--bg-elevated);
 }
 
@@ -527,13 +580,14 @@ html, body {
   padding: 2px var(--space-2-5) var(--space-4);
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 4px;
 }
 
 .rail-section-title {
   padding: var(--space-2) var(--space-2) var(--space-1);
   font-size: var(--text-2xs);
   font-weight: 600;
+  letter-spacing: 0.01em;
   color: var(--text-tertiary);
   display: flex;
   align-items: center;
@@ -552,7 +606,7 @@ html, body {
   background: transparent;
   cursor: pointer;
   text-align: left;
-  transition: background-color var(--dur-fast) var(--ease-out-expo), border-color var(--dur-fast) var(--ease-out-expo);
+  transition: background-color var(--dur-fast) var(--ease-out-expo), border-color var(--dur-fast) var(--ease-out-expo), box-shadow var(--dur-fast) var(--ease-out-expo);
 }
 
 .profile-item:hover {
@@ -562,33 +616,59 @@ html, body {
 .profile-item.is-selected {
   background: var(--bg-surface);
   border-color: var(--border-default);
+  box-shadow: var(--shadow-xs), var(--surface-sheen);
 }
 
 .profile-item.is-active-live {
   background: var(--bg-selected);
+  border-color: var(--accent-border);
+}
+
+.profile-item.is-active-live::before {
+  content: "";
+  position: absolute;
+  left: -1px;
+  top: 9px;
+  bottom: 9px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--accent);
+}
+
+.profile-item.is-selected.is-active-live {
+  background: var(--bg-surface);
   border-color: var(--border-focus);
+  box-shadow: var(--shadow-xs), 0 0 0 1px var(--focus-ring), var(--surface-sheen);
 }
 
 .provider-badge {
   width: 30px;
   height: 30px;
   border-radius: var(--radius-sm);
-  background: var(--bg-elevated);
-  border: 1px solid var(--border-subtle);
-  color: var(--text-primary);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  color: var(--text-secondary);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   font-family: var(--font-mono);
-  font-size: var(--text-2xs);
-  font-weight: 600;
+  font-size: 10.5px;
+  font-weight: 650;
+  letter-spacing: -0.02em;
   flex-shrink: 0;
+  box-shadow: var(--surface-sheen);
+}
+
+.profile-item.is-selected .provider-badge {
+  color: var(--text-primary);
+  border-color: var(--border-strong);
 }
 
 .profile-item.is-active-live .provider-badge {
   background: var(--accent);
   border-color: var(--accent);
   color: var(--text-on-accent);
+  box-shadow: var(--shadow-primary);
 }
 
 .profile-item-body {
@@ -607,7 +687,7 @@ html, body {
 
 .profile-item-name {
   font-size: var(--text-sm);
-  font-weight: 550;
+  font-weight: 560;
   color: var(--text-primary);
   white-space: nowrap;
   overflow: hidden;
@@ -651,6 +731,7 @@ html, body {
   padding: 2px 7px;
   border-radius: var(--radius-pill);
   background: var(--signal-live-soft);
+  border: 1px solid var(--signal-live-border);
   color: var(--signal-live);
   font-size: var(--text-2xs);
   font-weight: 600;
@@ -660,16 +741,17 @@ html, body {
 .quick-switch-btn {
   opacity: 0;
   height: 24px;
-  padding: 0 8px;
+  padding: 0 9px;
   border-radius: var(--radius-pill);
   border: 1px solid var(--border-default);
   background: var(--bg-elevated);
   color: var(--text-primary);
+  box-shadow: var(--shadow-xs);
   font-family: var(--font-sans);
   font-size: var(--text-2xs);
-  font-weight: 500;
+  font-weight: 550;
   cursor: pointer;
-  transition: opacity var(--dur-fast) var(--ease-out-expo), background-color var(--dur-fast) var(--ease-out-expo), border-color var(--dur-fast) var(--ease-out-expo);
+  transition: opacity var(--dur-fast) var(--ease-out-expo), background-color var(--dur-fast) var(--ease-out-expo), border-color var(--dur-fast) var(--ease-out-expo), color var(--dur-fast) var(--ease-out-expo);
 }
 
 .profile-item:hover .quick-switch-btn,
@@ -687,7 +769,9 @@ html, body {
 .workspace {
   grid-column: 2;
   grid-row: 1;
-  background: var(--bg-canvas);
+  background-color: var(--bg-canvas);
+  background-image: var(--canvas-ambient);
+  background-repeat: no-repeat;
   display: flex;
   flex-direction: column;
   min-width: 0;
@@ -734,6 +818,7 @@ html, body {
   font-weight: 600;
   color: var(--signal-warn);
   background: var(--signal-warn-soft);
+  border: 1px solid var(--signal-warn-border);
   padding: 2px 8px;
   border-radius: var(--radius-pill);
 }
@@ -745,11 +830,66 @@ html, body {
   flex-shrink: 0;
 }
 
+.topbar-divider {
+  width: 1px;
+  height: 16px;
+  background: var(--border-subtle);
+  margin: 0 2px;
+}
+
+/* --- Topbar 3-Segment Appearance Capsule (Light / Dark / System) --- */
+.theme-capsule {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px;
+  border-radius: var(--radius-pill);
+  background: var(--bg-rail);
+  border: 1px solid var(--border-subtle);
+  gap: 1px;
+}
+
+.theme-seg {
+  height: 24px;
+  padding: 0 8px;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--text-tertiary);
+  font-family: var(--font-sans);
+  font-size: var(--text-2xs);
+  font-weight: 560;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+  transition: background-color var(--dur-fast) var(--ease-out-expo), color var(--dur-fast) var(--ease-out-expo), box-shadow var(--dur-fast) var(--ease-out-expo);
+}
+
+.theme-seg svg {
+  width: 12.5px;
+  height: 12.5px;
+  flex-shrink: 0;
+}
+
+.theme-seg:hover {
+  color: var(--text-primary);
+}
+
+.theme-seg.is-active {
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-seg);
+}
+
+.theme-seg.is-active svg {
+  color: var(--accent);
+}
+
 /* --- Profile Hero Header --- */
 .profile-header {
   padding: var(--space-5) var(--space-6) var(--space-4);
   border-bottom: 1px solid var(--border-subtle);
-  background: var(--bg-canvas);
   display: flex;
   flex-direction: column;
   gap: var(--space-3-5);
@@ -776,6 +916,7 @@ html, body {
   border-radius: var(--radius-md);
   background: var(--bg-surface);
   border: 1px solid var(--border-default);
+  box-shadow: var(--shadow-xs), var(--surface-sheen);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -804,7 +945,7 @@ html, body {
 
 .profile-heading {
   font-size: var(--text-xl);
-  font-weight: 650;
+  font-weight: 660;
   letter-spacing: -0.025em;
   line-height: 1.2;
   color: var(--text-primary);
@@ -814,12 +955,13 @@ html, body {
 
 .tag-badge {
   font-size: var(--text-2xs);
-  font-weight: 500;
+  font-weight: 560;
   padding: 2px 8px;
   border-radius: var(--radius-pill);
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--border-default);
   background: var(--bg-surface);
   color: var(--text-secondary);
+  box-shadow: var(--surface-sheen);
 }
 
 .latency-chip {
@@ -828,6 +970,7 @@ html, body {
   gap: 5px;
   font-family: var(--font-mono);
   font-size: var(--text-2xs);
+  font-weight: 550;
   padding: 2px 8px;
   border-radius: var(--radius-pill);
   background: var(--bg-surface);
@@ -836,11 +979,12 @@ html, body {
 }
 .latency-chip.is-ok {
   color: var(--signal-live);
-  border-color: var(--signal-live-soft);
+  border-color: var(--signal-live-border);
   background: var(--signal-live-soft);
 }
 .latency-chip.is-fail {
   color: var(--signal-danger);
+  border-color: var(--signal-danger-border);
   background: var(--signal-danger-soft);
 }
 
@@ -879,21 +1023,21 @@ html, body {
 }
 
 .seg-tab {
-  height: 27px;
+  height: 28px;
   padding: 0 12px;
   border: none;
-  border-radius: var(--radius-xs);
+  border-radius: 6px;
   background: transparent;
   color: var(--text-secondary);
   font-family: var(--font-sans);
   font-size: var(--text-xs);
-  font-weight: 550;
+  font-weight: 560;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   gap: 6px;
   white-space: nowrap;
-  transition: background-color var(--dur-fast) var(--ease-out-expo), color var(--dur-fast) var(--ease-out-expo);
+  transition: background-color var(--dur-fast) var(--ease-out-expo), color var(--dur-fast) var(--ease-out-expo), box-shadow var(--dur-fast) var(--ease-out-expo);
 }
 
 .seg-tab svg {
@@ -907,9 +1051,13 @@ html, body {
 }
 
 .seg-tab.is-active {
-  background: var(--bg-surface);
+  background: var(--bg-elevated);
   color: var(--text-primary);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+  box-shadow: var(--shadow-seg);
+}
+
+.seg-tab.is-active svg {
+  color: var(--accent);
 }
 
 .secondary-actions {
@@ -926,16 +1074,17 @@ html, body {
   border: 1px solid var(--border-default);
   background: var(--bg-surface);
   color: var(--text-primary);
+  box-shadow: var(--shadow-btn);
   font-family: var(--font-sans);
   font-size: var(--text-xs);
-  font-weight: 550;
+  font-weight: 560;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
   cursor: pointer;
   white-space: nowrap;
-  transition: background-color var(--dur-fast) var(--ease-out-expo), border-color var(--dur-fast) var(--ease-out-expo), transform var(--dur-fast) var(--ease-out-expo);
+  transition: background-color var(--dur-fast) var(--ease-out-expo), border-color var(--dur-fast) var(--ease-out-expo), transform var(--dur-fast) var(--ease-out-expo), box-shadow var(--dur-fast) var(--ease-out-expo);
 }
 
 .btn svg {
@@ -945,7 +1094,7 @@ html, body {
 }
 
 .btn:hover:not(:disabled) {
-  background: var(--bg-hover);
+  background: var(--bg-elevated);
   border-color: var(--border-strong);
 }
 
@@ -955,6 +1104,7 @@ html, body {
 
 .btn:disabled {
   opacity: 0.45;
+  box-shadow: none;
   cursor: not-allowed;
 }
 
@@ -968,11 +1118,13 @@ html, body {
   border-color: transparent;
   background: transparent;
   color: var(--text-secondary);
+  box-shadow: none;
 }
 .btn-ghost:hover:not(:disabled) {
   background: var(--bg-hover);
   border-color: transparent;
   color: var(--text-primary);
+  box-shadow: none;
 }
 
 .btn-icon {
@@ -982,6 +1134,7 @@ html, body {
   border-color: transparent;
   background: transparent;
   color: var(--text-secondary);
+  box-shadow: none;
 }
 .btn-icon svg {
   width: 15px;
@@ -991,12 +1144,14 @@ html, body {
   background: var(--bg-hover);
   border-color: transparent;
   color: var(--text-primary);
+  box-shadow: none;
 }
 
 .btn-primary {
   background: var(--accent);
   border-color: var(--accent);
   color: var(--text-on-accent);
+  box-shadow: var(--shadow-primary);
 }
 .btn-primary:hover:not(:disabled) {
   background: var(--accent-hover);
@@ -1005,8 +1160,9 @@ html, body {
 
 .btn-live-active {
   background: var(--signal-live-soft);
-  border-color: var(--signal-live);
+  border-color: var(--signal-live-border);
   color: var(--signal-live);
+  box-shadow: none;
 }
 .btn-live-active:hover:not(:disabled) {
   background: var(--signal-live-soft);
@@ -1018,18 +1174,27 @@ html, body {
 }
 .btn-danger:hover:not(:disabled) {
   background: var(--signal-danger-soft);
-  border-color: var(--signal-danger);
+  border-color: var(--signal-danger-border);
   color: var(--signal-danger);
 }
 
 .kbd {
   font-family: var(--font-mono);
   font-size: 10px;
+  font-weight: 550;
   padding: 1px 5px;
   border-radius: 4px;
-  background: rgba(128, 122, 110, 0.16);
-  color: inherit;
-  opacity: 0.85;
+  background: var(--kbd-bg);
+  border: 1px solid var(--kbd-border);
+  box-shadow: 0 1px 0 var(--kbd-shadow);
+  color: var(--text-secondary);
+}
+
+.btn-primary .kbd {
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.26);
+  box-shadow: none;
+  color: #FFFFFF;
 }
 
 /* --- Content Body Scroll Pane --- */
@@ -1052,6 +1217,7 @@ html, body {
   background: var(--bg-surface);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card), var(--surface-sheen);
   overflow: hidden;
 }
 
@@ -1072,7 +1238,7 @@ html, body {
 
 .panel-title {
   font-size: var(--text-sm);
-  font-weight: 600;
+  font-weight: 610;
   color: var(--text-primary);
   letter-spacing: -0.01em;
 }
@@ -1100,14 +1266,14 @@ html, body {
   padding: 9px var(--space-2-5);
   border-radius: var(--radius-sm);
   border: 1px solid var(--border-subtle);
-  background: var(--bg-canvas);
+  background: var(--bg-subtle-card);
   color: var(--text-primary);
   cursor: pointer;
   text-align: left;
   display: flex;
   flex-direction: column;
   gap: 3px;
-  transition: border-color var(--dur-fast) var(--ease-out-expo), background-color var(--dur-fast) var(--ease-out-expo);
+  transition: border-color var(--dur-fast) var(--ease-out-expo), background-color var(--dur-fast) var(--ease-out-expo), box-shadow var(--dur-fast) var(--ease-out-expo);
 }
 .preset-card:hover {
   border-color: var(--border-strong);
@@ -1116,6 +1282,7 @@ html, body {
 .preset-card.is-current {
   border-color: var(--accent);
   background: var(--accent-soft);
+  box-shadow: 0 0 0 1px var(--focus-ring);
 }
 .preset-card-name {
   font-size: var(--text-xs);
@@ -1162,7 +1329,7 @@ html, body {
 
 .field-label {
   font-size: var(--text-xs);
-  font-weight: 550;
+  font-weight: 560;
   color: var(--text-secondary);
 }
 
@@ -1176,13 +1343,24 @@ html, body {
   width: 100%;
   height: var(--control-md);
   padding: 0 var(--space-3);
-  background: var(--bg-inset);
+  background-color: var(--bg-inset);
   border: 1px solid var(--border-default);
   border-radius: var(--radius-sm);
+  box-shadow: var(--inset-shadow);
   color: var(--text-primary);
   font-family: var(--font-sans);
   font-size: var(--text-sm);
-  transition: border-color var(--dur-fast) var(--ease-out-expo);
+  transition: border-color var(--dur-fast) var(--ease-out-expo), box-shadow var(--dur-fast) var(--ease-out-expo), background-color var(--dur-fast) var(--ease-out-expo);
+}
+
+.select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 32px;
+  background-image: var(--select-chevron);
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  cursor: pointer;
 }
 
 .input.mono {
@@ -1194,9 +1372,16 @@ html, body {
   color: var(--text-tertiary);
 }
 
+.input:hover:not(:focus),
+.select:hover:not(:focus) {
+  border-color: var(--border-strong);
+}
+
 .input:focus, .select:focus {
   outline: none;
   border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px var(--focus-ring);
+  background-color: var(--bg-surface);
 }
 
 .secret-group {
@@ -1220,20 +1405,22 @@ html, body {
   padding: var(--space-3);
   border-radius: var(--radius-sm);
   border: 1px solid var(--border-subtle);
-  background: var(--bg-canvas);
+  background: var(--bg-subtle-card);
   cursor: pointer;
   text-align: left;
   display: flex;
   flex-direction: column;
   gap: 4px;
-  transition: border-color var(--dur-fast) var(--ease-out-expo), background-color var(--dur-fast) var(--ease-out-expo);
+  transition: border-color var(--dur-fast) var(--ease-out-expo), background-color var(--dur-fast) var(--ease-out-expo), box-shadow var(--dur-fast) var(--ease-out-expo);
 }
 .mode-card:hover {
   border-color: var(--border-strong);
+  background: var(--bg-hover);
 }
 .mode-card.is-selected {
   border-color: var(--accent);
   background: var(--accent-soft);
+  box-shadow: 0 0 0 1px var(--focus-ring);
 }
 .mode-card-title {
   font-size: var(--text-xs);
@@ -1247,6 +1434,167 @@ html, body {
   font-size: var(--text-2xs);
   color: var(--text-secondary);
   line-height: 1.45;
+}
+
+/* --- Visual Theme Studio Cards (Settings Modal) --- */
+.theme-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-2-5);
+}
+
+.theme-card {
+  padding: var(--space-2-5);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-default);
+  background: var(--bg-subtle-card);
+  cursor: pointer;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  transition: border-color var(--dur-fast) var(--ease-out-expo), background-color var(--dur-fast) var(--ease-out-expo), box-shadow var(--dur-fast) var(--ease-out-expo);
+}
+
+.theme-card:hover {
+  border-color: var(--border-strong);
+}
+
+.theme-card.is-selected {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  box-shadow: 0 0 0 1px var(--focus-ring);
+}
+
+.theme-preview {
+  height: 60px;
+  border-radius: 7px;
+  border: 1px solid rgba(128, 122, 110, 0.24);
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: 34% 66%;
+  position: relative;
+}
+
+.theme-preview.is-light {
+  background: #F8F6F1;
+}
+.theme-preview.is-light .tp-rail {
+  background: #EFECE4;
+  border-right: 1px solid #E3DDD0;
+}
+.theme-preview.is-light .tp-card {
+  background: #FFFFFF;
+  border: 1px solid #E4DED1;
+  box-shadow: 0 1px 3px rgba(28, 25, 20, 0.06);
+}
+.theme-preview.is-light .tp-line {
+  background: #D3CCC0;
+}
+
+.theme-preview.is-dark {
+  background: #15161A;
+}
+.theme-preview.is-dark .tp-rail {
+  background: #111215;
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+}
+.theme-preview.is-dark .tp-card {
+  background: #1C1E23;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+}
+.theme-preview.is-dark .tp-line {
+  background: #3A3E48;
+}
+
+.theme-preview.is-system {
+  display: grid;
+  grid-template-columns: 50% 50%;
+}
+.tp-sys-half {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  padding: 8px;
+}
+.tp-sys-half.is-l {
+  background: #F7F5F0;
+  border-right: 1px solid rgba(128, 122, 110, 0.22);
+}
+.tp-sys-half.is-d {
+  background: #141519;
+}
+
+.tp-rail {
+  padding: 7px 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.tp-dots {
+  display: flex;
+  gap: 3px;
+}
+.tp-dots i {
+  width: 4px;
+  height: 4px;
+  border-radius: 99px;
+  background: rgba(145, 138, 126, 0.55);
+}
+.tp-pill-accent {
+  height: 7px;
+  border-radius: 4px;
+  background: #D97250;
+  width: 82%;
+}
+.tp-main {
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.tp-card {
+  padding: 7px;
+  border-radius: 5px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.tp-line {
+  height: 4px;
+  border-radius: 3px;
+  width: 78%;
+}
+.tp-line.is-short {
+  width: 48%;
+}
+
+.theme-card-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+}
+.theme-card-title {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--text-primary);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.theme-card-title svg {
+  width: 13px;
+  height: 13px;
+  color: var(--text-secondary);
+}
+.theme-card.is-selected .theme-card-title svg {
+  color: var(--accent);
+}
+.theme-card-sub {
+  font-size: 10.5px;
+  color: var(--text-tertiary);
 }
 
 /* --- Toggle Switch Rows --- */
@@ -1270,7 +1618,7 @@ html, body {
 }
 .toggle-title {
   font-size: var(--text-sm);
-  font-weight: 500;
+  font-weight: 550;
   color: var(--text-primary);
 }
 .toggle-sub {
@@ -1285,6 +1633,7 @@ html, body {
   border-radius: var(--radius-pill);
   border: 1px solid var(--border-strong);
   background: var(--bg-inset);
+  box-shadow: var(--inset-shadow);
   cursor: pointer;
   flex-shrink: 0;
   transition: background-color var(--dur-fast) var(--ease-out-expo), border-color var(--dur-fast) var(--ease-out-expo);
@@ -1298,11 +1647,13 @@ html, body {
   height: 16px;
   border-radius: var(--radius-pill);
   background: var(--text-secondary);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.22);
   transition: transform var(--dur-fast) var(--ease-out-expo), background-color var(--dur-fast) var(--ease-out-expo);
 }
 .switch.is-on {
   background: var(--accent);
   border-color: var(--accent);
+  box-shadow: none;
 }
 .switch.is-on::after {
   transform: translateX(16px);
@@ -1332,13 +1683,14 @@ html, body {
   background: var(--bg-surface);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
   overflow: hidden;
 }
 
 .code-toolbar {
   padding: var(--space-2) var(--space-3-5);
   border-bottom: 1px solid var(--border-subtle);
-  background: var(--bg-rail);
+  background: var(--code-gutter-bg);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1350,7 +1702,7 @@ html, body {
   align-items: center;
   gap: 6px;
   font-size: var(--text-xs);
-  font-weight: 550;
+  font-weight: 560;
 }
 .json-status.is-valid {
   color: var(--signal-live);
@@ -1375,7 +1727,7 @@ html, body {
   font-size: 12.5px;
   line-height: 21px;
   color: var(--text-tertiary);
-  background: var(--bg-rail);
+  background: var(--code-gutter-bg);
   border-right: 1px solid var(--border-subtle);
   overflow: hidden;
   user-select: none;
@@ -1413,6 +1765,7 @@ html, body {
   background: var(--bg-surface);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1424,12 +1777,13 @@ html, body {
   background: var(--bg-inset);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
   overflow: hidden;
 }
 
 .diff-header-bar {
   padding: var(--space-2) var(--space-3-5);
-  background: var(--bg-rail);
+  background: var(--code-gutter-bg);
   border-bottom: 1px solid var(--border-subtle);
   display: flex;
   align-items: center;
@@ -1531,17 +1885,40 @@ html, body {
   gap: 5px;
 }
 
+.status-theme-btn {
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: var(--font-sans);
+  font-size: var(--text-2xs);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  border-radius: var(--radius-xs);
+  transition: background-color var(--dur-fast) var(--ease-out-expo), color var(--dur-fast) var(--ease-out-expo);
+}
+.status-theme-btn svg {
+  width: 11.5px;
+  height: 11.5px;
+}
+.status-theme-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
 /* --- Modals & Command Palette (`⌘K`) --- */
 .overlay {
   position: fixed;
   inset: 0;
   background: var(--bg-backdrop);
-  backdrop-filter: blur(5px);
-  -webkit-backdrop-filter: blur(5px);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  padding-top: 11vh;
+  padding-top: 10vh;
   z-index: 100;
   animation: fadeIn 140ms var(--ease-out-expo);
 }
@@ -1558,11 +1935,11 @@ html, body {
 
 .modal {
   width: min(560px, calc(100vw - 32px));
-  max-height: 78vh;
+  max-height: 80vh;
   background: var(--bg-surface);
   border: 1px solid var(--border-default);
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-overlay);
+  box-shadow: var(--shadow-overlay), var(--surface-sheen);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -1583,7 +1960,7 @@ html, body {
 
 .modal-title {
   font-size: var(--text-md);
-  font-weight: 600;
+  font-weight: 620;
   letter-spacing: -0.015em;
 }
 
@@ -1672,7 +2049,7 @@ html, body {
   padding: var(--space-3);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-sm);
-  background: var(--bg-canvas);
+  background: var(--bg-subtle-card);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1697,7 +2074,7 @@ html, body {
   background: var(--bg-elevated);
   border: 1px solid var(--border-default);
   border-radius: var(--radius-sm);
-  box-shadow: var(--shadow-toast);
+  box-shadow: var(--shadow-toast), var(--surface-sheen);
   display: flex;
   align-items: center;
   gap: var(--space-2);
@@ -1747,6 +2124,7 @@ window.CCS_ICONS = {
   settings: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.08a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.08a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>`,
   sun: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="6.34" y2="6.34"/><line x1="17.66" y1="17.66" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/><line x1="4.93" y1="19.07" x2="6.34" y2="17.66"/><line x1="17.66" y1="6.34" x2="19.07" y2="4.93"/></svg>`,
   moon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`,
+  monitor: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>`,
   folder: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>`,
   external: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>`,
   command: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M18 3a3 3 0 0 0-3 3v12a3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3H6a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3V6a3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3h12a3 3 0 0 0 3-3 3 3 0 0 0-3-3z"/></svg>`,
@@ -2765,6 +3143,7 @@ window.CCS_COMPUTE_DIFF = function (beforeStr, afterStr) {
     },
     renameValue: "",
     settingsDraft: {
+      theme: "Dark",
       configDirectory: "",
       defaultSyncMode: "merge",
       autoBackup: true
@@ -2821,9 +3200,49 @@ window.CCS_COMPUTE_DIFF = function (beforeStr, afterStr) {
     }, 2800);
   }
 
-  function applyTheme(themeStr) {
-    const isLight = String(themeStr).toLowerCase() === "light";
-    document.documentElement.setAttribute("data-theme", isLight ? "light" : "dark");
+  function normalizeThemeMode(themeStr) {
+    const v = String(themeStr || "").trim().toLowerCase();
+    if (v === "light") return "Light";
+    if (v === "system" || v === "auto") return "System";
+    return "Dark";
+  }
+
+  function resolveEffectiveTheme(themeStr) {
+    const mode = normalizeThemeMode(themeStr);
+    if (mode === "Light") return "light";
+    if (mode === "Dark") return "dark";
+    if (window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches) {
+      return "light";
+    }
+    return "dark";
+  }
+
+  function applyTheme(themeStr, persistCache = true) {
+    const mode = normalizeThemeMode(themeStr);
+    const effective = resolveEffectiveTheme(mode);
+    document.documentElement.setAttribute("data-theme", effective);
+    if (persistCache) {
+      try {
+        localStorage.setItem("ccs_theme_mode", mode);
+      } catch (_) {}
+    }
+  }
+
+  if (window.matchMedia) {
+    const media = window.matchMedia("(prefers-color-scheme: light)");
+    const onSchemeChange = () => {
+      const activeMode = ui.modal === "settings"
+        ? ui.settingsDraft.theme
+        : ui.workspace?.settings?.theme;
+      if (normalizeThemeMode(activeMode) === "System") {
+        applyTheme("System", false);
+      }
+    };
+    if (typeof media.addEventListener === "function") {
+      media.addEventListener("change", onSchemeChange);
+    } else if (typeof media.addListener === "function") {
+      media.addListener(onSchemeChange);
+    }
   }
 
   function currentSelectedProfile() {
@@ -3027,15 +3446,57 @@ window.CCS_COMPUTE_DIFF = function (beforeStr, afterStr) {
     }
   }
 
-  async function handleToggleTheme() {
+  async function handleSetTheme(nextMode) {
     if (!ui.workspace) return;
-    const nextTheme = ui.workspace.settings.theme === "Light" ? "Dark" : "Light";
+    const normalized = normalizeThemeMode(nextMode);
+    if (normalizeThemeMode(ui.workspace.settings.theme) === normalized) return;
     try {
-      const next = await rpc("update_settings", { theme: nextTheme });
+      applyTheme(normalized, true);
+      const next = await rpc("update_settings", { theme: normalized });
       syncWorkspaceState(next, ui.selectedFile);
+      const labelMap = {
+        Light: "浅色 · 日光宣纸",
+        Dark: "深色 · 曜石暗室",
+        System: "跟随系统外观"
+      };
+      showToast(`已切换至「${labelMap[normalized]}」`, "success");
     } catch (err) {
       showToast(err.message, "error");
     }
+  }
+
+  async function handleToggleTheme() {
+    if (!ui.workspace) return;
+    const effective = resolveEffectiveTheme(ui.workspace.settings.theme);
+    const nextTheme = effective === "light" ? "Dark" : "Light";
+    await handleSetTheme(nextTheme);
+  }
+
+  function renderThemeCapsuleHtml() {
+    const mode = normalizeThemeMode(ui.workspace?.settings?.theme);
+    return `
+      <div class="theme-capsule" role="group" aria-label="外观主题切换">
+        <button type="button" class="theme-seg ${mode === "Light" ? "is-active" : ""}" data-theme-pick="Light" title="浅色主题 · 日光宣纸 (⌘⇧L)">
+          ${ICONS.sun}<span>浅色</span>
+        </button>
+        <button type="button" class="theme-seg ${mode === "Dark" ? "is-active" : ""}" data-theme-pick="Dark" title="深色主题 · 曜石暗室 (⌘⇧L)">
+          ${ICONS.moon}<span>深色</span>
+        </button>
+        <button type="button" class="theme-seg ${mode === "System" ? "is-active" : ""}" data-theme-pick="System" title="跟随操作系统深浅色自动切换">
+          ${ICONS.monitor}<span>自动</span>
+        </button>
+      </div>
+    `;
+  }
+
+  function bindThemeCapsuleEvents(scope) {
+    if (!scope) return;
+    scope.querySelectorAll("[data-theme-pick]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const picked = btn.getAttribute("data-theme-pick");
+        if (picked) handleSetTheme(picked);
+      });
+    });
   }
 
   function openNewProfileWizard(defaultPresetId = "anthropic") {
@@ -3074,6 +3535,7 @@ window.CCS_COMPUTE_DIFF = function (beforeStr, afterStr) {
   function openSettingsModal() {
     if (!ui.workspace) return;
     ui.settingsDraft = {
+      theme: normalizeThemeMode(ui.workspace.settings.theme),
       configDirectory: ui.workspace.settings.config_directory,
       defaultSyncMode: ui.workspace.settings.default_sync_mode || "merge",
       autoBackup: ui.workspace.settings.auto_backup !== false
@@ -3105,7 +3567,6 @@ window.CCS_COMPUTE_DIFF = function (beforeStr, afterStr) {
     const rail = document.getElementById("rail-root");
     if (!rail || !ui.workspace) return;
     const { liveStatus, settings } = ui.workspace;
-    const isLight = settings.theme === "Light";
 
     let statusPillClass = "is-missing";
     let statusLabel = "未托管";
@@ -3131,8 +3592,7 @@ window.CCS_COMPUTE_DIFF = function (beforeStr, afterStr) {
         </div>
         <div class="rail-actions">
           <button class="btn btn-icon" id="btn-cmd-palette" title="命令面板 (⌘K)">${ICONS.command}</button>
-          <button class="btn btn-icon" id="btn-theme-toggle" title="切换深浅主题">${isLight ? ICONS.moon : ICONS.sun}</button>
-          <button class="btn btn-icon" id="btn-open-settings" title="应用设置 (⌘,)">${ICONS.settings}</button>
+          <button class="btn btn-icon" id="btn-open-settings" title="应用与主题设置 (⌘,)">${ICONS.settings}</button>
         </div>
       </div>
 
@@ -3348,6 +3808,8 @@ window.CCS_COMPUTE_DIFF = function (beforeStr, afterStr) {
             <span class="crumb-muted">工作台</span>
           </div>
           <div class="topbar-controls">
+            ${renderThemeCapsuleHtml()}
+            <span class="topbar-divider"></span>
             <button class="btn btn-sm btn-ghost" id="ws-btn-backups">${ICONS.history} 历史快照 (${ui.workspace.backupsCount})</button>
           </div>
         </div>
@@ -3361,6 +3823,7 @@ window.CCS_COMPUTE_DIFF = function (beforeStr, afterStr) {
           </div>
         </div>
       `;
+      bindThemeCapsuleEvents(root);
       document.getElementById("ws-btn-backups")?.addEventListener("click", openBackupsModal);
       document.getElementById("empty-btn-new")?.addEventListener("click", () => openNewProfileWizard("anthropic"));
       document.getElementById("empty-btn-import")?.addEventListener("click", async () => {
@@ -3418,6 +3881,8 @@ window.CCS_COMPUTE_DIFF = function (beforeStr, afterStr) {
           ${ui.isDirty ? `<span class="unsaved-badge">● 未保存更改</span>` : ""}
         </div>
         <div class="topbar-controls">
+          ${renderThemeCapsuleHtml()}
+          <span class="topbar-divider"></span>
           <button class="btn btn-sm btn-ghost" id="ws-btn-backups" title="查看与回滚自动备份快照">
             ${ICONS.history} 快照 <span class="tabular">(${ui.workspace.backupsCount})</span>
           </button>
@@ -3499,6 +3964,7 @@ window.CCS_COMPUTE_DIFF = function (beforeStr, afterStr) {
       </div>
     `;
 
+    bindThemeCapsuleEvents(slot);
     document.getElementById("ws-btn-backups")?.addEventListener("click", openBackupsModal);
     document.getElementById("ws-btn-refresh")?.addEventListener("click", () => {
       guardUnsavedChanges(async () => {
@@ -4201,6 +4667,9 @@ window.CCS_COMPUTE_DIFF = function (beforeStr, afterStr) {
     const p = currentSelectedProfile();
     const charCount = (ui.draftContent || "").length;
     const lineCount = ui.draftContent ? ui.draftContent.split("\n").length : 0;
+    const themeMode = normalizeThemeMode(ui.workspace.settings.theme);
+    const themeLabel = themeMode === "Light" ? "浅色" : themeMode === "System" ? "跟随系统" : "深色";
+    const themeIcon = themeMode === "Light" ? ICONS.sun : themeMode === "System" ? ICONS.monitor : ICONS.moon;
     const syncColor =
       ui.workspace.liveStatus.syncState === "synced"
         ? "var(--signal-live)"
@@ -4218,16 +4687,28 @@ window.CCS_COMPUTE_DIFF = function (beforeStr, afterStr) {
       </div>
       <div class="statusbar-group tabular">
         ${p ? `<span>${lineCount} 行 · ${charCount} 字符</span>` : ""}
-        <span>快捷键: <span class="kbd">⌘K</span> 命令 · <span class="kbd">⌘N</span> 新建 · <span class="kbd">⌘↵</span> 激活</span>
+        <span>快捷键: <span class="kbd">⌘K</span> 命令 · <span class="kbd">⌘⇧L</span> 主题 · <span class="kbd">⌘↵</span> 激活</span>
+        <button type="button" class="status-theme-btn" id="status-theme-btn" title="点击切换深色 / 浅色外观 (⌘⇧L)">
+          ${themeIcon}<span>${themeLabel}</span>
+        </button>
         <span>v${escapeHtml(ui.workspace.appVersion)}</span>
       </div>
     `;
+    document.getElementById("status-theme-btn")?.addEventListener("click", handleToggleTheme);
   }
 
   // --- Modals & Command Palette ---
   function closeModal() {
+    const wasSettings = ui.modal === "settings";
     ui.modal = null;
     ui.pendingAction = null;
+    if (wasSettings && ui.workspace) {
+      const savedTheme = normalizeThemeMode(ui.workspace.settings.theme);
+      applyTheme(savedTheme, true);
+      if (isNative) {
+        rpc("window_action", { action: "set_theme", theme: savedTheme }).catch(() => {});
+      }
+    }
     renderModal();
   }
 
@@ -4572,14 +5053,82 @@ window.CCS_COMPUTE_DIFF = function (beforeStr, afterStr) {
         });
       });
     } else if (ui.modal === "settings") {
+      const draftTheme = normalizeThemeMode(ui.settingsDraft.theme);
       root.innerHTML = `
         <div class="overlay" id="modal-overlay">
           <div class="modal" role="dialog" aria-modal="true">
             <div class="modal-header">
-              <span class="modal-title">应用偏好设置</span>
+              <span class="modal-title">应用与外观设置</span>
               <button class="btn btn-icon" id="modal-close">${ICONS.close}</button>
             </div>
             <div class="modal-body">
+              <div class="field">
+                <div class="field-label-row">
+                  <span class="field-label">界面外观主题</span>
+                  <span class="field-key-hint">⌘⇧L 快速切换</span>
+                </div>
+                <div class="theme-picker-grid">
+                  <button type="button" class="theme-card ${draftTheme === "Light" ? "is-selected" : ""}" data-set-theme="Light">
+                    <div class="theme-preview is-light" aria-hidden="true">
+                      <div class="tp-rail">
+                        <div class="tp-dots"><i></i><i></i><i></i></div>
+                        <div class="tp-pill-accent"></div>
+                        <div class="tp-line"></div>
+                      </div>
+                      <div class="tp-main">
+                        <div class="tp-card">
+                          <div class="tp-line"></div>
+                          <div class="tp-line is-short"></div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="theme-card-meta">
+                      <span class="theme-card-title">${ICONS.sun} 浅色模式</span>
+                      <span class="theme-card-sub">日光宣纸</span>
+                    </div>
+                  </button>
+
+                  <button type="button" class="theme-card ${draftTheme === "Dark" ? "is-selected" : ""}" data-set-theme="Dark">
+                    <div class="theme-preview is-dark" aria-hidden="true">
+                      <div class="tp-rail">
+                        <div class="tp-dots"><i></i><i></i><i></i></div>
+                        <div class="tp-pill-accent"></div>
+                        <div class="tp-line"></div>
+                      </div>
+                      <div class="tp-main">
+                        <div class="tp-card">
+                          <div class="tp-line"></div>
+                          <div class="tp-line is-short"></div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="theme-card-meta">
+                      <span class="theme-card-title">${ICONS.moon} 深色模式</span>
+                      <span class="theme-card-sub">曜石暗室</span>
+                    </div>
+                  </button>
+
+                  <button type="button" class="theme-card ${draftTheme === "System" ? "is-selected" : ""}" data-set-theme="System">
+                    <div class="theme-preview is-system" aria-hidden="true">
+                      <div class="tp-sys-half is-l">
+                        <div class="tp-pill-accent"></div>
+                        <div class="tp-line" style="background:#D0C9BC"></div>
+                        <div class="tp-line is-short" style="background:#DED8CC"></div>
+                      </div>
+                      <div class="tp-sys-half is-d">
+                        <div class="tp-pill-accent"></div>
+                        <div class="tp-line" style="background:#3A3E48"></div>
+                        <div class="tp-line is-short" style="background:#2A2D35"></div>
+                      </div>
+                    </div>
+                    <div class="theme-card-meta">
+                      <span class="theme-card-title">${ICONS.monitor} 跟随系统</span>
+                      <span class="theme-card-sub">自动适配</span>
+                    </div>
+                  </button>
+                </div>
+              </div>
+
               <div class="field">
                 <label class="field-label" for="set-dir-input">环境配置存储目录</label>
                 <div class="secret-group">
@@ -4617,6 +5166,17 @@ window.CCS_COMPUTE_DIFF = function (beforeStr, afterStr) {
       `;
       document.getElementById("modal-close")?.addEventListener("click", closeModal);
       document.getElementById("set-cancel")?.addEventListener("click", closeModal);
+      root.querySelectorAll("[data-set-theme]").forEach((card) => {
+        card.addEventListener("click", () => {
+          const picked = normalizeThemeMode(card.getAttribute("data-set-theme"));
+          ui.settingsDraft.theme = picked;
+          applyTheme(picked, false);
+          if (isNative) {
+            rpc("window_action", { action: "set_theme", theme: picked }).catch(() => {});
+          }
+          renderModal();
+        });
+      });
       document.getElementById("set-dir-input")?.addEventListener("input", (e) => { ui.settingsDraft.configDirectory = e.target.value; });
       document.getElementById("set-sync-mode")?.addEventListener("change", (e) => { ui.settingsDraft.defaultSyncMode = e.target.value; });
       document.getElementById("set-backup-sw")?.addEventListener("click", () => {
@@ -4635,13 +5195,16 @@ window.CCS_COMPUTE_DIFF = function (beforeStr, afterStr) {
       document.getElementById("set-save")?.addEventListener("click", async () => {
         try {
           const next = await rpc("update_settings", {
+            theme: normalizeThemeMode(ui.settingsDraft.theme),
             configDirectory: ui.settingsDraft.configDirectory.trim(),
             defaultSyncMode: ui.settingsDraft.defaultSyncMode,
             autoBackup: ui.settingsDraft.autoBackup
           });
-          closeModal();
+          ui.modal = null;
+          ui.pendingAction = null;
+          renderModal();
           syncWorkspaceState(next);
-          showToast("应用设置已更新", "success");
+          showToast("应用与外观设置已更新", "success");
         } catch (err) {
           showToast(err.message, "error");
         }
@@ -4674,8 +5237,10 @@ window.CCS_COMPUTE_DIFF = function (beforeStr, afterStr) {
       { id: "probe", icon: ICONS.radar, title: "对当前配置执行连通性测速", hint: "Ping", run: () => handleProbeCurrent() },
       { id: "diff", icon: ICONS.gitDiff, title: "查看 ~/.claude/settings.json 生效差异对比", hint: "Diff", run: () => { ui.activeTab = "diff"; renderWorkspaceHeaderOnly(); renderWorkspaceBodyOnly(); } },
       { id: "backups", icon: ICONS.history, title: "打开时间机器自动备份快照…", hint: "Backups", run: () => openBackupsModal() },
-      { id: "theme", icon: ICONS.sun, title: "切换深色 (Obsidian) / 浅色 (Parchment) 主题", hint: "Theme", run: () => handleToggleTheme() },
-      { id: "settings", icon: ICONS.settings, title: "打开应用偏好设置…", hint: "⌘,", run: () => openSettingsModal() }
+      { id: "theme-light", icon: ICONS.sun, title: "外观主题: 切换至浅色模式 (日光宣纸)", hint: "Light", run: () => handleSetTheme("Light") },
+      { id: "theme-dark", icon: ICONS.moon, title: "外观主题: 切换至深色模式 (曜石暗室)", hint: "Dark", run: () => handleSetTheme("Dark") },
+      { id: "theme-system", icon: ICONS.monitor, title: "外观主题: 跟随操作系统自动切换", hint: "Auto", run: () => handleSetTheme("System") },
+      { id: "settings", icon: ICONS.settings, title: "打开应用与外观设置…", hint: "⌘,", run: () => openSettingsModal() }
     );
     const q = ui.paletteQuery.trim().toLowerCase();
     if (!q) return items;
@@ -4691,7 +5256,7 @@ window.CCS_COMPUTE_DIFF = function (beforeStr, afterStr) {
         <div class="modal" role="dialog" aria-modal="true">
           <div class="cmd-input-wrap">
             ${ICONS.search}
-            <input id="cmd-palette-input" class="cmd-input" type="text" placeholder="输入环境名称立即切换，或执行命令…" value="${escapeHtml(ui.paletteQuery)}" autocomplete="off" />
+            <input id="cmd-palette-input" class="cmd-input" type="text" placeholder="输入环境名称立即切换，或搜索外观 / 命令…" value="${escapeHtml(ui.paletteQuery)}" autocomplete="off" />
             <span class="kbd">ESC</span>
           </div>
           <div class="cmd-list" id="cmd-palette-list"></div>
@@ -4760,6 +5325,11 @@ window.CCS_COMPUTE_DIFF = function (beforeStr, afterStr) {
       closeModal();
       return;
     }
+    if (mod && e.shiftKey && e.key.toLowerCase() === "l") {
+      e.preventDefault();
+      handleToggleTheme();
+      return;
+    }
     if (mod && e.key.toLowerCase() === "k") {
       e.preventDefault();
       if (ui.modal === "palette") closeModal();
@@ -4820,6 +5390,7 @@ window.CCS_COMPUTE_DIFF = function (beforeStr, afterStr) {
         const params = new URLSearchParams(window.location.search);
         if (params.get("theme") === "light") state.settings.theme = "Light";
         if (params.get("theme") === "dark") state.settings.theme = "Dark";
+        if (params.get("theme") === "system") state.settings.theme = "System";
         const tab = params.get("tab");
         if (tab === "studio" || tab === "json" || tab === "diff") ui.activeTab = tab;
         const sel = params.get("select");
@@ -4833,6 +5404,7 @@ window.CCS_COMPUTE_DIFF = function (beforeStr, afterStr) {
         const params = new URLSearchParams(window.location.search);
         if (params.get("modal") === "new") openNewProfileWizard("openrouter");
         if (params.get("modal") === "palette") openCommandPalette();
+        if (params.get("modal") === "settings") openSettingsModal();
       }
     } catch (err) {
       showToast(`初始化失败: ${err.message}`, "error");

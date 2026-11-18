@@ -594,6 +594,7 @@
     },
     renameValue: "",
     settingsDraft: {
+      theme: "Dark",
       configDirectory: "",
       defaultSyncMode: "merge",
       autoBackup: true
@@ -650,9 +651,49 @@
     }, 2800);
   }
 
-  function applyTheme(themeStr) {
-    const isLight = String(themeStr).toLowerCase() === "light";
-    document.documentElement.setAttribute("data-theme", isLight ? "light" : "dark");
+  function normalizeThemeMode(themeStr) {
+    const v = String(themeStr || "").trim().toLowerCase();
+    if (v === "light") return "Light";
+    if (v === "system" || v === "auto") return "System";
+    return "Dark";
+  }
+
+  function resolveEffectiveTheme(themeStr) {
+    const mode = normalizeThemeMode(themeStr);
+    if (mode === "Light") return "light";
+    if (mode === "Dark") return "dark";
+    if (window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches) {
+      return "light";
+    }
+    return "dark";
+  }
+
+  function applyTheme(themeStr, persistCache = true) {
+    const mode = normalizeThemeMode(themeStr);
+    const effective = resolveEffectiveTheme(mode);
+    document.documentElement.setAttribute("data-theme", effective);
+    if (persistCache) {
+      try {
+        localStorage.setItem("ccs_theme_mode", mode);
+      } catch (_) {}
+    }
+  }
+
+  if (window.matchMedia) {
+    const media = window.matchMedia("(prefers-color-scheme: light)");
+    const onSchemeChange = () => {
+      const activeMode = ui.modal === "settings"
+        ? ui.settingsDraft.theme
+        : ui.workspace?.settings?.theme;
+      if (normalizeThemeMode(activeMode) === "System") {
+        applyTheme("System", false);
+      }
+    };
+    if (typeof media.addEventListener === "function") {
+      media.addEventListener("change", onSchemeChange);
+    } else if (typeof media.addListener === "function") {
+      media.addListener(onSchemeChange);
+    }
   }
 
   function currentSelectedProfile() {
@@ -856,15 +897,57 @@
     }
   }
 
-  async function handleToggleTheme() {
+  async function handleSetTheme(nextMode) {
     if (!ui.workspace) return;
-    const nextTheme = ui.workspace.settings.theme === "Light" ? "Dark" : "Light";
+    const normalized = normalizeThemeMode(nextMode);
+    if (normalizeThemeMode(ui.workspace.settings.theme) === normalized) return;
     try {
-      const next = await rpc("update_settings", { theme: nextTheme });
+      applyTheme(normalized, true);
+      const next = await rpc("update_settings", { theme: normalized });
       syncWorkspaceState(next, ui.selectedFile);
+      const labelMap = {
+        Light: "浅色 · 日光宣纸",
+        Dark: "深色 · 曜石暗室",
+        System: "跟随系统外观"
+      };
+      showToast(`已切换至「${labelMap[normalized]}」`, "success");
     } catch (err) {
       showToast(err.message, "error");
     }
+  }
+
+  async function handleToggleTheme() {
+    if (!ui.workspace) return;
+    const effective = resolveEffectiveTheme(ui.workspace.settings.theme);
+    const nextTheme = effective === "light" ? "Dark" : "Light";
+    await handleSetTheme(nextTheme);
+  }
+
+  function renderThemeCapsuleHtml() {
+    const mode = normalizeThemeMode(ui.workspace?.settings?.theme);
+    return `
+      <div class="theme-capsule" role="group" aria-label="外观主题切换">
+        <button type="button" class="theme-seg ${mode === "Light" ? "is-active" : ""}" data-theme-pick="Light" title="浅色主题 · 日光宣纸 (⌘⇧L)">
+          ${ICONS.sun}<span>浅色</span>
+        </button>
+        <button type="button" class="theme-seg ${mode === "Dark" ? "is-active" : ""}" data-theme-pick="Dark" title="深色主题 · 曜石暗室 (⌘⇧L)">
+          ${ICONS.moon}<span>深色</span>
+        </button>
+        <button type="button" class="theme-seg ${mode === "System" ? "is-active" : ""}" data-theme-pick="System" title="跟随操作系统深浅色自动切换">
+          ${ICONS.monitor}<span>自动</span>
+        </button>
+      </div>
+    `;
+  }
+
+  function bindThemeCapsuleEvents(scope) {
+    if (!scope) return;
+    scope.querySelectorAll("[data-theme-pick]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const picked = btn.getAttribute("data-theme-pick");
+        if (picked) handleSetTheme(picked);
+      });
+    });
   }
 
   function openNewProfileWizard(defaultPresetId = "anthropic") {
@@ -903,6 +986,7 @@
   function openSettingsModal() {
     if (!ui.workspace) return;
     ui.settingsDraft = {
+      theme: normalizeThemeMode(ui.workspace.settings.theme),
       configDirectory: ui.workspace.settings.config_directory,
       defaultSyncMode: ui.workspace.settings.default_sync_mode || "merge",
       autoBackup: ui.workspace.settings.auto_backup !== false
@@ -934,7 +1018,6 @@
     const rail = document.getElementById("rail-root");
     if (!rail || !ui.workspace) return;
     const { liveStatus, settings } = ui.workspace;
-    const isLight = settings.theme === "Light";
 
     let statusPillClass = "is-missing";
     let statusLabel = "未托管";
@@ -960,8 +1043,7 @@
         </div>
         <div class="rail-actions">
           <button class="btn btn-icon" id="btn-cmd-palette" title="命令面板 (⌘K)">${ICONS.command}</button>
-          <button class="btn btn-icon" id="btn-theme-toggle" title="切换深浅主题">${isLight ? ICONS.moon : ICONS.sun}</button>
-          <button class="btn btn-icon" id="btn-open-settings" title="应用设置 (⌘,)">${ICONS.settings}</button>
+          <button class="btn btn-icon" id="btn-open-settings" title="应用与主题设置 (⌘,)">${ICONS.settings}</button>
         </div>
       </div>
 
@@ -1177,6 +1259,8 @@
             <span class="crumb-muted">工作台</span>
           </div>
           <div class="topbar-controls">
+            ${renderThemeCapsuleHtml()}
+            <span class="topbar-divider"></span>
             <button class="btn btn-sm btn-ghost" id="ws-btn-backups">${ICONS.history} 历史快照 (${ui.workspace.backupsCount})</button>
           </div>
         </div>
@@ -1190,6 +1274,7 @@
           </div>
         </div>
       `;
+      bindThemeCapsuleEvents(root);
       document.getElementById("ws-btn-backups")?.addEventListener("click", openBackupsModal);
       document.getElementById("empty-btn-new")?.addEventListener("click", () => openNewProfileWizard("anthropic"));
       document.getElementById("empty-btn-import")?.addEventListener("click", async () => {
@@ -1247,6 +1332,8 @@
           ${ui.isDirty ? `<span class="unsaved-badge">● 未保存更改</span>` : ""}
         </div>
         <div class="topbar-controls">
+          ${renderThemeCapsuleHtml()}
+          <span class="topbar-divider"></span>
           <button class="btn btn-sm btn-ghost" id="ws-btn-backups" title="查看与回滚自动备份快照">
             ${ICONS.history} 快照 <span class="tabular">(${ui.workspace.backupsCount})</span>
           </button>
@@ -1328,6 +1415,7 @@
       </div>
     `;
 
+    bindThemeCapsuleEvents(slot);
     document.getElementById("ws-btn-backups")?.addEventListener("click", openBackupsModal);
     document.getElementById("ws-btn-refresh")?.addEventListener("click", () => {
       guardUnsavedChanges(async () => {
@@ -2030,6 +2118,9 @@
     const p = currentSelectedProfile();
     const charCount = (ui.draftContent || "").length;
     const lineCount = ui.draftContent ? ui.draftContent.split("\n").length : 0;
+    const themeMode = normalizeThemeMode(ui.workspace.settings.theme);
+    const themeLabel = themeMode === "Light" ? "浅色" : themeMode === "System" ? "跟随系统" : "深色";
+    const themeIcon = themeMode === "Light" ? ICONS.sun : themeMode === "System" ? ICONS.monitor : ICONS.moon;
     const syncColor =
       ui.workspace.liveStatus.syncState === "synced"
         ? "var(--signal-live)"
@@ -2047,16 +2138,28 @@
       </div>
       <div class="statusbar-group tabular">
         ${p ? `<span>${lineCount} 行 · ${charCount} 字符</span>` : ""}
-        <span>快捷键: <span class="kbd">⌘K</span> 命令 · <span class="kbd">⌘N</span> 新建 · <span class="kbd">⌘↵</span> 激活</span>
+        <span>快捷键: <span class="kbd">⌘K</span> 命令 · <span class="kbd">⌘⇧L</span> 主题 · <span class="kbd">⌘↵</span> 激活</span>
+        <button type="button" class="status-theme-btn" id="status-theme-btn" title="点击切换深色 / 浅色外观 (⌘⇧L)">
+          ${themeIcon}<span>${themeLabel}</span>
+        </button>
         <span>v${escapeHtml(ui.workspace.appVersion)}</span>
       </div>
     `;
+    document.getElementById("status-theme-btn")?.addEventListener("click", handleToggleTheme);
   }
 
   // --- Modals & Command Palette ---
   function closeModal() {
+    const wasSettings = ui.modal === "settings";
     ui.modal = null;
     ui.pendingAction = null;
+    if (wasSettings && ui.workspace) {
+      const savedTheme = normalizeThemeMode(ui.workspace.settings.theme);
+      applyTheme(savedTheme, true);
+      if (isNative) {
+        rpc("window_action", { action: "set_theme", theme: savedTheme }).catch(() => {});
+      }
+    }
     renderModal();
   }
 
@@ -2401,14 +2504,82 @@
         });
       });
     } else if (ui.modal === "settings") {
+      const draftTheme = normalizeThemeMode(ui.settingsDraft.theme);
       root.innerHTML = `
         <div class="overlay" id="modal-overlay">
           <div class="modal" role="dialog" aria-modal="true">
             <div class="modal-header">
-              <span class="modal-title">应用偏好设置</span>
+              <span class="modal-title">应用与外观设置</span>
               <button class="btn btn-icon" id="modal-close">${ICONS.close}</button>
             </div>
             <div class="modal-body">
+              <div class="field">
+                <div class="field-label-row">
+                  <span class="field-label">界面外观主题</span>
+                  <span class="field-key-hint">⌘⇧L 快速切换</span>
+                </div>
+                <div class="theme-picker-grid">
+                  <button type="button" class="theme-card ${draftTheme === "Light" ? "is-selected" : ""}" data-set-theme="Light">
+                    <div class="theme-preview is-light" aria-hidden="true">
+                      <div class="tp-rail">
+                        <div class="tp-dots"><i></i><i></i><i></i></div>
+                        <div class="tp-pill-accent"></div>
+                        <div class="tp-line"></div>
+                      </div>
+                      <div class="tp-main">
+                        <div class="tp-card">
+                          <div class="tp-line"></div>
+                          <div class="tp-line is-short"></div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="theme-card-meta">
+                      <span class="theme-card-title">${ICONS.sun} 浅色模式</span>
+                      <span class="theme-card-sub">日光宣纸</span>
+                    </div>
+                  </button>
+
+                  <button type="button" class="theme-card ${draftTheme === "Dark" ? "is-selected" : ""}" data-set-theme="Dark">
+                    <div class="theme-preview is-dark" aria-hidden="true">
+                      <div class="tp-rail">
+                        <div class="tp-dots"><i></i><i></i><i></i></div>
+                        <div class="tp-pill-accent"></div>
+                        <div class="tp-line"></div>
+                      </div>
+                      <div class="tp-main">
+                        <div class="tp-card">
+                          <div class="tp-line"></div>
+                          <div class="tp-line is-short"></div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="theme-card-meta">
+                      <span class="theme-card-title">${ICONS.moon} 深色模式</span>
+                      <span class="theme-card-sub">曜石暗室</span>
+                    </div>
+                  </button>
+
+                  <button type="button" class="theme-card ${draftTheme === "System" ? "is-selected" : ""}" data-set-theme="System">
+                    <div class="theme-preview is-system" aria-hidden="true">
+                      <div class="tp-sys-half is-l">
+                        <div class="tp-pill-accent"></div>
+                        <div class="tp-line" style="background:#D0C9BC"></div>
+                        <div class="tp-line is-short" style="background:#DED8CC"></div>
+                      </div>
+                      <div class="tp-sys-half is-d">
+                        <div class="tp-pill-accent"></div>
+                        <div class="tp-line" style="background:#3A3E48"></div>
+                        <div class="tp-line is-short" style="background:#2A2D35"></div>
+                      </div>
+                    </div>
+                    <div class="theme-card-meta">
+                      <span class="theme-card-title">${ICONS.monitor} 跟随系统</span>
+                      <span class="theme-card-sub">自动适配</span>
+                    </div>
+                  </button>
+                </div>
+              </div>
+
               <div class="field">
                 <label class="field-label" for="set-dir-input">环境配置存储目录</label>
                 <div class="secret-group">
@@ -2446,6 +2617,17 @@
       `;
       document.getElementById("modal-close")?.addEventListener("click", closeModal);
       document.getElementById("set-cancel")?.addEventListener("click", closeModal);
+      root.querySelectorAll("[data-set-theme]").forEach((card) => {
+        card.addEventListener("click", () => {
+          const picked = normalizeThemeMode(card.getAttribute("data-set-theme"));
+          ui.settingsDraft.theme = picked;
+          applyTheme(picked, false);
+          if (isNative) {
+            rpc("window_action", { action: "set_theme", theme: picked }).catch(() => {});
+          }
+          renderModal();
+        });
+      });
       document.getElementById("set-dir-input")?.addEventListener("input", (e) => { ui.settingsDraft.configDirectory = e.target.value; });
       document.getElementById("set-sync-mode")?.addEventListener("change", (e) => { ui.settingsDraft.defaultSyncMode = e.target.value; });
       document.getElementById("set-backup-sw")?.addEventListener("click", () => {
@@ -2464,13 +2646,16 @@
       document.getElementById("set-save")?.addEventListener("click", async () => {
         try {
           const next = await rpc("update_settings", {
+            theme: normalizeThemeMode(ui.settingsDraft.theme),
             configDirectory: ui.settingsDraft.configDirectory.trim(),
             defaultSyncMode: ui.settingsDraft.defaultSyncMode,
             autoBackup: ui.settingsDraft.autoBackup
           });
-          closeModal();
+          ui.modal = null;
+          ui.pendingAction = null;
+          renderModal();
           syncWorkspaceState(next);
-          showToast("应用设置已更新", "success");
+          showToast("应用与外观设置已更新", "success");
         } catch (err) {
           showToast(err.message, "error");
         }
@@ -2503,8 +2688,10 @@
       { id: "probe", icon: ICONS.radar, title: "对当前配置执行连通性测速", hint: "Ping", run: () => handleProbeCurrent() },
       { id: "diff", icon: ICONS.gitDiff, title: "查看 ~/.claude/settings.json 生效差异对比", hint: "Diff", run: () => { ui.activeTab = "diff"; renderWorkspaceHeaderOnly(); renderWorkspaceBodyOnly(); } },
       { id: "backups", icon: ICONS.history, title: "打开时间机器自动备份快照…", hint: "Backups", run: () => openBackupsModal() },
-      { id: "theme", icon: ICONS.sun, title: "切换深色 (Obsidian) / 浅色 (Parchment) 主题", hint: "Theme", run: () => handleToggleTheme() },
-      { id: "settings", icon: ICONS.settings, title: "打开应用偏好设置…", hint: "⌘,", run: () => openSettingsModal() }
+      { id: "theme-light", icon: ICONS.sun, title: "外观主题: 切换至浅色模式 (日光宣纸)", hint: "Light", run: () => handleSetTheme("Light") },
+      { id: "theme-dark", icon: ICONS.moon, title: "外观主题: 切换至深色模式 (曜石暗室)", hint: "Dark", run: () => handleSetTheme("Dark") },
+      { id: "theme-system", icon: ICONS.monitor, title: "外观主题: 跟随操作系统自动切换", hint: "Auto", run: () => handleSetTheme("System") },
+      { id: "settings", icon: ICONS.settings, title: "打开应用与外观设置…", hint: "⌘,", run: () => openSettingsModal() }
     );
     const q = ui.paletteQuery.trim().toLowerCase();
     if (!q) return items;
@@ -2520,7 +2707,7 @@
         <div class="modal" role="dialog" aria-modal="true">
           <div class="cmd-input-wrap">
             ${ICONS.search}
-            <input id="cmd-palette-input" class="cmd-input" type="text" placeholder="输入环境名称立即切换，或执行命令…" value="${escapeHtml(ui.paletteQuery)}" autocomplete="off" />
+            <input id="cmd-palette-input" class="cmd-input" type="text" placeholder="输入环境名称立即切换，或搜索外观 / 命令…" value="${escapeHtml(ui.paletteQuery)}" autocomplete="off" />
             <span class="kbd">ESC</span>
           </div>
           <div class="cmd-list" id="cmd-palette-list"></div>
@@ -2589,6 +2776,11 @@
       closeModal();
       return;
     }
+    if (mod && e.shiftKey && e.key.toLowerCase() === "l") {
+      e.preventDefault();
+      handleToggleTheme();
+      return;
+    }
     if (mod && e.key.toLowerCase() === "k") {
       e.preventDefault();
       if (ui.modal === "palette") closeModal();
@@ -2649,6 +2841,7 @@
         const params = new URLSearchParams(window.location.search);
         if (params.get("theme") === "light") state.settings.theme = "Light";
         if (params.get("theme") === "dark") state.settings.theme = "Dark";
+        if (params.get("theme") === "system") state.settings.theme = "System";
         const tab = params.get("tab");
         if (tab === "studio" || tab === "json" || tab === "diff") ui.activeTab = tab;
         const sel = params.get("select");
@@ -2662,6 +2855,7 @@
         const params = new URLSearchParams(window.location.search);
         if (params.get("modal") === "new") openNewProfileWizard("openrouter");
         if (params.get("modal") === "palette") openCommandPalette();
+        if (params.get("modal") === "settings") openSettingsModal();
       }
     } catch (err) {
       showToast(`初始化失败: ${err.message}`, "error");

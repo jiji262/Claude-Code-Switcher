@@ -1,68 +1,57 @@
 /* ==========================================================================
    Claude Code Switcher v2.0 — Three-Layer Design Tokens
-   Direction: Editorial Warm Precision (Obsidian Studio & Warm Parchment)
+   Dual Flagship Themes:
+   - Obsidian Studio (Dark)  : Layered architectural graphite + warm specular catchlights
+   - Warm Alabaster  (Light) : Crisp pure paper cards on warm linen + soft ambient shadows
    ========================================================================== */
 
 :root {
-  /* --- Layer 1: Primitive Color Tokens --- */
-  --p-stone-950: #121210;
-  --p-stone-925: #171614;
-  --p-stone-900: #1C1B18;
-  --p-stone-850: #22211E;
-  --p-stone-800: #2A2824;
-  --p-stone-750: #33302B;
-  --p-stone-700: #3E3A34;
-  --p-stone-600: #59544B;
-  --p-stone-500: #7D776C;
-  --p-stone-400: #A8A195;
-  --p-stone-300: #CFC9BE;
-  --p-stone-200: #E3DED4;
-  --p-stone-150: #ECE8DF;
-  --p-stone-100: #F3F0E8;
-  --p-stone-50:  #FAF8F4;
-  --p-white:     #FFFFFF;
+  /* --- Layer 1: Primitive Color Scales --- */
+  /* Obsidian Graphite Scale (Dark Surfaces) */
+  --p-obsidian-975: #0B0C0E;
+  --p-obsidian-950: #111215;
+  --p-obsidian-925: #15161A;
+  --p-obsidian-900: #1C1E23;
+  --p-obsidian-850: #23262D;
+  --p-obsidian-800: #2C3038;
+  --p-obsidian-750: #363A44;
 
-  /* Claude Terracotta Scale */
-  --p-clay-700: #9E4326;
-  --p-clay-600: #B85030;
-  --p-clay-500: #CC6240;
-  --p-clay-400: #D97757;
-  --p-clay-300: #E7967B;
-  --p-clay-glow-dark: rgba(217, 119, 87, 0.15);
-  --p-clay-glow-light: rgba(204, 98, 64, 0.11);
+  /* Warm Alabaster & Linen Scale (Light Surfaces & Ink) */
+  --p-paper-white:  #FFFFFF;
+  --p-alabaster-25: #FCFBF8;
+  --p-alabaster-50: #F8F6F1;
+  --p-linen-100:    #EFECE4;
+  --p-linen-150:    #E8E3D9;
+  --p-linen-200:    #DED8CC;
+  --p-linen-300:    #CBC3B4;
+  --p-ink-950:      #171614;
+  --p-ink-700:      #4E4940;
+  --p-ink-500:      #797266;
+  --p-chalk-100:    #F4F2EC;
+  --p-chalk-300:    #ADA89D;
+  --p-chalk-500:    #7B766C;
+
+  /* Claude Terracotta Accent Scale */
+  --p-clay-700: #9B3E22;
+  --p-clay-600: #B44B2B;
+  --p-clay-500: #C65937;
+  --p-clay-400: #DE7856;
+  --p-clay-300: #EA8D6E;
 
   /* Instrument Signal Scales */
-  --p-emerald-600: #1E8255;
-  --p-emerald-500: #279663;
-  --p-emerald-400: #3ECF8E;
-  --p-emerald-soft-dark: rgba(62, 207, 142, 0.13);
-  --p-emerald-soft-light: rgba(30, 130, 85, 0.10);
+  --p-emerald-600: #147A4B;
+  --p-emerald-400: #3BD18D;
 
-  --p-amber-600: #B2680E;
-  --p-amber-400: #E6A23C;
-  --p-amber-soft-dark: rgba(230, 162, 60, 0.14);
-  --p-amber-soft-light: rgba(178, 104, 14, 0.11);
+  --p-amber-600:   #A65D08;
+  --p-amber-400:   #EEAB42;
 
-  --p-crimson-600: #C23A32;
-  --p-crimson-400: #F06A63;
-  --p-crimson-soft-dark: rgba(240, 106, 99, 0.14);
-  --p-crimson-soft-light: rgba(194, 58, 50, 0.10);
+  --p-crimson-600: #BD3129;
+  --p-crimson-400: #F26B64;
 
-  --p-sky-600: #2563EB;
-  --p-sky-400: #6BA3FF;
+  --p-sky-600:     #245EE0;
+  --p-sky-400:     #6DA4FF;
 
-  /* Diff Highlight Primitives */
-  --p-diff-add-bg-dark: rgba(62, 207, 142, 0.11);
-  --p-diff-add-fg-dark: #7CE5B4;
-  --p-diff-del-bg-dark: rgba(240, 106, 99, 0.12);
-  --p-diff-del-fg-dark: #F79893;
-
-  --p-diff-add-bg-light: rgba(30, 130, 85, 0.10);
-  --p-diff-add-fg-light: #166541;
-  --p-diff-del-bg-light: rgba(194, 58, 50, 0.09);
-  --p-diff-del-fg-light: #9E2A23;
-
-  /* --- Layer 1: Primitive Spacing, Typography & Motion --- */
+  /* --- Layer 1: Spacing, Radius, Typography & Motion --- */
   --space-1: 4px;
   --space-1-5: 6px;
   --space-2: 8px;
@@ -76,9 +65,9 @@
   --space-10: 40px;
 
   --radius-xs: 5px;
-  --radius-sm: 7px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
+  --radius-sm: 8px;
+  --radius-md: 11px;
+  --radius-lg: 15px;
   --radius-pill: 999px;
 
   --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei UI", system-ui, sans-serif;
@@ -107,113 +96,167 @@
   --control-lg: 38px;
 }
 
-/* --- Layer 2: Semantic Tokens — Obsidian Studio (Dark Default) --- */
+/* ==========================================================================
+   Layer 2: Semantic Tokens — Obsidian Studio (Dark Theme)
+   ========================================================================== */
 :root,
 [data-theme="dark"] {
   color-scheme: dark;
 
-  --bg-canvas: var(--p-stone-950);
-  --bg-rail: var(--p-stone-925);
-  --bg-surface: var(--p-stone-900);
-  --bg-elevated: var(--p-stone-850);
-  --bg-inset: #0E0E0C;
-  --bg-hover: var(--p-stone-850);
-  --bg-active: var(--p-stone-800);
-  --bg-selected: rgba(217, 119, 87, 0.12);
-  --bg-backdrop: rgba(8, 8, 7, 0.66);
+  /* Surfaces (4 distinct depth planes) */
+  --bg-inset:       var(--p-obsidian-975);
+  --bg-rail:        var(--p-obsidian-950);
+  --bg-canvas:      var(--p-obsidian-925);
+  --bg-surface:     var(--p-obsidian-900);
+  --bg-subtle-card: #181A1F;
+  --bg-elevated:    var(--p-obsidian-850);
+  --bg-hover:       rgba(255, 250, 240, 0.055);
+  --bg-active:      rgba(255, 250, 240, 0.095);
+  --bg-selected:    rgba(222, 120, 86, 0.13);
+  --bg-backdrop:    rgba(6, 7, 9, 0.68);
+  --canvas-ambient: radial-gradient(920px 320px at 50% -110px, rgba(222, 120, 86, 0.065), transparent 70%);
 
-  --border-subtle: #262420;
-  --border-default: #312E29;
-  --border-strong: #433F38;
-  --border-focus: var(--p-clay-400);
+  /* Hairlines & Focus */
+  --border-subtle:  rgba(255, 250, 242, 0.075);
+  --border-default: rgba(255, 250, 242, 0.125);
+  --border-strong:  rgba(255, 250, 242, 0.21);
+  --border-focus:   var(--p-clay-400);
+  --focus-ring:     rgba(222, 120, 86, 0.22);
 
-  --text-primary: #F3F0E9;
-  --text-secondary: #B4AEA2;
-  --text-tertiary: #847E72;
-  --text-on-accent: #FAF8F4;
+  /* Typography */
+  --text-primary:   var(--p-chalk-100);
+  --text-secondary: var(--p-chalk-300);
+  --text-tertiary:  var(--p-chalk-500);
+  --text-on-accent: #FFFFFF;
 
-  --accent: var(--p-clay-400);
-  --accent-hover: var(--p-clay-300);
+  /* Accent */
+  --accent:         var(--p-clay-400);
+  --accent-hover:   var(--p-clay-300);
   --accent-pressed: var(--p-clay-500);
-  --accent-soft: var(--p-clay-glow-dark);
+  --accent-soft:    rgba(222, 120, 86, 0.14);
+  --accent-border:  rgba(222, 120, 86, 0.42);
 
-  --signal-live: var(--p-emerald-400);
-  --signal-live-soft: var(--p-emerald-soft-dark);
-  --signal-warn: var(--p-amber-400);
-  --signal-warn-soft: var(--p-amber-soft-dark);
-  --signal-danger: var(--p-crimson-400);
-  --signal-danger-soft: var(--p-crimson-soft-dark);
+  /* Semantic Signals */
+  --signal-live:        var(--p-emerald-400);
+  --signal-live-soft:   rgba(59, 209, 141, 0.13);
+  --signal-live-border: rgba(59, 209, 141, 0.28);
+
+  --signal-warn:        var(--p-amber-400);
+  --signal-warn-soft:   rgba(238, 171, 66, 0.14);
+  --signal-warn-border: rgba(238, 171, 66, 0.30);
+
+  --signal-danger:        var(--p-crimson-400);
+  --signal-danger-soft:   rgba(242, 107, 100, 0.14);
+  --signal-danger-border: rgba(242, 107, 100, 0.30);
+
   --signal-info: var(--p-sky-400);
 
-  --diff-add-bg: var(--p-diff-add-bg-dark);
-  --diff-add-fg: var(--p-diff-add-fg-dark);
-  --diff-del-bg: var(--p-diff-del-bg-dark);
-  --diff-del-fg: var(--p-diff-del-fg-dark);
+  /* Diff & Code Surfaces */
+  --code-gutter-bg: #101114;
+  --diff-add-bg:    rgba(59, 209, 141, 0.11);
+  --diff-add-fg:    #82E8BA;
+  --diff-del-bg:    rgba(242, 107, 100, 0.12);
+  --diff-del-fg:    #F99D98;
 
-  --syntax-key: #E7967B;
-  --syntax-str: #8FD9A8;
-  --syntax-num: #E6B46A;
-  --syntax-bool: #8AB4F8;
-  --syntax-punc: #7D776C;
+  /* Elevations, Sheens & Controls */
+  --surface-sheen:  inset 0 1px 0 rgba(255, 255, 255, 0.045);
+  --inset-shadow:   inset 0 1px 2px rgba(0, 0, 0, 0.35);
+  --shadow-xs:      0 1px 2px rgba(0, 0, 0, 0.32);
+  --shadow-card:    0 1px 2px rgba(0, 0, 0, 0.36), 0 6px 18px rgba(0, 0, 0, 0.16);
+  --shadow-btn:     0 1px 2px rgba(0, 0, 0, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.055);
+  --shadow-primary: 0 1px 2px rgba(0, 0, 0, 0.42), 0 4px 14px rgba(217, 119, 87, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.20);
+  --shadow-seg:     0 1px 3px rgba(0, 0, 0, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  --shadow-overlay: 0 22px 56px rgba(0, 0, 0, 0.62), 0 6px 16px rgba(0, 0, 0, 0.38);
+  --shadow-toast:   0 12px 32px rgba(0, 0, 0, 0.50);
 
-  --shadow-overlay: 0 18px 48px rgba(0, 0, 0, 0.52), 0 4px 12px rgba(0, 0, 0, 0.34);
-  --shadow-toast: 0 10px 28px rgba(0, 0, 0, 0.45);
-  --selection-bg: rgba(217, 119, 87, 0.28);
-  --scrollbar-thumb: #36332D;
-  --scrollbar-thumb-hover: #4A463E;
+  --kbd-bg:         rgba(255, 255, 255, 0.065);
+  --kbd-border:     rgba(255, 255, 255, 0.11);
+  --kbd-shadow:     rgba(0, 0, 0, 0.35);
+  --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23ADA89D' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+
+  --selection-bg:          rgba(222, 120, 86, 0.30);
+  --scrollbar-thumb:       rgba(255, 250, 240, 0.14);
+  --scrollbar-thumb-hover: rgba(255, 250, 240, 0.25);
 }
 
-/* --- Layer 2: Semantic Tokens — Warm Parchment (Light) --- */
+/* ==========================================================================
+   Layer 2: Semantic Tokens — Warm Alabaster (Light Theme)
+   ========================================================================== */
 [data-theme="light"] {
   color-scheme: light;
 
-  --bg-canvas: var(--p-stone-50);
-  --bg-rail: var(--p-stone-100);
-  --bg-surface: var(--p-white);
-  --bg-elevated: var(--p-white);
-  --bg-inset: #F4F1EA;
-  --bg-hover: #EAE6DC;
-  --bg-active: #E1DCD0;
-  --bg-selected: rgba(204, 98, 64, 0.10);
-  --bg-backdrop: rgba(24, 23, 21, 0.36);
+  /* Surfaces (Crisp pure white studio cards over warm alabaster & linen) */
+  --bg-inset:       var(--p-alabaster-25);
+  --bg-rail:        var(--p-linen-100);
+  --bg-canvas:      var(--p-alabaster-50);
+  --bg-surface:     var(--p-paper-white);
+  --bg-subtle-card: #FAF8F4;
+  --bg-elevated:    var(--p-paper-white);
+  --bg-hover:       rgba(32, 28, 22, 0.048);
+  --bg-active:      rgba(32, 28, 22, 0.085);
+  --bg-selected:    rgba(198, 89, 55, 0.09);
+  --bg-backdrop:    rgba(24, 22, 18, 0.32);
+  --canvas-ambient: radial-gradient(920px 320px at 50% -120px, rgba(198, 89, 55, 0.055), transparent 70%);
 
-  --border-subtle: #E5E0D5;
-  --border-default: #D7D1C4;
-  --border-strong: #BEB7A8;
-  --border-focus: var(--p-clay-500);
+  /* Hairlines & Focus */
+  --border-subtle:  #E5DFD3;
+  --border-default: #D5CEC0;
+  --border-strong:  #B9B09F;
+  --border-focus:   var(--p-clay-500);
+  --focus-ring:     rgba(198, 89, 55, 0.16);
 
-  --text-primary: #191816;
-  --text-secondary: #575248;
-  --text-tertiary: #7A7367;
+  /* Typography */
+  --text-primary:   var(--p-ink-950);
+  --text-secondary: var(--p-ink-700);
+  --text-tertiary:  var(--p-ink-500);
   --text-on-accent: #FFFFFF;
 
-  --accent: var(--p-clay-500);
-  --accent-hover: var(--p-clay-600);
+  /* Accent */
+  --accent:         var(--p-clay-500);
+  --accent-hover:   var(--p-clay-600);
   --accent-pressed: var(--p-clay-700);
-  --accent-soft: var(--p-clay-glow-light);
+  --accent-soft:    rgba(198, 89, 55, 0.09);
+  --accent-border:  rgba(198, 89, 55, 0.36);
 
-  --signal-live: var(--p-emerald-600);
-  --signal-live-soft: var(--p-emerald-soft-light);
-  --signal-warn: var(--p-amber-600);
-  --signal-warn-soft: var(--p-amber-soft-light);
-  --signal-danger: var(--p-crimson-600);
-  --signal-danger-soft: var(--p-crimson-soft-light);
+  /* Semantic Signals */
+  --signal-live:        var(--p-emerald-600);
+  --signal-live-soft:   rgba(20, 122, 75, 0.095);
+  --signal-live-border: rgba(20, 122, 75, 0.24);
+
+  --signal-warn:        var(--p-amber-600);
+  --signal-warn-soft:   rgba(166, 93, 8, 0.10);
+  --signal-warn-border: rgba(166, 93, 8, 0.25);
+
+  --signal-danger:        var(--p-crimson-600);
+  --signal-danger-soft:   rgba(189, 49, 41, 0.09);
+  --signal-danger-border: rgba(189, 49, 41, 0.25);
+
   --signal-info: var(--p-sky-600);
 
-  --diff-add-bg: var(--p-diff-add-bg-light);
-  --diff-add-fg: var(--p-diff-add-fg-light);
-  --diff-del-bg: var(--p-diff-del-bg-light);
-  --diff-del-fg: var(--p-diff-del-fg-light);
+  /* Diff & Code Surfaces */
+  --code-gutter-bg: #F2EFE7;
+  --diff-add-bg:    rgba(20, 122, 75, 0.095);
+  --diff-add-fg:    #115E39;
+  --diff-del-bg:    rgba(189, 49, 41, 0.09);
+  --diff-del-fg:    #99221B;
 
-  --syntax-key: #A84424;
-  --syntax-str: #1B6E46;
-  --syntax-num: #9A5B0A;
-  --syntax-bool: #1D4ED8;
-  --syntax-punc: #7A7367;
+  /* Elevations, Sheens & Controls */
+  --surface-sheen:  inset 0 1px 0 rgba(255, 255, 255, 0.90);
+  --inset-shadow:   inset 0 1px 2px rgba(24, 22, 18, 0.045);
+  --shadow-xs:      0 1px 2px rgba(28, 25, 20, 0.05);
+  --shadow-card:    0 1px 2px rgba(28, 25, 20, 0.045), 0 5px 16px rgba(28, 25, 20, 0.035);
+  --shadow-btn:     0 1px 2px rgba(28, 25, 20, 0.055), inset 0 1px 0 rgba(255, 255, 255, 0.92);
+  --shadow-primary: 0 1px 2px rgba(155, 62, 34, 0.26), 0 4px 12px rgba(198, 89, 55, 0.20), inset 0 1px 0 rgba(255, 255, 255, 0.24);
+  --shadow-seg:     0 1px 3px rgba(28, 25, 20, 0.09), 0 1px 1px rgba(28, 25, 20, 0.05);
+  --shadow-overlay: 0 20px 52px rgba(24, 22, 18, 0.16), 0 4px 14px rgba(24, 22, 18, 0.07);
+  --shadow-toast:   0 10px 28px rgba(24, 22, 18, 0.13);
 
-  --shadow-overlay: 0 18px 44px rgba(25, 24, 22, 0.16), 0 4px 12px rgba(25, 24, 22, 0.08);
-  --shadow-toast: 0 8px 24px rgba(25, 24, 22, 0.13);
-  --selection-bg: rgba(204, 98, 64, 0.20);
-  --scrollbar-thumb: #CFC9BE;
-  --scrollbar-thumb-hover: #B5AEA0;
+  --kbd-bg:         #F2EFE8;
+  --kbd-border:     #DCD5C7;
+  --kbd-shadow:     rgba(28, 25, 20, 0.08);
+  --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%234E4940' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+
+  --selection-bg:          rgba(198, 89, 55, 0.18);
+  --scrollbar-thumb:       rgba(28, 25, 20, 0.18);
+  --scrollbar-thumb-hover: rgba(28, 25, 20, 0.30);
 }
