@@ -12,7 +12,7 @@ window.CCS_PRESETS = [
     template: {
       env: {
         ANTHROPIC_BASE_URL: "https://api.anthropic.com",
-        ANTHROPIC_API_KEY: "sk-ant-api03-your-key-here"
+        ANTHROPIC_API_KEY: ""
       },
       model: "claude-sonnet-4-6"
     }
@@ -26,8 +26,7 @@ window.CCS_PRESETS = [
     template: {
       env: {
         ANTHROPIC_BASE_URL: "https://openrouter.ai/api",
-        ANTHROPIC_AUTH_TOKEN: "sk-or-v1-your-key-here",
-        ANTHROPIC_API_KEY: ""
+        ANTHROPIC_AUTH_TOKEN: ""
       },
       model: "anthropic/claude-sonnet-4.6"
     }
@@ -41,7 +40,7 @@ window.CCS_PRESETS = [
     template: {
       env: {
         ANTHROPIC_BASE_URL: "https://api.deepseek.com/anthropic",
-        ANTHROPIC_AUTH_TOKEN: "sk-your-deepseek-key",
+        ANTHROPIC_AUTH_TOKEN: "",
         ANTHROPIC_MODEL: "deepseek-chat",
         ANTHROPIC_SMALL_FAST_MODEL: "deepseek-chat",
         CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: "1"
@@ -57,7 +56,7 @@ window.CCS_PRESETS = [
     template: {
       env: {
         ANTHROPIC_BASE_URL: "https://open.bigmodel.cn/api/anthropic",
-        ANTHROPIC_AUTH_TOKEN: "your-zhipu-api-key",
+        ANTHROPIC_AUTH_TOKEN: "",
         CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: "1"
       }
     }
@@ -71,7 +70,7 @@ window.CCS_PRESETS = [
     template: {
       env: {
         ANTHROPIC_BASE_URL: "https://api.moonshot.cn/anthropic",
-        ANTHROPIC_AUTH_TOKEN: "sk-your-moonshot-key",
+        ANTHROPIC_AUTH_TOKEN: "",
         CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: "1"
       }
     }
@@ -85,7 +84,7 @@ window.CCS_PRESETS = [
     template: {
       env: {
         ANTHROPIC_BASE_URL: "https://api.siliconflow.cn/",
-        ANTHROPIC_AUTH_TOKEN: "sk-your-siliconflow-key",
+        ANTHROPIC_AUTH_TOKEN: "",
         ANTHROPIC_MODEL: "Pro/deepseek-ai/DeepSeek-V3"
       }
     }
@@ -114,7 +113,7 @@ window.CCS_PRESETS = [
       env: {
         CLAUDE_CODE_USE_VERTEX: "1",
         CLOUD_ML_REGION: "global",
-        ANTHROPIC_VERTEX_PROJECT_ID: "your-gcp-project-id"
+        ANTHROPIC_VERTEX_PROJECT_ID: ""
       }
     }
   },
@@ -127,7 +126,7 @@ window.CCS_PRESETS = [
     template: {
       env: {
         ANTHROPIC_BASE_URL: "https://your-gateway.example.com",
-        ANTHROPIC_AUTH_TOKEN: "sk-your-relay-token"
+        ANTHROPIC_AUTH_TOKEN: ""
       }
     }
   }
@@ -165,7 +164,7 @@ window.CCS_PARSE_FORM = function (jsonText) {
   const env = (obj.env && typeof obj.env === "object" && !Array.isArray(obj.env)) ? obj.env : {};
   const perms = (obj.permissions && typeof obj.permissions === "object") ? obj.permissions : {};
 
-  let authMode = "auth_token";
+  let authMode = "oauth_none";
   if (String(env.CLAUDE_CODE_USE_BEDROCK || "") === "1") {
     authMode = "bedrock";
   } else if (String(env.CLAUDE_CODE_USE_VERTEX || "") === "1") {
@@ -174,8 +173,8 @@ window.CCS_PARSE_FORM = function (jsonText) {
     authMode = "auth_token";
   } else if (env.ANTHROPIC_API_KEY !== undefined && env.ANTHROPIC_API_KEY !== "") {
     authMode = "api_key";
-  } else if (env.ANTHROPIC_API_KEY === undefined && env.ANTHROPIC_AUTH_TOKEN === undefined) {
-    authMode = "oauth_none";
+  } else if (env.ANTHROPIC_AUTH_TOKEN !== undefined) {
+    authMode = "auth_token";
   } else if (env.ANTHROPIC_API_KEY !== undefined) {
     authMode = "api_key";
   }

@@ -171,9 +171,24 @@ html, body {
   background: var(--signal-warn-soft);
   color: var(--signal-warn);
 }
+.live-pill.is-corrupted {
+  background: var(--signal-danger-soft);
+  color: var(--signal-danger);
+}
 .live-pill.is-missing {
   background: var(--bg-active);
   color: var(--text-secondary);
+}
+
+.snap-badge-orig {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 6px;
+  border-radius: var(--radius-pill);
+  font-size: 10px;
+  font-weight: 600;
+  background: var(--accent-soft);
+  color: var(--accent);
 }
 
 .pulse-dot {

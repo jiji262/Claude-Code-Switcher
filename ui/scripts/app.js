@@ -82,6 +82,9 @@
     }
     if (profileObj.env && typeof profileObj.env === "object" && !Array.isArray(profileObj.env)) {
       for (const [k, v] of Object.entries(profileObj.env)) {
+        if ((k === "ANTHROPIC_API_KEY" || k === "ANTHROPIC_AUTH_TOKEN") && typeof v === "string" && v.trim() === "") {
+          continue;
+        }
         baseObj.env[k] = v;
       }
     }
@@ -89,14 +92,13 @@
       delete baseObj.env;
     }
 
-    if ("model" in profileObj) {
-      baseObj.model = profileObj.model;
-    }
-    if ("alwaysThinkingEnabled" in profileObj) {
-      baseObj.alwaysThinkingEnabled = profileObj.alwaysThinkingEnabled;
-    }
+    // Clear stale profile-managed top-level keys before applying target profile
+    delete baseObj.model;
+    delete baseObj.alwaysThinkingEnabled;
+
     for (const [k, v] of Object.entries(profileObj)) {
-      if (k === "env" || k === "model" || k === "alwaysThinkingEnabled") continue;
+      if (k === "env") continue;
+      if (k === "model" && typeof v === "string" && v.trim() === "") continue;
       if (k === "permissions" && v && typeof v === "object" && baseObj.permissions && typeof baseObj.permissions === "object") {
         baseObj.permissions = { ...baseObj.permissions, ...v };
       } else {
@@ -104,6 +106,21 @@
       }
     }
     return JSON.stringify(baseObj, null, 2);
+  }
+
+  function extractProviderProfileFromLiveJs(liveRaw) {
+    try {
+      const parsed = JSON.parse(liveRaw || "{}");
+      if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return liveRaw;
+      const out = {};
+      if (parsed.env && typeof parsed.env === "object") out.env = parsed.env;
+      if ("model" in parsed) out.model = parsed.model;
+      if ("alwaysThinkingEnabled" in parsed) out.alwaysThinkingEnabled = parsed.alwaysThinkingEnabled;
+      if (Object.keys(out).length === 0) out.env = {};
+      return JSON.stringify(out, null, 2);
+    } catch (_) {
+      return liveRaw;
+    }
   }
 
   // --- Browser Preview Mock Backend (Used only when outside Native Wry) ---
@@ -138,19 +155,30 @@
       liveContent: liveInitial,
       backups: [
         {
+          id: "original-claude-settings",
+          fileName: "original-claude-settings.json",
+          createdAt: "首次启动",
+          label: "初始原版 ~/.claude/settings.json (永久保护)",
+          byteSize: liveInitial.length,
+          isOriginal: true,
+          content: liveInitial
+        },
+        {
           id: "snap-01",
-          fileName: "20261118-004210_Anthropic-Official.json",
+          fileName: "snap-01.json",
           createdAt: "15 分钟前",
-          label: "切换前自动备份 · OpenRouter",
+          label: "切换至「OpenRouter Relay」前自动备份",
           byteSize: 642,
+          isOriginal: false,
           content: liveInitial
         },
         {
           id: "snap-02",
-          fileName: "20261117-221504_DeepSeek-Coder.json",
+          fileName: "snap-02.json",
           createdAt: "3 小时前",
-          label: "切换前自动备份 · DeepSeek",
+          label: "切换至「DeepSeek V3 Coding」前自动备份",
           byteSize: 618,
+          isOriginal: false,
           content: liveInitial
         }
       ],
@@ -189,8 +217,7 @@
           content: JSON.stringify({
             env: {
               ANTHROPIC_BASE_URL: "https://openrouter.ai/api",
-              ANTHROPIC_AUTH_TOKEN: "sk-or-v1-92bc41e09fa188b27c3d",
-              ANTHROPIC_API_KEY: ""
+              ANTHROPIC_AUTH_TOKEN: "sk-or-v1-92bc41e09fa188b27c3d"
             },
             model: "anthropic/claude-sonnet-4.6"
           }, null, 2)
@@ -269,7 +296,7 @@
     const secret = parsed.authMode === "api_key" ? parsed.apiKey : parsed.authToken;
     const maskedKey = secret
       ? (secret.length > 10 ? `${secret.slice(0, 6)}••••${secret.slice(-4)}` : "••••••••")
-      : (parsed.authMode === "oauth_none" ? "OAuth / 订阅" : "云端 IAM");
+      : (parsed.authMode === "oauth_none" ? "OAuth / 订阅" : (parsed.authMode === "bedrock" || parsed.authMode === "vertex" ? "IAM / Cloud" : "待填写密钥"));
     return {
       ...p,
       isActive: mockStore.settings.default_config_file === p.fileName,
@@ -282,15 +309,18 @@
     };
   }
 
-  function buildMockState() {
+  function buildMockState(targetFile = undefined) {
     const profiles = mockStore.profiles.map(enrichMockProfile).sort((a, b) => {
       if (a.isActive !== b.isActive) return a.isActive ? -1 : 1;
       if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
       return a.displayName.localeCompare(b.displayName);
     });
     const active = profiles.find((p) => p.isActive);
+    const liveForm = window.CCS_PARSE_FORM(mockStore.liveContent);
     let syncState = "unmanaged";
-    if (active) {
+    if (!liveForm.valid) {
+      syncState = "corrupted";
+    } else if (active) {
       try {
         syncState = JSON.stringify(JSON.parse(active.effectivePreview)) === JSON.stringify(JSON.parse(mockStore.liveContent))
           ? "synced"
@@ -299,9 +329,8 @@
         syncState = "drifted";
       }
     }
-    const liveForm = window.CCS_PARSE_FORM(mockStore.liveContent);
-    let activeHost = "api.anthropic.com";
-    if (liveForm.baseUrl) {
+    let activeHost = liveForm.valid ? "api.anthropic.com" : "JSON 语法错误";
+    if (liveForm.valid && liveForm.baseUrl) {
       try { activeHost = new URL(liveForm.baseUrl).host; } catch (_) { activeHost = liveForm.baseUrl; }
     }
     const liveRaw = liveForm.raw || {};
@@ -316,14 +345,15 @@
         exists: true,
         syncState,
         activeHost,
-        activeModel: liveForm.topModel || liveForm.envModel || "claude-sonnet-4-6",
+        activeModel: liveForm.topModel || liveForm.envModel || "默认模型",
         preservedSections,
         liveContent: mockStore.liveContent,
         byteSize: mockStore.liveContent.length,
         modifiedAgo: "刚刚"
       },
       profiles,
-      backupsCount: mockStore.backups.length
+      backupsCount: mockStore.backups.length,
+      targetFile
     };
   }
 
@@ -333,11 +363,16 @@
       case "get_state":
         return buildMockState();
       case "create_profile": {
-        const clean = payload.name.replace(/\.json$/i, "").trim() || "New Profile";
-        const fileName = `${clean}.json`;
+        const baseClean = payload.name.replace(/\.json$/i, "").trim() || "New Profile";
+        let fileName = `${baseClean}.json`;
+        let counter = 1;
+        while (mockStore.profiles.some((x) => x.fileName === fileName)) {
+          fileName = `${baseClean}_${counter++}.json`;
+        }
+        const displayName = fileName.replace(/\.json$/i, "");
         mockStore.profiles.push({
           fileName,
-          displayName: clean,
+          displayName,
           provider: payload.provider || "custom",
           description: payload.description || "",
           syncMode: payload.syncMode || mockStore.settings.default_sync_mode,
@@ -352,7 +387,7 @@
           mockStore.liveContent = computeEffectiveJson(mockStore.liveContent, payload.content, payload.syncMode || "merge");
           mockStore.settings.default_config_file = fileName;
         }
-        return buildMockState();
+        return buildMockState(fileName);
       }
       case "save_profile": {
         const idx = mockStore.profiles.findIndex((p) => p.fileName === payload.fileName);
@@ -370,55 +405,68 @@
             mockStore.liveContent = computeEffectiveJson(mockStore.liveContent, payload.content, mockStore.profiles[idx].syncMode);
           }
         }
-        return buildMockState();
+        return buildMockState(payload.fileName);
       }
       case "activate_profile": {
         const p = mockStore.profiles.find((x) => x.fileName === payload.fileName);
         if (p) {
-          mockStore.backups.unshift({
-            id: `snap-${Date.now()}`,
-            fileName: `${Date.now()}_${p.fileName}`,
-            createdAt: "刚刚",
-            label: `切换至 ${p.displayName} 前备份`,
-            byteSize: mockStore.liveContent.length,
-            content: mockStore.liveContent
-          });
-          mockStore.liveContent = computeEffectiveJson(mockStore.liveContent, p.content, payload.syncModeOverride || p.syncMode);
+          if (mockStore.settings.auto_backup) {
+            const origIdx = mockStore.backups.findIndex((b) => b.isOriginal);
+            const insertAt = origIdx >= 0 ? origIdx + 1 : 0;
+            mockStore.backups.splice(insertAt, 0, {
+              id: `snap-${Date.now()}`,
+              fileName: `snap-${Date.now()}.json`,
+              createdAt: "刚刚",
+              label: `切换至「${p.displayName}」前自动备份`,
+              byteSize: mockStore.liveContent.length,
+              isOriginal: false,
+              content: mockStore.liveContent
+            });
+          }
+          if (payload.syncModeOverride) p.syncMode = payload.syncModeOverride;
+          mockStore.liveContent = computeEffectiveJson(mockStore.liveContent, p.content, p.syncMode);
           mockStore.settings.default_config_file = p.fileName;
         }
-        return buildMockState();
+        return buildMockState(payload.fileName);
       }
       case "toggle_pin": {
         const p = mockStore.profiles.find((x) => x.fileName === payload.fileName);
         if (p) p.pinned = !p.pinned;
-        return buildMockState();
+        return buildMockState(payload.fileName);
       }
       case "duplicate_profile": {
         const p = mockStore.profiles.find((x) => x.fileName === payload.fileName);
+        let newFn;
         if (p) {
-          const copyName = `${p.displayName} 副本`;
+          let copyName = `${p.displayName} 副本`;
+          newFn = `${copyName}.json`;
+          let c = 1;
+          while (mockStore.profiles.some((x) => x.fileName === newFn)) {
+            newFn = `${copyName}_${c++}.json`;
+          }
           mockStore.profiles.push({
             ...p,
-            fileName: `${copyName}.json`,
-            displayName: copyName,
+            fileName: newFn,
+            displayName: newFn.replace(/\.json$/i, ""),
             pinned: false,
             updatedAgo: "刚刚"
           });
         }
-        return buildMockState();
+        return buildMockState(newFn);
       }
       case "rename_profile": {
         const p = mockStore.profiles.find((x) => x.fileName === payload.oldFileName);
+        let newFn;
         if (p) {
           const clean = payload.newName.replace(/\.json$/i, "").trim();
-          const newFn = `${clean}.json`;
+          newFn = `${clean}.json`;
           if (mockStore.settings.default_config_file === p.fileName) {
             mockStore.settings.default_config_file = newFn;
           }
           p.fileName = newFn;
           p.displayName = clean;
         }
-        return buildMockState();
+        return buildMockState(newFn);
       }
       case "delete_profile": {
         mockStore.profiles = mockStore.profiles.filter((x) => x.fileName !== payload.fileName);
@@ -444,36 +492,57 @@
         };
       }
       case "import_live_config": {
-        if (payload.mode === "update_active") {
+        const extracted = extractProviderProfileFromLiveJs(mockStore.liveContent);
+        if (payload.mode === "update_active" && mockStore.settings.default_config_file) {
           const p = mockStore.profiles.find((x) => x.fileName === mockStore.settings.default_config_file);
-          if (p) p.content = mockStore.liveContent;
-        } else {
-          const name = payload.name || "Claude 当前导入配置";
-          mockStore.profiles.push({
-            fileName: `${name}.json`,
-            displayName: name,
-            provider: "anthropic",
-            description: "从 ~/.claude/settings.json 实时捕获",
-            syncMode: "merge",
-            pinned: false,
-            lastLatencyMs: null,
-            lastProbeOk: null,
-            lastProbeDetail: "",
-            updatedAgo: "刚刚",
-            content: mockStore.liveContent
-          });
+          if (p) {
+            p.content = p.syncMode === "replace" ? mockStore.liveContent : extracted;
+            return buildMockState(p.fileName);
+          }
         }
-        return buildMockState();
+        const baseName = payload.name || "Claude 实时导入配置";
+        let fn = `${baseName}.json`;
+        let c = 1;
+        while (mockStore.profiles.some((x) => x.fileName === fn)) {
+          fn = `${baseName}_${c++}.json`;
+        }
+        mockStore.profiles.push({
+          fileName: fn,
+          displayName: fn.replace(/\.json$/i, ""),
+          provider: "anthropic",
+          description: "从 ~/.claude/settings.json 捕获导入",
+          syncMode: "merge",
+          pinned: false,
+          lastLatencyMs: null,
+          lastProbeOk: null,
+          lastProbeDetail: "",
+          updatedAgo: "刚刚",
+          content: extracted
+        });
+        mockStore.settings.default_config_file = fn;
+        return buildMockState(fn);
       }
       case "list_backups":
         return mockStore.backups;
       case "restore_backup": {
         const snap = mockStore.backups.find((b) => b.id === payload.id);
-        if (snap) mockStore.liveContent = snap.content;
+        if (snap) {
+          mockStore.liveContent = snap.content;
+          const matching = mockStore.profiles.find((p) => {
+            try {
+              const eff = computeEffectiveJson(snap.content, p.content, p.syncMode);
+              return JSON.stringify(JSON.parse(eff)) === JSON.stringify(JSON.parse(snap.content));
+            } catch (_) {
+              return false;
+            }
+          });
+          mockStore.settings.default_config_file = matching ? matching.fileName : "";
+          return buildMockState(matching?.fileName);
+        }
         return buildMockState();
       }
       case "delete_backup": {
-        mockStore.backups = mockStore.backups.filter((b) => b.id !== payload.id);
+        mockStore.backups = mockStore.backups.filter((b) => b.isOriginal || b.id !== payload.id);
         return mockStore.backups;
       }
       case "update_settings": {
@@ -508,8 +577,9 @@
     draftPinned: false,
     isDirty: false,
 
-    // Modals: null | "new" | "rename" | "delete" | "backups" | "settings" | "palette"
+    // Modals: null | "new" | "rename" | "delete" | "backups" | "settings" | "palette" | "unsaved"
     modal: null,
+    pendingAction: null,
     backupsList: [],
     previewBackupId: null,
     newWizard: {
@@ -538,6 +608,31 @@
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;")
       .replace(/"/g, "&quot;");
+  }
+
+  async function copyToClipboard(text) {
+    try {
+      if (navigator.clipboard && typeof navigator.clipboard.writeText === "function") {
+        await navigator.clipboard.writeText(text);
+        return true;
+      }
+    } catch (_) {
+      // Fallback below for WebViews with restricted clipboard API
+    }
+    try {
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      document.execCommand("copy");
+      ta.remove();
+      return true;
+    } catch (_) {
+      return false;
+    }
   }
 
   function showToast(message, kind = "success") {
@@ -609,7 +704,7 @@
       }
     }
 
-    const targetFile = preferredFileName || ui.selectedFile || nextWorkspace.settings.default_config_file;
+    const targetFile = preferredFileName || nextWorkspace.targetFile || ui.selectedFile || nextWorkspace.settings.default_config_file;
     let found = nextWorkspace.profiles.find((p) => p.fileName === targetFile);
     if (!found && nextWorkspace.profiles.length > 0) {
       found = nextWorkspace.profiles[0];
@@ -619,8 +714,28 @@
       loadProfileIntoDraft(null);
     } else if (found.fileName !== ui.selectedFile || !ui.isDirty) {
       loadProfileIntoDraft(found);
+    } else {
+      recomputeDirty();
     }
     renderAll();
+  }
+
+  function guardUnsavedChanges(nextFn) {
+    if (!ui.isDirty) {
+      nextFn();
+      return;
+    }
+    ui.pendingAction = nextFn;
+    ui.modal = "unsaved";
+    renderModal();
+  }
+
+  function handleRevertDraft() {
+    const p = currentSelectedProfile();
+    if (!p) return;
+    loadProfileIntoDraft(p);
+    renderAll();
+    showToast(`已放弃对「${p.displayName}」的未保存更改`, "success");
   }
 
   // --- Actions ---
@@ -629,6 +744,10 @@
     if (!p) return false;
     try {
       const parsed = JSON.parse(ui.draftContent);
+      if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+        showToast("JSON 根节点必须是对象 {}", "error");
+        return false;
+      }
       const formatted = JSON.stringify(parsed, null, 2);
       ui.draftContent = formatted;
     } catch (err) {
@@ -652,7 +771,13 @@
       );
       return true;
     } catch (err) {
-      showToast(`保存失败: ${err.message}`, "error");
+      try {
+        const refreshed = await rpc("get_state");
+        ui.workspace = refreshed;
+        recomputeDirty();
+        renderAll();
+      } catch (_) {}
+      showToast(`保存警告: ${err.message}`, "error");
       return false;
     }
   }
@@ -662,16 +787,22 @@
     if (!target) return;
 
     if (fileName === ui.selectedFile && ui.isDirty) {
+      const wasActive = target.isActive;
       const saved = await handleSaveCurrent();
       if (!saved) return;
+      if (wasActive && ui.workspace?.liveStatus?.syncState === "synced") {
+        return;
+      }
     }
+
+    const preserveDirtySelection = fileName !== ui.selectedFile && ui.isDirty;
 
     try {
       const next = await rpc("activate_profile", {
         fileName,
         syncModeOverride: fileName === ui.selectedFile ? ui.draftSyncMode : undefined
       });
-      syncWorkspaceState(next, fileName);
+      syncWorkspaceState(next, preserveDirtySelection ? ui.selectedFile : fileName);
       showToast(`已切换至「${target.displayName}」· ~/.claude/settings.json 已生效`, "success");
     } catch (err) {
       showToast(`切换配置失败: ${err.message}`, "error");
@@ -801,6 +932,9 @@
     } else if (liveStatus.syncState === "drifted") {
       statusPillClass = "is-drifted";
       statusLabel = "检测到外部变更";
+    } else if (liveStatus.syncState === "corrupted") {
+      statusPillClass = "is-corrupted";
+      statusLabel = "JSON 语法损坏";
     } else if (!liveStatus.exists) {
       statusPillClass = "is-missing";
       statusLabel = "尚未生成配置";
@@ -833,10 +967,19 @@
             智能保护字段: ${liveStatus.preservedSections.map(escapeHtml).join(" · ")}
           </div>
         ` : ""}
-        ${liveStatus.syncState === "drifted" || liveStatus.syncState === "unmanaged" ? `
+        ${liveStatus.syncState === "corrupted" ? `
           <div class="live-drift-bar">
-            <button class="btn btn-sm" id="btn-import-live" style="flex:1">${ICONS.download} 捕获为配置</button>
-            ${settings.default_config_file ? `<button class="btn btn-sm btn-primary" id="btn-reapply-active">重新覆盖同步</button>` : ""}
+            <button class="btn btn-sm btn-primary" id="btn-repair-live" style="width:100%">${ICONS.history} 从备份快照回滚修复</button>
+          </div>
+        ` : liveStatus.syncState === "drifted" ? `
+          <div class="live-drift-bar">
+            ${settings.default_config_file ? `<button class="btn btn-sm" id="btn-absorb-live" title="将 ~/.claude/settings.json 中的外部变更吸纳回当前活动配置">吸纳变更</button>` : ""}
+            <button class="btn btn-sm" id="btn-import-live" style="flex:1" title="将当前 ~/.claude/settings.json 另存为一份新的独立配置">另存新配置</button>
+            ${settings.default_config_file ? `<button class="btn btn-sm btn-primary" id="btn-reapply-active" title="用当前活动配置重新覆盖同步 ~/.claude/settings.json">覆盖同步</button>` : ""}
+          </div>
+        ` : liveStatus.syncState === "unmanaged" && liveStatus.exists ? `
+          <div class="live-drift-bar">
+            <button class="btn btn-sm" id="btn-import-live" style="width:100%">${ICONS.download} 捕获为新配置并托管</button>
           </div>
         ` : ""}
       </div>
@@ -855,6 +998,15 @@
 
     renderRailListOnly();
     bindRailEvents();
+  }
+
+  function selectProfileByFileName(fn) {
+    const target = ui.workspace?.profiles.find((x) => x.fileName === fn);
+    if (!target) return;
+    loadProfileIntoDraft(target);
+    renderRailListOnly();
+    renderWorkspace();
+    renderStatusBar();
   }
 
   function renderRailListOnly() {
@@ -929,13 +1081,7 @@
         }
         const fn = row.getAttribute("data-profile-file");
         if (fn === ui.selectedFile) return;
-        const target = ui.workspace.profiles.find((x) => x.fileName === fn);
-        if (target) {
-          loadProfileIntoDraft(target);
-          renderRailListOnly();
-          renderWorkspace();
-          renderStatusBar();
-        }
+        guardUnsavedChanges(() => selectProfileByFileName(fn));
       });
       row.addEventListener("dblclick", () => {
         const fn = row.getAttribute("data-profile-file");
@@ -944,12 +1090,8 @@
       row.addEventListener("keydown", (e) => {
         if (e.key === "Enter") {
           const fn = row.getAttribute("data-profile-file");
-          const target = ui.workspace.profiles.find((x) => x.fileName === fn);
-          if (target) {
-            loadProfileIntoDraft(target);
-            renderRailListOnly();
-            renderWorkspace();
-          }
+          if (fn === ui.selectedFile) return;
+          guardUnsavedChanges(() => selectProfileByFileName(fn));
         }
       });
     });
@@ -959,7 +1101,9 @@
     document.getElementById("btn-cmd-palette")?.addEventListener("click", openCommandPalette);
     document.getElementById("btn-theme-toggle")?.addEventListener("click", handleToggleTheme);
     document.getElementById("btn-open-settings")?.addEventListener("click", openSettingsModal);
-    document.getElementById("btn-new-profile")?.addEventListener("click", () => openNewProfileWizard("anthropic"));
+    document.getElementById("btn-new-profile")?.addEventListener("click", () => {
+      guardUnsavedChanges(() => openNewProfileWizard("anthropic"));
+    });
 
     const searchInput = document.getElementById("rail-search-input");
     searchInput?.addEventListener("input", (e) => {
@@ -975,10 +1119,27 @@
       renderRailListOnly();
     });
 
+    document.getElementById("btn-repair-live")?.addEventListener("click", openBackupsModal);
+
+    document.getElementById("btn-absorb-live")?.addEventListener("click", async () => {
+      try {
+        const next = await rpc("import_live_config", { mode: "update_active" });
+        ui.isDirty = false;
+        syncWorkspaceState(next, next.targetFile);
+        showToast("已将外部变更吸纳并更新至当前活动配置", "success");
+      } catch (err) {
+        showToast(err.message, "error");
+      }
+    });
+
     document.getElementById("btn-import-live")?.addEventListener("click", async () => {
       try {
         const next = await rpc("import_live_config", { mode: "new_profile" });
-        syncWorkspaceState(next);
+        if (!ui.isDirty) {
+          syncWorkspaceState(next, next.targetFile);
+        } else {
+          syncWorkspaceState(next, ui.selectedFile);
+        }
         showToast("已将当前 ~/.claude/settings.json 捕获为新配置", "success");
       } catch (err) {
         showToast(err.message, "error");
@@ -1020,8 +1181,12 @@
       document.getElementById("ws-btn-backups")?.addEventListener("click", openBackupsModal);
       document.getElementById("empty-btn-new")?.addEventListener("click", () => openNewProfileWizard("anthropic"));
       document.getElementById("empty-btn-import")?.addEventListener("click", async () => {
-        const next = await rpc("import_live_config", { mode: "new_profile" });
-        syncWorkspaceState(next);
+        try {
+          const next = await rpc("import_live_config", { mode: "new_profile" });
+          syncWorkspaceState(next, next.targetFile);
+        } catch (err) {
+          showToast(err.message, "error");
+        }
       });
       return;
     }
@@ -1034,6 +1199,17 @@
     renderWorkspaceBodyOnly();
   }
 
+  function computeDraftHost(fallbackHost) {
+    const parsed = window.CCS_PARSE_FORM(ui.draftContent);
+    if (!parsed.valid) return fallbackHost;
+    if (parsed.authMode === "bedrock") return `bedrock.${parsed.awsRegion || "aws"}`;
+    if (parsed.authMode === "vertex") return "vertex.googleapis.com";
+    if (parsed.baseUrl) {
+      try { return new URL(parsed.baseUrl).host || parsed.baseUrl; } catch (_) { return parsed.baseUrl; }
+    }
+    return "api.anthropic.com";
+  }
+
   function renderWorkspaceHeaderOnly() {
     const slot = document.getElementById("ws-header-slot");
     const p = currentSelectedProfile();
@@ -1041,6 +1217,7 @@
 
     const syncedAndActive = p.isActive && ui.workspace.liveStatus.syncState === "synced" && !ui.isDirty;
     const syncLabel = ui.draftSyncMode === "merge" ? "智能合并" : "完整覆盖";
+    const liveDraftHost = computeDraftHost(p.baseHost);
 
     let latencyBadge = "";
     if (ui.probing) {
@@ -1078,7 +1255,7 @@
                 ${latencyBadge}
               </div>
               <div class="profile-subtitle">
-                <span class="mono">${escapeHtml(p.baseHost)}</span>
+                <span class="mono">${escapeHtml(liveDraftHost)}</span>
                 <span>·</span>
                 <span>${escapeHtml(ui.draftDescription || "未填写环境备注")}</span>
               </div>
@@ -1089,6 +1266,11 @@
             <button class="btn" id="btn-probe" ${ui.probing ? "disabled" : ""} title="检测 API 网关连通性与延迟">
               ${ICONS.radar} ${ui.probing ? "检测中…" : "连通测速"}
             </button>
+            ${ui.isDirty ? `
+              <button class="btn btn-ghost" id="btn-revert-draft" title="放弃当前未保存修改，恢复至已保存版本">
+                放弃更改
+              </button>
+            ` : ""}
             <button class="btn" id="btn-save-profile" ${ui.isDirty ? "" : "disabled"} title="保存当前配置 (⌘S)">
               ${ICONS.save} 保存 <span class="kbd">⌘S</span>
             </button>
@@ -1135,13 +1317,17 @@
     `;
 
     document.getElementById("ws-btn-backups")?.addEventListener("click", openBackupsModal);
-    document.getElementById("ws-btn-refresh")?.addEventListener("click", async () => {
-      const next = await rpc("get_state");
-      syncWorkspaceState(next, ui.selectedFile);
-      showToast("已与本地磁盘及 Claude 配置重新同步", "success");
+    document.getElementById("ws-btn-refresh")?.addEventListener("click", () => {
+      guardUnsavedChanges(async () => {
+        ui.isDirty = false;
+        const next = await rpc("get_state");
+        syncWorkspaceState(next, ui.selectedFile);
+        showToast("已与本地磁盘及 Claude 配置重新同步", "success");
+      });
     });
 
     document.getElementById("btn-probe")?.addEventListener("click", handleProbeCurrent);
+    document.getElementById("btn-revert-draft")?.addEventListener("click", handleRevertDraft);
     document.getElementById("btn-save-profile")?.addEventListener("click", handleSaveCurrent);
     document.getElementById("btn-activate-profile")?.addEventListener("click", () => handleActivateProfile(p.fileName));
 
@@ -1162,10 +1348,12 @@
       syncWorkspaceState(next, p.fileName);
     });
 
-    document.getElementById("btn-dup-profile")?.addEventListener("click", async () => {
-      const next = await rpc("duplicate_profile", { fileName: p.fileName });
-      syncWorkspaceState(next);
-      showToast(`已克隆「${p.displayName}」`, "success");
+    document.getElementById("btn-dup-profile")?.addEventListener("click", () => {
+      guardUnsavedChanges(async () => {
+        const next = await rpc("duplicate_profile", { fileName: p.fileName });
+        syncWorkspaceState(next, next.targetFile);
+        showToast(`已克隆「${p.displayName}」`, "success");
+      });
     });
 
     document.getElementById("btn-rename-profile")?.addEventListener("click", () => {
@@ -1521,14 +1709,29 @@
         ui.draftProvider = pid;
         if (!ui.draftDescription) ui.draftDescription = preset.description;
 
-        // Merge preset env/model onto current JSON while keeping current secret if non-placeholder
+        // Merge preset env/model onto current JSON while preserving proxy, thinking, permissions, custom extraEnv, and secret
         const curForm = window.CCS_PARSE_FORM(ui.draftContent);
         const existingSecret = curForm.apiKey || curForm.authToken;
-        let nextObj = JSON.parse(JSON.stringify(preset.template));
-        if (existingSecret && !existingSecret.includes("your-") && nextObj.env) {
+        const curRaw = curForm.valid && curForm.raw ? curForm.raw : {};
+        const nextObj = JSON.parse(JSON.stringify(preset.template));
+        if (!nextObj.env) nextObj.env = {};
+
+        if (existingSecret && !existingSecret.includes("your-")) {
           if ("ANTHROPIC_AUTH_TOKEN" in nextObj.env) nextObj.env.ANTHROPIC_AUTH_TOKEN = existingSecret;
           else if ("ANTHROPIC_API_KEY" in nextObj.env) nextObj.env.ANTHROPIC_API_KEY = existingSecret;
         }
+        if (curForm.httpsProxy) nextObj.env.HTTPS_PROXY = curForm.httpsProxy;
+        if (curForm.maxOutputTokens) nextObj.env.CLAUDE_CODE_MAX_OUTPUT_TOKENS = curForm.maxOutputTokens;
+        if (Array.isArray(curForm.extraEnv)) {
+          for (const kv of curForm.extraEnv) {
+            if (kv.key) nextObj.env[kv.key] = kv.value;
+          }
+        }
+        if (curRaw.alwaysThinkingEnabled) nextObj.alwaysThinkingEnabled = true;
+        if (curRaw.permissions && typeof curRaw.permissions === "object") {
+          nextObj.permissions = JSON.parse(JSON.stringify(curRaw.permissions));
+        }
+
         ui.draftContent = JSON.stringify(nextObj, null, 2);
         recomputeDirty();
         renderWorkspaceHeaderOnly();
@@ -1562,8 +1765,8 @@
 
     document.getElementById("btn-copy-secret")?.addEventListener("click", async () => {
       if (!secretVal) return;
-      await navigator.clipboard?.writeText(secretVal);
-      showToast("密钥已复制到剪贴板", "success");
+      const ok = await copyToClipboard(secretVal);
+      showToast(ok ? "密钥已复制到剪贴板" : "复制失败，请手动复制", ok ? "success" : "error");
     });
 
     document.getElementById("f-aws-region")?.addEventListener("input", (e) => {
@@ -1665,7 +1868,10 @@
 
     const validate = (txt) => {
       try {
-        JSON.parse(txt);
+        const parsed = JSON.parse(txt);
+        if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+          return { ok: false, msg: "JSON 根节点必须是对象 {}" };
+        }
         return { ok: true, msg: "JSON 语法有效" };
       } catch (err) {
         return { ok: false, msg: err.message };
@@ -1741,8 +1947,8 @@
     });
 
     document.getElementById("btn-copy-json")?.addEventListener("click", async () => {
-      await navigator.clipboard?.writeText(ui.draftContent);
-      showToast("JSON 内容已复制", "success");
+      const ok = await copyToClipboard(ui.draftContent);
+      showToast(ok ? "JSON 内容已复制" : "复制失败，请手动复制", ok ? "success" : "error");
     });
   }
 
@@ -1812,11 +2018,17 @@
     const p = currentSelectedProfile();
     const charCount = (ui.draftContent || "").length;
     const lineCount = ui.draftContent ? ui.draftContent.split("\n").length : 0;
+    const syncColor =
+      ui.workspace.liveStatus.syncState === "synced"
+        ? "var(--signal-live)"
+        : ui.workspace.liveStatus.syncState === "corrupted"
+          ? "var(--signal-danger)"
+          : "var(--signal-warn)";
 
     bar.innerHTML = `
       <div class="statusbar-group">
         <span class="status-item">
-          <span class="pulse-dot" style="color:${ui.workspace.liveStatus.syncState === "synced" ? "var(--signal-live)" : "var(--signal-warn)"}"></span>
+          <span class="pulse-dot" style="color:${syncColor}"></span>
           <span>当前活动配置: <strong>${escapeHtml(ui.workspace.settings.default_config_file || "未指定")}</strong></span>
         </span>
         <span class="status-item mono">${escapeHtml(ui.workspace.settings.config_directory)}</span>
@@ -1832,6 +2044,7 @@
   // --- Modals & Command Palette ---
   function closeModal() {
     ui.modal = null;
+    ui.pendingAction = null;
     renderModal();
   }
 
@@ -1843,7 +2056,45 @@
       return;
     }
 
-    if (ui.modal === "new") {
+    if (ui.modal === "unsaved") {
+      const p = currentSelectedProfile();
+      root.innerHTML = `
+        <div class="overlay" id="modal-overlay">
+          <div class="modal" role="dialog" aria-modal="true" style="width:440px">
+            <div class="modal-header">
+              <span class="modal-title">当前配置有未保存的更改</span>
+              <button class="btn btn-icon" id="modal-close">${ICONS.close}</button>
+            </div>
+            <div class="modal-body">
+              <p style="color:var(--text-secondary);font-size:var(--text-sm)">
+                您对 <strong>${escapeHtml(p?.displayName || "当前配置")}</strong> 进行了修改但尚未保存。切换或离开前是否保存这些修改？
+              </p>
+            </div>
+            <div class="modal-footer">
+              <button class="btn" id="unsaved-cancel" style="margin-right:auto">取消</button>
+              <button class="btn btn-danger" id="unsaved-discard">放弃未保存更改</button>
+              <button class="btn btn-primary" id="unsaved-save">${ICONS.save} 保存并继续</button>
+            </div>
+          </div>
+        </div>
+      `;
+      document.getElementById("modal-close")?.addEventListener("click", closeModal);
+      document.getElementById("unsaved-cancel")?.addEventListener("click", closeModal);
+      document.getElementById("unsaved-discard")?.addEventListener("click", () => {
+        const fn = ui.pendingAction;
+        ui.isDirty = false;
+        closeModal();
+        fn?.();
+      });
+      document.getElementById("unsaved-save")?.addEventListener("click", async () => {
+        const fn = ui.pendingAction;
+        const ok = await handleSaveCurrent();
+        if (ok) {
+          closeModal();
+          fn?.();
+        }
+      });
+    } else if (ui.modal === "new") {
       const w = ui.newWizard;
       root.innerHTML = `
         <div class="overlay" id="modal-overlay">
@@ -1881,7 +2132,7 @@
                     <input id="wiz-url-input" type="text" class="input mono" value="${escapeHtml(w.baseUrl)}" placeholder="https://api.anthropic.com" />
                   </div>
                   <div class="field">
-                    <label class="field-label" for="wiz-secret-input">API Key / Auth Token (留空可稍后填写)</label>
+                    <label class="field-label" for="wiz-secret-input">API Key / Auth Token (留空则不覆盖现有登录)</label>
                     <input id="wiz-secret-input" type="password" class="input mono" value="${escapeHtml(w.secret)}" placeholder="sk-..." />
                   </div>
                 </div>
@@ -1940,7 +2191,10 @@
         const pr = PRESETS.find((x) => x.id === ui.newWizard.presetId) || PRESETS[0];
         const obj = JSON.parse(JSON.stringify(pr.template));
         if (!obj.env) obj.env = {};
-        if (ui.newWizard.baseUrl) obj.env.ANTHROPIC_BASE_URL = ui.newWizard.baseUrl.trim();
+        if (ui.newWizard.presetId !== "bedrock" && ui.newWizard.presetId !== "vertex") {
+          if (ui.newWizard.baseUrl.trim()) obj.env.ANTHROPIC_BASE_URL = ui.newWizard.baseUrl.trim();
+          else delete obj.env.ANTHROPIC_BASE_URL;
+        }
         if (ui.newWizard.secret.trim()) {
           if ("ANTHROPIC_AUTH_TOKEN" in obj.env || ui.newWizard.presetId !== "anthropic") {
             delete obj.env.ANTHROPIC_API_KEY;
@@ -1949,9 +2203,13 @@
             obj.env.ANTHROPIC_API_KEY = ui.newWizard.secret.trim();
           }
         }
-        if (ui.newWizard.model.trim()) {
-          if ("ANTHROPIC_MODEL" in obj.env) obj.env.ANTHROPIC_MODEL = ui.newWizard.model.trim();
-          else obj.model = ui.newWizard.model.trim();
+        const mTrim = ui.newWizard.model.trim();
+        if (mTrim) {
+          if ("ANTHROPIC_MODEL" in obj.env) obj.env.ANTHROPIC_MODEL = mTrim;
+          else obj.model = mTrim;
+        } else {
+          delete obj.model;
+          delete obj.env.ANTHROPIC_MODEL;
         }
         try {
           const nameClean = ui.newWizard.name.trim() || pr.name;
@@ -1964,9 +2222,10 @@
             pinned: false,
             activateNow: ui.newWizard.activateNow
           });
+          ui.isDirty = false;
           closeModal();
-          syncWorkspaceState(next, `${nameClean.replace(/\.json$/i, "")}.json`);
-          showToast(`已创建配置「${nameClean}」`, "success");
+          syncWorkspaceState(next, next.targetFile);
+          showToast(`已创建配置「${next.targetFile ? next.targetFile.replace(/\.json$/i, "") : nameClean}」`, "success");
         } catch (err) {
           showToast(err.message, "error");
         }
@@ -1999,8 +2258,10 @@
           const clean = ui.renameValue.replace(/\.json$/i, "").trim();
           const next = await rpc("rename_profile", { oldFileName: p.fileName, newName: clean });
           closeModal();
-          syncWorkspaceState(next, `${clean}.json`);
-          showToast(`已重命名为「${clean}」`, "success");
+          const newFn = next.targetFile || `${clean}.json`;
+          ui.selectedFile = newFn;
+          syncWorkspaceState(next, newFn);
+          showToast(`已重命名为「${newFn.replace(/\.json$/i, "")}」`, "success");
         } catch (err) {
           showToast(err.message, "error");
         }
@@ -2038,6 +2299,7 @@
         try {
           const next = await rpc("delete_profile", { fileName: p.fileName });
           ui.selectedFile = null;
+          ui.isDirty = false;
           closeModal();
           syncWorkspaceState(next);
           showToast(`已删除「${p.displayName}」`, "success");
@@ -2056,18 +2318,21 @@
             </div>
             <div class="modal-body">
               ${ui.backupsList.length === 0 ? `
-                <div style="padding:24px;text-align:center;color:var(--text-tertiary)">暂无历史快照。每次切换或同步配置前会自动在此创建安全备份。</div>
+                <div style="padding:24px;text-align:center;color:var(--text-tertiary)">暂无历史快照。首次发现原版文件或每次切换配置前会自动在此创建安全备份。</div>
               ` : `
-                <div style="display:flex;flex-direction:column;gap:8px;max-height:220px;overflow-y:auto">
+                <div style="display:flex;flex-direction:column;gap:8px;max-height:230px;overflow-y:auto">
                   ${ui.backupsList.map((b) => `
                     <div class="backup-row" style="${selectedSnap?.id === b.id ? "border-color:var(--accent)" : ""}">
                       <div style="min-width:0;cursor:pointer;flex:1" data-snap-select="${escapeHtml(b.id)}">
-                        <div style="font-size:var(--text-xs);font-weight:600">${escapeHtml(b.label)}</div>
+                        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+                          <span style="font-size:var(--text-xs);font-weight:600">${escapeHtml(b.label)}</span>
+                          ${b.isOriginal ? `<span class="snap-badge-orig">初始原版 · 永久保留</span>` : ""}
+                        </div>
                         <div class="tabular" style="font-size:11px;color:var(--text-tertiary)">${escapeHtml(b.createdAt)} · ${b.byteSize} Bytes · ${escapeHtml(b.fileName)}</div>
                       </div>
-                      <div style="display:flex;gap:6px">
+                      <div style="display:flex;gap:6px;align-items:center">
                         <button class="btn btn-sm btn-primary" data-snap-restore="${escapeHtml(b.id)}">回滚恢复</button>
-                        <button class="btn btn-icon btn-danger" data-snap-del="${escapeHtml(b.id)}" title="删除快照">${ICONS.trash}</button>
+                        ${b.isOriginal ? "" : `<button class="btn btn-icon btn-danger" data-snap-del="${escapeHtml(b.id)}" title="删除快照">${ICONS.trash}</button>`}
                       </div>
                     </div>
                   `).join("")}
@@ -2081,7 +2346,7 @@
               `}
             </div>
             <div class="modal-footer">
-              ${isNative ? `<button class="btn btn-ghost" id="btn-reveal-backups" style="margin-right:auto">${ICONS.external} 在 Finder 中打开备份目录</button>` : ""}
+              ${isNative ? `<button class="btn btn-ghost" id="btn-reveal-backups" style="margin-right:auto">${ICONS.external} 在文件管理器中打开备份目录</button>` : ""}
               <button class="btn" id="backups-close">关闭</button>
             </div>
           </div>
@@ -2100,16 +2365,25 @@
       root.querySelectorAll("[data-snap-restore]").forEach((btn) => {
         btn.addEventListener("click", async () => {
           const id = btn.getAttribute("data-snap-restore");
-          const next = await rpc("restore_backup", { id });
-          closeModal();
-          syncWorkspaceState(next, ui.selectedFile);
-          showToast("已将 ~/.claude/settings.json 回滚至所选历史快照", "success");
+          try {
+            const next = await rpc("restore_backup", { id });
+            closeModal();
+            syncWorkspaceState(next, next.targetFile || ui.selectedFile);
+            showToast("已将 ~/.claude/settings.json 安全回滚至所选快照", "success");
+          } catch (err) {
+            showToast(`回滚失败: ${err.message}`, "error");
+          }
         });
       });
       root.querySelectorAll("[data-snap-del]").forEach((btn) => {
         btn.addEventListener("click", async () => {
           const id = btn.getAttribute("data-snap-del");
           ui.backupsList = await rpc("delete_backup", { id });
+          if (!ui.backupsList.some((b) => b.id === ui.previewBackupId)) {
+            ui.previewBackupId = ui.backupsList[0]?.id || null;
+          }
+          if (ui.workspace) ui.workspace.backupsCount = ui.backupsList.length;
+          renderWorkspaceHeaderOnly();
           renderModal();
         });
       });
@@ -2139,7 +2413,7 @@
               <div class="toggle-row" style="border-top:1px solid var(--border-subtle);padding-top:12px">
                 <div class="toggle-info">
                   <span class="toggle-title">写入前自动创建快照备份</span>
-                  <span class="toggle-sub">保留最近 25 份 ~/.claude/settings.json 历史快照以便随时回滚</span>
+                  <span class="toggle-sub">永久保留首次原版 settings.json，并滚动保存最近 25 份切换前快照</span>
                 </div>
                 <button type="button" class="switch ${ui.settingsDraft.autoBackup ? "is-on" : ""}" id="set-backup-sw"></button>
               </div>
@@ -2320,7 +2594,7 @@
     }
     if (mod && e.key.toLowerCase() === "n") {
       e.preventDefault();
-      openNewProfileWizard("anthropic");
+      guardUnsavedChanges(() => openNewProfileWizard("anthropic"));
       return;
     }
     if (mod && e.key === ",") {
