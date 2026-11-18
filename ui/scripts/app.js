@@ -338,7 +338,7 @@
       .filter((k) => k in liveRaw);
 
     return {
-      appVersion: "2.0.0",
+      appVersion: "2.0.1",
       platform: "macos",
       settings: { ...mockStore.settings },
       liveStatus: {

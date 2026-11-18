@@ -1,6 +1,6 @@
 [package]
 name = "claude-code-switcher"
-version = "2.0.0"
+version = "2.0.1"
 edition = "2021"
 authors = ["Claude Code Switcher Contributors"]
 description = "Precision environment, gateway, and model routing switchboard for Claude Code"
