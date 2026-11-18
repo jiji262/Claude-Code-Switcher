@@ -817,7 +817,18 @@
       showToast("当前 JSON 格式有误，请先修复后再测速", "warn");
       return;
     }
-    const baseUrl = form.baseUrl || "https://api.anthropic.com";
+    let baseUrl = form.baseUrl;
+    if (!baseUrl) {
+      if (form.authMode === "bedrock") {
+        baseUrl = `https://bedrock-runtime.${form.awsRegion || "us-east-1"}.amazonaws.com`;
+      } else if (form.authMode === "vertex") {
+        baseUrl = form.vertexRegion && form.vertexRegion !== "global"
+          ? `https://${form.vertexRegion}-aiplatform.googleapis.com`
+          : "https://aiplatform.googleapis.com";
+      } else {
+        baseUrl = "https://api.anthropic.com";
+      }
+    }
     ui.probing = true;
     renderWorkspaceHeaderOnly();
     try {
@@ -825,7 +836,8 @@
         fileName: p.fileName,
         baseUrl,
         apiKey: form.apiKey,
-        authToken: form.authToken
+        authToken: form.authToken,
+        httpsProxy: form.httpsProxy
       });
       const fresh = await rpc("get_state");
       ui.probing = false;
@@ -2368,6 +2380,7 @@
           try {
             const next = await rpc("restore_backup", { id });
             closeModal();
+            ui.isDirty = false;
             syncWorkspaceState(next, next.targetFile || ui.selectedFile);
             showToast("已将 ~/.claude/settings.json 安全回滚至所选快照", "success");
           } catch (err) {

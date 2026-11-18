@@ -190,11 +190,13 @@ fn run_desktop_app() -> wry::Result<()> {
                         let base_url = str_field(&env.payload, "baseUrl");
                         let api_key = str_field(&env.payload, "apiKey");
                         let auth_token = str_field(&env.payload, "authToken");
+                        let https_proxy = str_field(&env.payload, "httpsProxy");
                         let thread_proxy = proxy.clone();
                         let req_id = env.id;
 
                         std::thread::spawn(move || {
-                            let result = probe_gateway(&base_url, &api_key, &auth_token);
+                            let result =
+                                probe_gateway(&base_url, &api_key, &auth_token, &https_proxy);
                             let _ = thread_proxy.send_event(UserEvent::ProbeFinished {
                                 id: req_id,
                                 file_name,

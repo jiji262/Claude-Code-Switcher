@@ -15,7 +15,7 @@ pub struct ProbeResult {
     pub detail: String,
 }
 
-pub fn probe_gateway(base_url: &str, api_key: &str, auth_token: &str) -> ProbeResult {
+pub fn probe_gateway(base_url: &str, api_key: &str, auth_token: &str, proxy: &str) -> ProbeResult {
     let normalized = if base_url.trim().is_empty() {
         "https://api.anthropic.com".to_string()
     } else {
@@ -47,7 +47,7 @@ pub fn probe_gateway(base_url: &str, api_key: &str, auth_token: &str) -> ProbeRe
     }
 
     // Prefer system `curl` via stdin config (`-K -`) so secrets never appear in process argv
-    if let Some(res) = probe_via_curl(&parsed, api_key, auth_token) {
+    if let Some(res) = probe_via_curl(&parsed, api_key, auth_token, proxy) {
         return res;
     }
 
@@ -61,11 +61,15 @@ fn sanitize_curl_config_value(s: &str) -> String {
         .collect()
 }
 
-fn probe_via_curl(url: &Url, api_key: &str, auth_token: &str) -> Option<ProbeResult> {
+fn probe_via_curl(url: &Url, api_key: &str, auth_token: &str, proxy: &str) -> Option<ProbeResult> {
     let mut probe_url = url.clone();
-    let trimmed_path = probe_url.path().trim_end_matches('/');
-    let models_path = format!("{}/v1/models", trimmed_path);
-    probe_url.set_path(&models_path);
+    let host = probe_url.host_str().unwrap_or("");
+    let is_cloud_native = host.ends_with("amazonaws.com") || host.ends_with("googleapis.com");
+    if !is_cloud_native {
+        let trimmed_path = probe_url.path().trim_end_matches('/');
+        let models_path = format!("{}/v1/models", trimmed_path);
+        probe_url.set_path(&models_path);
+    }
 
     let mut cfg = String::new();
     cfg.push_str(&format!(
@@ -80,7 +84,16 @@ fn probe_via_curl(url: &Url, api_key: &str, auth_token: &str) -> Option<ProbeRes
     #[cfg(not(windows))]
     cfg.push_str("output = \"/dev/null\"\n");
 
-    cfg.push_str("header = \"anthropic-version: 2023-06-01\"\n");
+    if !proxy.trim().is_empty() {
+        cfg.push_str(&format!(
+            "proxy = \"{}\"\n",
+            sanitize_curl_config_value(proxy.trim())
+        ));
+    }
+
+    if !is_cloud_native {
+        cfg.push_str("header = \"anthropic-version: 2023-06-01\"\n");
+    }
 
     if !auth_token.trim().is_empty() {
         cfg.push_str(&format!(

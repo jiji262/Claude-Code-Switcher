@@ -930,7 +930,15 @@ impl WorkspaceManager {
             } else {
                 extracted
             };
-            return self.save_profile(&active_fn, &next_content, None, None, None, None);
+            let inferred_provider = infer_provider_from_json(&next_content);
+            return self.save_profile(
+                &active_fn,
+                &next_content,
+                Some(inferred_provider),
+                None,
+                None,
+                None,
+            );
         }
 
         let name = custom_name.unwrap_or("Claude 实时导入配置");
@@ -981,12 +989,55 @@ impl WorkspaceManager {
             if !trimmed.is_empty() {
                 let next_dir = expand_tilde_path(trimmed);
                 if next_dir != self.app_settings.config_directory {
-                    fs::create_dir_all(next_dir.join(SETTINGS_SUBDIR)).map_err(|e| {
+                    let next_settings_dir = next_dir.join(SETTINGS_SUBDIR);
+                    let next_backups_dir = next_dir.join(BACKUPS_SUBDIR);
+                    fs::create_dir_all(&next_settings_dir).map_err(|e| {
                         format!("无法在所选路径创建配置目录 '{}': {}", next_dir.display(), e)
                     })?;
-                    fs::create_dir_all(next_dir.join(BACKUPS_SUBDIR)).map_err(|e| {
+                    fs::create_dir_all(&next_backups_dir).map_err(|e| {
                         format!("无法在所选路径创建备份目录 '{}': {}", next_dir.display(), e)
                     })?;
+
+                    // Check whether target directory already contains saved profiles (e.g. synced iCloud/Dropbox folder).
+                    // If target is brand-new and empty, non-destructively copy current profiles, metadata, and original baseline backup.
+                    let target_has_profiles = fs::read_dir(&next_settings_dir)
+                        .ok()
+                        .map(|entries| {
+                            entries.filter_map(Result::ok).any(|e| {
+                                let p = e.path();
+                                p.is_file()
+                                    && p.extension().map_or(false, |ext| ext == "json")
+                                    && !p
+                                        .file_name()
+                                        .and_then(|s| s.to_str())
+                                        .unwrap_or("")
+                                        .starts_with('.')
+                            })
+                        })
+                        .unwrap_or(false);
+
+                    if !target_has_profiles {
+                        for src_prof in self.list_profile_paths() {
+                            if let Some(fname) = src_prof.file_name() {
+                                let dst = next_settings_dir.join(fname);
+                                if !dst.exists() {
+                                    let _ = fs::copy(&src_prof, &dst);
+                                }
+                            }
+                        }
+                        let old_meta = self.meta_path();
+                        let dst_meta = next_dir.join(PROFILES_META_NAME);
+                        if old_meta.exists() && !dst_meta.exists() {
+                            let _ = fs::copy(&old_meta, &dst_meta);
+                        }
+                        let old_orig_backup = self.original_backup_path();
+                        let dst_orig_backup =
+                            next_backups_dir.join(format!("{}.json", ORIGINAL_BACKUP_ID));
+                        if old_orig_backup.exists() && !dst_orig_backup.exists() {
+                            let _ = fs::copy(&old_orig_backup, &dst_orig_backup);
+                        }
+                    }
+
                     self.app_settings.config_directory = next_dir;
                     self.load_meta_from_current_dir();
                     self.ensure_directories_and_seed();
@@ -1630,7 +1681,7 @@ fn format_elapsed_secs(secs: u64) -> String {
     }
 }
 
-// --- Headless CLI Companion (`--status`, `--list`, `--use <profile>`) ---
+// --- Headless CLI Companion (`--status`, `--list`, `--use`, `--backups`, `--restore`) ---
 pub fn run_cli_if_requested() -> Option<i32> {
     let args: Vec<String> = std::env::args().skip(1).collect();
     if args.is_empty() {
@@ -1641,10 +1692,12 @@ pub fn run_cli_if_requested() -> Option<i32> {
         "-h" | "--help" => {
             println!("Claude Code Switcher v{}", APP_VERSION);
             println!("用法:");
-            println!("  claude-code-switcher               启动桌面图形界面");
-            println!("  claude-code-switcher --status      查看当前 Claude Code 环境同步状态");
-            println!("  claude-code-switcher --list        列出所有已保存的环境配置");
-            println!("  claude-code-switcher --use <名称>  立即激活指定配置 (默认智能合并)");
+            println!("  claude-code-switcher                     启动桌面图形界面");
+            println!("  claude-code-switcher --status            查看当前 Claude Code 环境同步状态");
+            println!("  claude-code-switcher --list              列出所有已保存的环境配置");
+            println!("  claude-code-switcher --use <名称>        立即激活指定配置 (默认智能合并)");
+            println!("  claude-code-switcher --backups           列出 ~/.claude/settings.json 历史备份快照");
+            println!("  claude-code-switcher --restore <快照ID>  回滚至指定快照 (--original 恢复初始原版)");
             Some(0)
         }
         "-v" | "--version" => {
@@ -1728,8 +1781,45 @@ pub fn run_cli_if_requested() -> Option<i32> {
                 }
             }
         }
+        "--backups" => {
+            let mgr = WorkspaceManager::new_default();
+            let snaps = mgr.list_backups();
+            if snaps.is_empty() {
+                println!("暂无历史备份快照。");
+            } else {
+                for b in snaps {
+                    let badge = if b.is_original { "[初始原版]" } else { "          " };
+                    println!(
+                        "{} {:<30} {:<16} {}",
+                        badge, b.id, b.created_at, b.label
+                    );
+                }
+            }
+            Some(0)
+        }
+        "--restore" => {
+            let target_id = match args.get(1).map(|s| s.as_str()) {
+                None | Some("--original") | Some("original") => ORIGINAL_BACKUP_ID,
+                Some(id) => id,
+            };
+            let mut mgr = WorkspaceManager::new_default();
+            match mgr.restore_backup(target_id) {
+                Ok(_) => {
+                    println!("✓ 已将 ~/.claude/settings.json 安全恢复至快照「{}」", target_id);
+                    Some(0)
+                }
+                Err(e) => {
+                    eprintln!("✗ 恢复快照失败: {}", e);
+                    Some(1)
+                }
+            }
+        }
         // Ignore macOS Finder `-psn_...` launch arguments so GUI opens normally
         arg if arg.starts_with("-psn_") => None,
+        arg if arg.starts_with('-') => {
+            eprintln!("未知参数: {} (使用 --help 查看可用命令)", arg);
+            Some(1)
+        }
         _ => None,
     }
 }
@@ -1911,5 +2001,59 @@ mod tests {
 
         // Path traversal is rejected
         assert!(mgr.delete_profile("../app_settings.json").is_err());
+    }
+
+    #[test]
+    fn config_directory_migration_and_absorb_live_updates_provider() {
+        let tmp = TempDir::new().unwrap();
+        let app_dir = tmp.path().join(".claude-code-switcher");
+        let migrated_dir = tmp.path().join("custom-cloud-sync");
+        let claude_file = tmp.path().join(".claude").join("settings.json");
+        fs::create_dir_all(claude_file.parent().unwrap()).unwrap();
+        fs::write(
+            &claude_file,
+            r#"{"env":{"ANTHROPIC_API_KEY":"sk-ant-init"}}"#,
+        )
+        .unwrap();
+
+        let mut mgr = WorkspaceManager::with_paths(
+            app_dir.join("app_settings.json"),
+            claude_file.clone(),
+            app_dir.clone(),
+        );
+        mgr.create_profile(
+            "GLM Gateway",
+            r#"{"env":{"ANTHROPIC_BASE_URL":"https://open.bigmodel.cn/api/anthropic","ANTHROPIC_AUTH_TOKEN":"zp-1"}}"#,
+            "glm",
+            "Zhipu",
+            "merge",
+            true,
+            false,
+        )
+        .unwrap();
+
+        // Switching config_directory to a brand-new empty folder migrates profiles, metadata, and original baseline
+        let st_migrated = mgr
+            .update_settings(
+                None,
+                Some(migrated_dir.to_string_lossy().to_string()),
+                None,
+                None,
+            )
+            .unwrap();
+        assert_eq!(st_migrated.profiles.len(), 2);
+        assert!(st_migrated.profiles.iter().any(|p| p.display_name == "GLM Gateway" && p.pinned));
+        assert!(mgr.list_backups().iter().any(|b| b.is_original));
+
+        // Simulate external CLI gateway switch to DeepSeek and absorb into active profile
+        fs::write(
+            &claude_file,
+            r#"{"env":{"ANTHROPIC_BASE_URL":"https://api.deepseek.com/anthropic","ANTHROPIC_AUTH_TOKEN":"sk-ds-ext"}}"#,
+        )
+        .unwrap();
+        let st_absorbed = mgr.import_live_config("update_active", None).unwrap();
+        assert_eq!(st_absorbed.live_status.sync_state, "synced");
+        let active_p = st_absorbed.profiles.iter().find(|p| p.is_active).unwrap();
+        assert_eq!(active_p.provider, "deepseek");
     }
 }
