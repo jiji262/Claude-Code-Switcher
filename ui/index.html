@@ -7,8 +7,17 @@
   <script>
     (function () {
       try {
-        var saved = localStorage.getItem("ccs_theme_mode");
-        var isLight = saved === "Light" || (saved === "System" && window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches);
+        var boot = window.__CCS_BOOT__;
+        if (boot && boot.platform) {
+          document.documentElement.setAttribute("data-platform", boot.platform);
+        }
+        var isLight;
+        if (boot && boot.resolvedTheme) {
+          isLight = boot.resolvedTheme === "light";
+        } else {
+          var saved = localStorage.getItem("ccs_theme_mode");
+          isLight = saved === "Light" || (saved === "System" && window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches);
+        }
         if (window.location.search.indexOf("theme=light") !== -1) isLight = true;
         if (window.location.search.indexOf("theme=dark") !== -1) isLight = false;
         document.documentElement.setAttribute("data-theme", isLight ? "light" : "dark");

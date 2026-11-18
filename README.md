@@ -20,7 +20,17 @@
 
 **Claude Code Switcher v2.0** 彻底重构了桌面架构与产品交互。针对真实开发者在 `~/.claude/settings.json` 中同时维护 `hooks`、`permissions`、`mcpServers` 与多套 API 网关的痛点，v2.0 引入了**智能合并同步引擎 (Smart Merge)**、**三模态可视化工作台**、**网关连通测速**、**双旗舰明暗主题**与**永久原版基线 + 时光机自动快照**。
 
-![Claude Code Switcher v2.0 界面预览](dist/demo.png)
+![Claude Code Switcher v2.0 深色主工作区预览](dist/demo.png)
+
+### 界面运行截图
+
+| 曜石暗室 · 深色工作台 (`Obsidian Studio`) | 日光宣纸 · 浅色工作台 (`Warm Alabaster`) |
+| :---: | :---: |
+| ![曜石暗室 深色工作台](designs/claude-code-switcher/screen-dark.png) | ![日光宣纸 浅色工作台](designs/claude-code-switcher/screen-light.png) |
+| **智能合并 Diff 生效变更预览** | **三态外观切换与原版永久备份设置 (`⌘,`)** |
+| ![智能合并 Diff 预览](designs/claude-code-switcher/screen-diff.png) | ![外观与备份设置](designs/claude-code-switcher/screen-settings.png) |
+| **九大主流服务商一键预设向导 (`⌘N`)** | **全局命令面板极速操作 (`⌘K`)** |
+| ![新建配置预设向导](designs/claude-code-switcher/screen-new-modal.png) | ![全局命令面板](designs/claude-code-switcher/screen-palette.png) |
 
 ---
 

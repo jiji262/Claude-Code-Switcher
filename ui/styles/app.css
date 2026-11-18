@@ -90,6 +90,7 @@ html, body {
   flex-shrink: 0;
 }
 
+html[data-platform="macos"] .rail-titlebar,
 .app-Shell-macos .rail-titlebar {
   padding-left: calc(var(--traffic-inset-width) + 6px);
 }

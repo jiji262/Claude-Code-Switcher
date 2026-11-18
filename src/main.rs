@@ -131,11 +131,25 @@ fn run_desktop_app() -> wry::Result<()> {
     } else {
         (21, 22, 26, 255)
     };
+    let platform_tag = if cfg!(target_os = "macos") {
+        "macos"
+    } else if cfg!(target_os = "windows") {
+        "windows"
+    } else {
+        "linux"
+    };
+    let boot_script = format!(
+        "window.__CCS_BOOT__={{resolvedTheme:{:?},themeMode:{:?},platform:{:?}}};",
+        if resolved_light { "light" } else { "dark" },
+        initial_theme_pref,
+        platform_tag
+    );
 
     let ipc_proxy = proxy.clone();
     let webview_builder = WebViewBuilder::new()
         .with_background_color(initial_bg)
         .with_accept_first_mouse(true)
+        .with_initialization_script(&boot_script)
         .with_custom_protocol("ccs".into(), move |_webview_id, request| {
             serve_embedded_asset(request)
         })
@@ -541,4 +555,53 @@ fn load_window_icon(svg_data: &[u8]) -> Option<Icon> {
     // tiny-skia Pixmap already stores premultiplied RGBA bytes
     let rgba = pixmap.data().to_vec();
     Icon::from_rgba(rgba, size, size).ok()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn theme_mapping_handles_light_dark_and_system() {
+        assert_eq!(tao_theme_from_setting("Light"), Some(Theme::Light));
+        assert_eq!(tao_theme_from_setting(" light "), Some(Theme::Light));
+        assert_eq!(tao_theme_from_setting("Dark"), Some(Theme::Dark));
+        assert_eq!(tao_theme_from_setting("dark"), Some(Theme::Dark));
+        assert_eq!(tao_theme_from_setting("System"), None);
+        assert_eq!(tao_theme_from_setting("auto"), None);
+    }
+
+    #[test]
+    fn embedded_protocol_serves_all_ui_assets_and_404() {
+        for path in [
+            "/",
+            "/index.html",
+            "/styles/tokens.css",
+            "/styles/app.css",
+            "/scripts/icons.js",
+            "/scripts/presets.js",
+            "/scripts/diff.js",
+            "/scripts/app.js",
+            "/icon.svg",
+        ] {
+            let req = Request::builder()
+                .uri(format!("ccs://localhost{}", path))
+                .body(Vec::new())
+                .unwrap();
+            let resp = serve_embedded_asset(req);
+            assert_eq!(resp.status(), 200, "asset {} failed", path);
+            assert!(!resp.body().is_empty(), "asset {} empty", path);
+        }
+
+        let missing_req = Request::builder()
+            .uri("ccs://localhost/missing.js")
+            .body(Vec::new())
+            .unwrap();
+        assert_eq!(serve_embedded_asset(missing_req).status(), 404);
+    }
+
+    #[test]
+    fn window_icon_rasterizes_cleanly() {
+        assert!(load_window_icon(ASSET_ICON_SVG).is_some());
+    }
 }

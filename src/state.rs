@@ -60,10 +60,19 @@ pub struct AppSettings {
     pub auto_backup: bool,
 }
 
+fn resolve_home_dir() -> Option<PathBuf> {
+    if let Some(override_home) = std::env::var_os("CLAUDE_CODE_SWITCHER_HOME") {
+        if !override_home.is_empty() {
+            return Some(PathBuf::from(override_home));
+        }
+    }
+    UserDirs::new().map(|u| u.home_dir().to_path_buf())
+}
+
 impl Default for AppSettings {
     fn default() -> Self {
-        let default_dir = UserDirs::new()
-            .map(|u| u.home_dir().join(APP_DIR_NAME))
+        let default_dir = resolve_home_dir()
+            .map(|h| h.join(APP_DIR_NAME))
             .unwrap_or_else(|| PathBuf::from(APP_DIR_NAME));
         Self {
             config_directory: default_dir,
@@ -195,9 +204,7 @@ pub struct WorkspaceManager {
 
 impl WorkspaceManager {
     pub fn new_default() -> Self {
-        let home = UserDirs::new()
-            .map(|u| u.home_dir().to_path_buf())
-            .unwrap_or_else(|| PathBuf::from("."));
+        let home = resolve_home_dir().unwrap_or_else(|| PathBuf::from("."));
         let app_root = home.join(APP_DIR_NAME);
         let claude_root = home.join(CLAUDE_DIR_NAME);
         Self::with_paths(
@@ -1641,13 +1648,13 @@ fn sanitize_profile_stem(input: &str) -> Result<String, String> {
 
 fn expand_tilde_path(raw: &str) -> PathBuf {
     if raw == "~" {
-        if let Some(u) = UserDirs::new() {
-            return u.home_dir().to_path_buf();
+        if let Some(h) = resolve_home_dir() {
+            return h;
         }
     }
     if let Some(rest) = raw.strip_prefix("~/").or_else(|| raw.strip_prefix("~\\")) {
-        if let Some(u) = UserDirs::new() {
-            return u.home_dir().join(rest);
+        if let Some(h) = resolve_home_dir() {
+            return h.join(rest);
         }
     }
     PathBuf::from(raw)
@@ -2060,5 +2067,43 @@ mod tests {
         assert_eq!(st_absorbed.live_status.sync_state, "synced");
         let active_p = st_absorbed.profiles.iter().find(|p| p.is_active).unwrap();
         assert_eq!(active_p.provider, "deepseek");
+    }
+
+    #[test]
+    fn theme_settings_normalization_and_persistence() {
+        let dir = TempDir::new().unwrap();
+        let app_dir = dir.path().join("app");
+        let claude_file = dir.path().join("claude_settings.json");
+
+        let mut mgr = WorkspaceManager::with_paths(
+            app_dir.join("app_settings.json"),
+            claude_file.clone(),
+            app_dir.clone(),
+        );
+        assert_eq!(mgr.build_workspace_state().settings.theme, "Dark");
+
+        let st_light = mgr
+            .update_settings(Some("light".into()), None, None, None)
+            .unwrap();
+        assert_eq!(st_light.settings.theme, "Light");
+
+        let st_auto = mgr
+            .update_settings(Some("auto".into()), None, None, None)
+            .unwrap();
+        assert_eq!(st_auto.settings.theme, "System");
+
+        // Reload from disk and confirm System theme persists
+        let reloaded = WorkspaceManager::with_paths(
+            app_dir.join("app_settings.json"),
+            claude_file.clone(),
+            app_dir.clone(),
+        );
+        assert_eq!(reloaded.build_workspace_state().settings.theme, "System");
+
+        let mut mgr2 = reloaded;
+        let st_fallback = mgr2
+            .update_settings(Some("unexpected-value".into()), None, None, None)
+            .unwrap();
+        assert_eq!(st_fallback.settings.theme, "Dark");
     }
 }
