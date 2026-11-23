@@ -1,0 +1,86 @@
+{
+  "$schema": "https://design-tokens.github.io/community-group/format/",
+  "meta": {
+    "name": "Claude Code Switcher Design System",
+    "version": "2.0.0",
+    "direction": "Obsidian Studio (Dark) & Warm Alabaster (Light)"
+  },
+  "primitive": {
+    "color": {
+      "obsidian-975": "#0B0C0E",
+      "obsidian-950": "#111215",
+      "obsidian-925": "#15161A",
+      "obsidian-900": "#1C1E23",
+      "obsidian-850": "#23262D",
+      "obsidian-800": "#2C3038",
+      "paper-white": "#FFFFFF",
+      "alabaster-25": "#FCFBF8",
+      "alabaster-50": "#F8F6F1",
+      "linen-100": "#EFECE4",
+      "linen-200": "#DED8CC",
+      "ink-950": "#171614",
+      "ink-700": "#4E4940",
+      "ink-500": "#797266",
+      "chalk-100": "#F4F2EC",
+      "chalk-300": "#ADA89D",
+      "chalk-500": "#7B766C",
+      "clay-600": "#B44B2B",
+      "clay-500": "#C65937",
+      "clay-400": "#DE7856",
+      "clay-300": "#EA8D6E",
+      "emerald-600": "#147A4B",
+      "emerald-400": "#3BD18D",
+      "amber-600": "#A65D08",
+      "amber-400": "#EEAB42",
+      "crimson-600": "#BD3129",
+      "crimson-400": "#F26B64"
+    },
+    "space": {
+      "1": "4px",
+      "2": "8px",
+      "3": "12px",
+      "4": "16px",
+      "5": "20px",
+      "6": "24px",
+      "8": "32px",
+      "10": "40px"
+    },
+    "radius": {
+      "xs": "5px",
+      "sm": "8px",
+      "md": "11px",
+      "lg": "15px",
+      "pill": "999px"
+    }
+  },
+  "semantic": {
+    "dark": {
+      "bg-inset": "{primitive.color.obsidian-975}",
+      "bg-rail": "{primitive.color.obsidian-950}",
+      "bg-canvas": "{primitive.color.obsidian-925}",
+      "bg-surface": "{primitive.color.obsidian-900}",
+      "bg-elevated": "{primitive.color.obsidian-850}",
+      "text-primary": "{primitive.color.chalk-100}",
+      "text-secondary": "{primitive.color.chalk-300}",
+      "text-tertiary": "{primitive.color.chalk-500}",
+      "accent": "{primitive.color.clay-400}",
+      "signal-live": "{primitive.color.emerald-400}",
+      "signal-warn": "{primitive.color.amber-400}",
+      "signal-danger": "{primitive.color.crimson-400}"
+    },
+    "light": {
+      "bg-inset": "{primitive.color.alabaster-25}",
+      "bg-rail": "{primitive.color.linen-100}",
+      "bg-canvas": "{primitive.color.alabaster-50}",
+      "bg-surface": "{primitive.color.paper-white}",
+      "bg-elevated": "{primitive.color.paper-white}",
+      "text-primary": "{primitive.color.ink-950}",
+      "text-secondary": "{primitive.color.ink-700}",
+      "text-tertiary": "{primitive.color.ink-500}",
+      "accent": "{primitive.color.clay-500}",
+      "signal-live": "{primitive.color.emerald-600}",
+      "signal-warn": "{primitive.color.amber-600}",
+      "signal-danger": "{primitive.color.crimson-600}"
+    }
+  }
+}

@@ -1,0 +1,64 @@
+# Rust 编译输出
+/target/
+**/*.rs.bk
+*.pdb
+
+# Cargo 锁文件 (如果是库项目，应该忽略；如果是可执行项目，可以保留)
+# Cargo.lock
+
+# IDE 和编辑器文件
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 操作系统生成的文件
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Windows 系统文件
+*.tmp
+*.temp
+*.log
+
+# 备份文件
+*.bak
+*.backup
+*_backup.*
+
+# 临时文件
+*.tmp
+*.temp
+
+# 调试文件
+*.pdb
+
+# 测试覆盖率报告
+tarpaulin-report.html
+cobertura.xml
+
+# 性能分析文件
+*.prof
+perf.data*
+
+# 文档生成文件
+/doc/
+
+# 环境变量文件
+.env
+.env.local
+.env.*.local
+
+# 包管理器文件
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# 其他
+*.orig

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Claude Code Switcher</title>
+  <script>
+    (function () {
+      try {
+        var boot = window.__CCS_BOOT__;
+        if (boot && boot.platform) {
+          document.documentElement.setAttribute("data-platform", boot.platform);
+        }
+        var isLight;
+        if (boot && boot.resolvedTheme) {
+          isLight = boot.resolvedTheme === "light";
+        } else {
+          var saved = localStorage.getItem("ccs_theme_mode");
+          isLight = saved === "Light" || (saved === "System" && window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches);
+        }
+        if (window.location.search.indexOf("theme=light") !== -1) isLight = true;
+        if (window.location.search.indexOf("theme=dark") !== -1) isLight = false;
+        document.documentElement.setAttribute("data-theme", isLight ? "light" : "dark");
+      } catch (_) {}
+    })();
+  </script>
+  <link rel="stylesheet" href="/styles/tokens.css" />
+  <link rel="stylesheet" href="/styles/app.css" />
+</head>
+<body>
+  <div class="app-shell" id="app-shell">
+    <aside class="rail" id="rail-root" aria-label="环境配置列表"></aside>
+    <main class="workspace" id="workspace-root" aria-label="配置工作台"></main>
+    <footer class="statusbar" id="statusbar-root" aria-label="状态栏"></footer>
+  </div>
+  <div id="modal-root"></div>
+  <div class="toast-stack" id="toast-stack" aria-live="polite"></div>
+
+  <script src="/scripts/icons.js"></script>
+  <script src="/scripts/presets.js"></script>
+  <script src="/scripts/diff.js"></script>
+  <script src="/scripts/app.js"></script>
+</body>
+</html>

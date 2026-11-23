@@ -1,0 +1,5424 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Claude Code Switcher v2.0 — Interactive Design Prototype</title>
+  <style>
+/* ==========================================================================
+   Claude Code Switcher v2.0 — Three-Layer Design Tokens
+   Dual Flagship Themes:
+   - Obsidian Studio (Dark)  : Layered architectural graphite + warm specular catchlights
+   - Warm Alabaster  (Light) : Crisp pure paper cards on warm linen + soft ambient shadows
+   ========================================================================== */
+
+:root {
+  /* --- Layer 1: Primitive Color Scales --- */
+  /* Obsidian Graphite Scale (Dark Surfaces) */
+  --p-obsidian-975: #0B0C0E;
+  --p-obsidian-950: #111215;
+  --p-obsidian-925: #15161A;
+  --p-obsidian-900: #1C1E23;
+  --p-obsidian-850: #23262D;
+  --p-obsidian-800: #2C3038;
+  --p-obsidian-750: #363A44;
+
+  /* Warm Alabaster & Linen Scale (Light Surfaces & Ink) */
+  --p-paper-white:  #FFFFFF;
+  --p-alabaster-25: #FCFBF8;
+  --p-alabaster-50: #F8F6F1;
+  --p-linen-100:    #EFECE4;
+  --p-linen-150:    #E8E3D9;
+  --p-linen-200:    #DED8CC;
+  --p-linen-300:    #CBC3B4;
+  --p-ink-950:      #171614;
+  --p-ink-700:      #4E4940;
+  --p-ink-500:      #797266;
+  --p-chalk-100:    #F4F2EC;
+  --p-chalk-300:    #ADA89D;
+  --p-chalk-500:    #7B766C;
+
+  /* Claude Terracotta Accent Scale */
+  --p-clay-700: #9B3E22;
+  --p-clay-600: #B44B2B;
+  --p-clay-500: #C65937;
+  --p-clay-400: #DE7856;
+  --p-clay-300: #EA8D6E;
+
+  /* Instrument Signal Scales */
+  --p-emerald-600: #147A4B;
+  --p-emerald-400: #3BD18D;
+
+  --p-amber-600:   #A65D08;
+  --p-amber-400:   #EEAB42;
+
+  --p-crimson-600: #BD3129;
+  --p-crimson-400: #F26B64;
+
+  --p-sky-600:     #245EE0;
+  --p-sky-400:     #6DA4FF;
+
+  /* --- Layer 1: Spacing, Radius, Typography & Motion --- */
+  --space-1: 4px;
+  --space-1-5: 6px;
+  --space-2: 8px;
+  --space-2-5: 10px;
+  --space-3: 12px;
+  --space-3-5: 14px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+
+  --radius-xs: 5px;
+  --radius-sm: 8px;
+  --radius-md: 11px;
+  --radius-lg: 15px;
+  --radius-pill: 999px;
+
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei UI", system-ui, sans-serif;
+  --font-display: "Iowan Old Style", "Newsreader", "Georgia", "Songti SC", serif;
+  --font-mono: "SF Mono", "JetBrains Mono", "Menlo", "Monaco", "Consolas", ui-monospace, monospace;
+
+  --text-2xs: 11px;
+  --text-xs: 12px;
+  --text-sm: 13px;
+  --text-base: 14px;
+  --text-md: 15px;
+  --text-lg: 18px;
+  --text-xl: 21px;
+
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur-fast: 140ms;
+  --dur-med: 220ms;
+
+  /* --- Layer 3: Layout & Component Dimensions --- */
+  --rail-width: 298px;
+  --titlebar-height: 46px;
+  --statusbar-height: 29px;
+  --traffic-inset-width: 74px;
+  --control-sm: 28px;
+  --control-md: 34px;
+  --control-lg: 38px;
+}
+
+/* ==========================================================================
+   Layer 2: Semantic Tokens — Obsidian Studio (Dark Theme)
+   ========================================================================== */
+:root,
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* Surfaces (4 distinct depth planes) */
+  --bg-inset:       var(--p-obsidian-975);
+  --bg-rail:        var(--p-obsidian-950);
+  --bg-canvas:      var(--p-obsidian-925);
+  --bg-surface:     var(--p-obsidian-900);
+  --bg-subtle-card: #181A1F;
+  --bg-elevated:    var(--p-obsidian-850);
+  --bg-hover:       rgba(255, 250, 240, 0.055);
+  --bg-active:      rgba(255, 250, 240, 0.095);
+  --bg-selected:    rgba(222, 120, 86, 0.13);
+  --bg-backdrop:    rgba(6, 7, 9, 0.68);
+  --canvas-ambient: radial-gradient(920px 320px at 50% -110px, rgba(222, 120, 86, 0.065), transparent 70%);
+
+  /* Hairlines & Focus */
+  --border-subtle:  rgba(255, 250, 242, 0.075);
+  --border-default: rgba(255, 250, 242, 0.125);
+  --border-strong:  rgba(255, 250, 242, 0.21);
+  --border-focus:   var(--p-clay-400);
+  --focus-ring:     rgba(222, 120, 86, 0.22);
+
+  /* Typography */
+  --text-primary:   var(--p-chalk-100);
+  --text-secondary: var(--p-chalk-300);
+  --text-tertiary:  var(--p-chalk-500);
+  --text-on-accent: #FFFFFF;
+
+  /* Accent */
+  --accent:         var(--p-clay-400);
+  --accent-hover:   var(--p-clay-300);
+  --accent-pressed: var(--p-clay-500);
+  --accent-soft:    rgba(222, 120, 86, 0.14);
+  --accent-border:  rgba(222, 120, 86, 0.42);
+
+  /* Semantic Signals */
+  --signal-live:        var(--p-emerald-400);
+  --signal-live-soft:   rgba(59, 209, 141, 0.13);
+  --signal-live-border: rgba(59, 209, 141, 0.28);
+
+  --signal-warn:        var(--p-amber-400);
+  --signal-warn-soft:   rgba(238, 171, 66, 0.14);
+  --signal-warn-border: rgba(238, 171, 66, 0.30);
+
+  --signal-danger:        var(--p-crimson-400);
+  --signal-danger-soft:   rgba(242, 107, 100, 0.14);
+  --signal-danger-border: rgba(242, 107, 100, 0.30);
+
+  --signal-info: var(--p-sky-400);
+
+  /* Diff & Code Surfaces */
+  --code-gutter-bg: #101114;
+  --diff-add-bg:    rgba(59, 209, 141, 0.11);
+  --diff-add-fg:    #82E8BA;
+  --diff-del-bg:    rgba(242, 107, 100, 0.12);
+  --diff-del-fg:    #F99D98;
+
+  /* Elevations, Sheens & Controls */
+  --surface-sheen:  inset 0 1px 0 rgba(255, 255, 255, 0.045);
+  --inset-shadow:   inset 0 1px 2px rgba(0, 0, 0, 0.35);
+  --shadow-xs:      0 1px 2px rgba(0, 0, 0, 0.32);
+  --shadow-card:    0 1px 2px rgba(0, 0, 0, 0.36), 0 6px 18px rgba(0, 0, 0, 0.16);
+  --shadow-btn:     0 1px 2px rgba(0, 0, 0, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.055);
+  --shadow-primary: 0 1px 2px rgba(0, 0, 0, 0.42), 0 4px 14px rgba(217, 119, 87, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.20);
+  --shadow-seg:     0 1px 3px rgba(0, 0, 0, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  --shadow-overlay: 0 22px 56px rgba(0, 0, 0, 0.62), 0 6px 16px rgba(0, 0, 0, 0.38);
+  --shadow-toast:   0 12px 32px rgba(0, 0, 0, 0.50);
+
+  --kbd-bg:         rgba(255, 255, 255, 0.065);
+  --kbd-border:     rgba(255, 255, 255, 0.11);
+  --kbd-shadow:     rgba(0, 0, 0, 0.35);
+  --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23ADA89D' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+
+  --selection-bg:          rgba(222, 120, 86, 0.30);
+  --scrollbar-thumb:       rgba(255, 250, 240, 0.14);
+  --scrollbar-thumb-hover: rgba(255, 250, 240, 0.25);
+}
+
+/* ==========================================================================
+   Layer 2: Semantic Tokens — Warm Alabaster (Light Theme)
+   ========================================================================== */
+[data-theme="light"] {
+  color-scheme: light;
+
+  /* Surfaces (Crisp pure white studio cards over warm alabaster & linen) */
+  --bg-inset:       var(--p-alabaster-25);
+  --bg-rail:        var(--p-linen-100);
+  --bg-canvas:      var(--p-alabaster-50);
+  --bg-surface:     var(--p-paper-white);
+  --bg-subtle-card: #FAF8F4;
+  --bg-elevated:    var(--p-paper-white);
+  --bg-hover:       rgba(32, 28, 22, 0.048);
+  --bg-active:      rgba(32, 28, 22, 0.085);
+  --bg-selected:    rgba(198, 89, 55, 0.09);
+  --bg-backdrop:    rgba(24, 22, 18, 0.32);
+  --canvas-ambient: radial-gradient(920px 320px at 50% -120px, rgba(198, 89, 55, 0.055), transparent 70%);
+
+  /* Hairlines & Focus */
+  --border-subtle:  #E5DFD3;
+  --border-default: #D5CEC0;
+  --border-strong:  #B9B09F;
+  --border-focus:   var(--p-clay-500);
+  --focus-ring:     rgba(198, 89, 55, 0.16);
+
+  /* Typography */
+  --text-primary:   var(--p-ink-950);
+  --text-secondary: var(--p-ink-700);
+  --text-tertiary:  var(--p-ink-500);
+  --text-on-accent: #FFFFFF;
+
+  /* Accent */
+  --accent:         var(--p-clay-500);
+  --accent-hover:   var(--p-clay-600);
+  --accent-pressed: var(--p-clay-700);
+  --accent-soft:    rgba(198, 89, 55, 0.09);
+  --accent-border:  rgba(198, 89, 55, 0.36);
+
+  /* Semantic Signals */
+  --signal-live:        var(--p-emerald-600);
+  --signal-live-soft:   rgba(20, 122, 75, 0.095);
+  --signal-live-border: rgba(20, 122, 75, 0.24);
+
+  --signal-warn:        var(--p-amber-600);
+  --signal-warn-soft:   rgba(166, 93, 8, 0.10);
+  --signal-warn-border: rgba(166, 93, 8, 0.25);
+
+  --signal-danger:        var(--p-crimson-600);
+  --signal-danger-soft:   rgba(189, 49, 41, 0.09);
+  --signal-danger-border: rgba(189, 49, 41, 0.25);
+
+  --signal-info: var(--p-sky-600);
+
+  /* Diff & Code Surfaces */
+  --code-gutter-bg: #F2EFE7;
+  --diff-add-bg:    rgba(20, 122, 75, 0.095);
+  --diff-add-fg:    #115E39;
+  --diff-del-bg:    rgba(189, 49, 41, 0.09);
+  --diff-del-fg:    #99221B;
+
+  /* Elevations, Sheens & Controls */
+  --surface-sheen:  inset 0 1px 0 rgba(255, 255, 255, 0.90);
+  --inset-shadow:   inset 0 1px 2px rgba(24, 22, 18, 0.045);
+  --shadow-xs:      0 1px 2px rgba(28, 25, 20, 0.05);
+  --shadow-card:    0 1px 2px rgba(28, 25, 20, 0.045), 0 5px 16px rgba(28, 25, 20, 0.035);
+  --shadow-btn:     0 1px 2px rgba(28, 25, 20, 0.055), inset 0 1px 0 rgba(255, 255, 255, 0.92);
+  --shadow-primary: 0 1px 2px rgba(155, 62, 34, 0.26), 0 4px 12px rgba(198, 89, 55, 0.20), inset 0 1px 0 rgba(255, 255, 255, 0.24);
+  --shadow-seg:     0 1px 3px rgba(28, 25, 20, 0.09), 0 1px 1px rgba(28, 25, 20, 0.05);
+  --shadow-overlay: 0 20px 52px rgba(24, 22, 18, 0.16), 0 4px 14px rgba(24, 22, 18, 0.07);
+  --shadow-toast:   0 10px 28px rgba(24, 22, 18, 0.13);
+
+  --kbd-bg:         #F2EFE8;
+  --kbd-border:     #DCD5C7;
+  --kbd-shadow:     rgba(28, 25, 20, 0.08);
+  --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%234E4940' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+
+  --selection-bg:          rgba(198, 89, 55, 0.18);
+  --scrollbar-thumb:       rgba(28, 25, 20, 0.18);
+  --scrollbar-thumb-hover: rgba(28, 25, 20, 0.30);
+}
+
+/* ==========================================================================
+   Claude Code Switcher v2.0 — Application Stylesheet
+   Craft Floor: Dual-Theme Elevation, Tactile Hairlines, Zero `transition: all`
+   ========================================================================== */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+  overflow-x: clip;
+  overflow-y: hidden;
+  background: var(--bg-canvas);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  user-select: none;
+}
+
+::selection {
+  background: var(--selection-bg);
+  color: var(--text-primary);
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: var(--radius-pill);
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 1px;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+.mono {
+  font-family: var(--font-mono);
+}
+
+/* --- App Shell Grid --- */
+.app-shell {
+  display: grid;
+  grid-template-columns: var(--rail-width) minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr) var(--statusbar-height);
+  height: 100vh;
+  width: 100%;
+}
+
+/* --- Left Switchboard Rail --- */
+.rail {
+  grid-column: 1;
+  grid-row: 1;
+  background: var(--bg-rail);
+  border-right: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.rail-titlebar {
+  height: var(--titlebar-height);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--space-3);
+  border-bottom: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+}
+
+html[data-platform="macos"] .rail-titlebar,
+.app-Shell-macos .rail-titlebar {
+  padding-left: calc(var(--traffic-inset-width) + 6px);
+}
+
+.brand-lockup {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.brand-mark {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background: var(--accent);
+  color: var(--text-on-accent);
+  box-shadow: var(--shadow-primary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.brand-mark svg {
+  width: 14px;
+  height: 14px;
+}
+
+.brand-title {
+  font-size: var(--text-sm);
+  font-weight: 620;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rail-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+/* --- Live Claude Status Card --- */
+.live-card {
+  margin: var(--space-3) var(--space-3) var(--space-2-5);
+  padding: var(--space-2-5) var(--space-3);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-xs), var(--surface-sheen);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1-5);
+}
+
+.live-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.live-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: var(--text-2xs);
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  border: 1px solid transparent;
+}
+
+.live-pill.is-synced {
+  background: var(--signal-live-soft);
+  border-color: var(--signal-live-border);
+  color: var(--signal-live);
+}
+.live-pill.is-drifted {
+  background: var(--signal-warn-soft);
+  border-color: var(--signal-warn-border);
+  color: var(--signal-warn);
+}
+.live-pill.is-corrupted {
+  background: var(--signal-danger-soft);
+  border-color: var(--signal-danger-border);
+  color: var(--signal-danger);
+}
+.live-pill.is-missing {
+  background: var(--bg-active);
+  border-color: var(--border-subtle);
+  color: var(--text-secondary);
+}
+
+.snap-badge-orig {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 7px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--accent-border);
+  font-size: 10px;
+  font-weight: 600;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.pulse-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-pill);
+  background: currentColor;
+}
+
+.live-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}
+
+.live-host {
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.live-drift-bar {
+  margin-top: var(--space-1);
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-1-5);
+}
+
+/* --- Search + New Profile Bar --- */
+.rail-toolbar {
+  padding: 0 var(--space-3) var(--space-2-5);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.search-box {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+
+.search-box svg {
+  position: absolute;
+  left: 9px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 13.5px;
+  height: 13.5px;
+  color: var(--text-tertiary);
+  pointer-events: none;
+}
+
+.search-input {
+  width: 100%;
+  height: var(--control-sm);
+  padding: 0 26px 0 28px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--inset-shadow);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: var(--text-xs);
+  transition: border-color var(--dur-fast) var(--ease-out-expo), box-shadow var(--dur-fast) var(--ease-out-expo), background-color var(--dur-fast) var(--ease-out-expo);
+}
+.search-input::placeholder {
+  color: var(--text-tertiary);
+}
+.search-input:focus {
+  outline: none;
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px var(--focus-ring);
+  background: var(--bg-elevated);
+}
+
+.search-clear {
+  position: absolute;
+  right: 5px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 18px;
+  height: 18px;
+  border: none;
+  background: transparent;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  border-radius: var(--radius-xs);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.search-clear:hover {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}
+
+/* --- Profile List --- */
+.profile-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 2px var(--space-2-5) var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.rail-section-title {
+  padding: var(--space-2) var(--space-2) var(--space-1);
+  font-size: var(--text-2xs);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--text-tertiary);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.profile-item {
+  position: relative;
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-2-5);
+  padding: 9px var(--space-2-5);
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  transition: background-color var(--dur-fast) var(--ease-out-expo), border-color var(--dur-fast) var(--ease-out-expo), box-shadow var(--dur-fast) var(--ease-out-expo);
+}
+
+.profile-item:hover {
+  background: var(--bg-hover);
+}
+
+.profile-item.is-selected {
+  background: var(--bg-surface);
+  border-color: var(--border-default);
+  box-shadow: var(--shadow-xs), var(--surface-sheen);
+}
+
+.profile-item.is-active-live {
+  background: var(--bg-selected);
+  border-color: var(--accent-border);
+}
+
+.profile-item.is-active-live::before {
+  content: "";
+  position: absolute;
+  left: -1px;
+  top: 9px;
+  bottom: 9px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--accent);
+}
+
+.profile-item.is-selected.is-active-live {
+  background: var(--bg-surface);
+  border-color: var(--border-focus);
+  box-shadow: var(--shadow-xs), 0 0 0 1px var(--focus-ring), var(--surface-sheen);
+}
+
+.provider-badge {
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  color: var(--text-secondary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  flex-shrink: 0;
+  box-shadow: var(--surface-sheen);
+}
+
+.profile-item.is-selected .provider-badge {
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+}
+
+.profile-item.is-active-live .provider-badge {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--text-on-accent);
+  box-shadow: var(--shadow-primary);
+}
+
+.profile-item-body {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.profile-item-title-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+}
+
+.profile-item-name {
+  font-size: var(--text-sm);
+  font-weight: 560;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pin-icon {
+  width: 11px;
+  height: 11px;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+.profile-item-sub {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--text-2xs);
+  color: var(--text-tertiary);
+  min-width: 0;
+}
+
+.profile-item-host {
+  font-family: var(--font-mono);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.profile-item-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.active-dot-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  border-radius: var(--radius-pill);
+  background: var(--signal-live-soft);
+  border: 1px solid var(--signal-live-border);
+  color: var(--signal-live);
+  font-size: var(--text-2xs);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.quick-switch-btn {
+  opacity: 0;
+  height: 24px;
+  padding: 0 9px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border-default);
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-xs);
+  font-family: var(--font-sans);
+  font-size: var(--text-2xs);
+  font-weight: 550;
+  cursor: pointer;
+  transition: opacity var(--dur-fast) var(--ease-out-expo), background-color var(--dur-fast) var(--ease-out-expo), border-color var(--dur-fast) var(--ease-out-expo), color var(--dur-fast) var(--ease-out-expo);
+}
+
+.profile-item:hover .quick-switch-btn,
+.profile-item:focus-within .quick-switch-btn {
+  opacity: 1;
+}
+
+.quick-switch-btn:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--text-on-accent);
+}
+
+/* --- Main Workspace --- */
+.workspace {
+  grid-column: 2;
+  grid-row: 1;
+  background-color: var(--bg-canvas);
+  background-image: var(--canvas-ambient);
+  background-repeat: no-repeat;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.workspace-topbar {
+  height: var(--titlebar-height);
+  padding: 0 var(--space-5);
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  flex-shrink: 0;
+}
+
+.topbar-breadcrumbs {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.crumb-muted {
+  color: var(--text-tertiary);
+  font-size: var(--text-xs);
+}
+
+.crumb-current {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.unsaved-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: var(--text-2xs);
+  font-weight: 600;
+  color: var(--signal-warn);
+  background: var(--signal-warn-soft);
+  border: 1px solid var(--signal-warn-border);
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+}
+
+.topbar-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+
+.topbar-divider {
+  width: 1px;
+  height: 16px;
+  background: var(--border-subtle);
+  margin: 0 2px;
+}
+
+/* --- Topbar 3-Segment Appearance Capsule (Light / Dark / System) --- */
+.theme-capsule {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px;
+  border-radius: var(--radius-pill);
+  background: var(--bg-rail);
+  border: 1px solid var(--border-subtle);
+  gap: 1px;
+}
+
+.theme-seg {
+  height: 24px;
+  padding: 0 8px;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--text-tertiary);
+  font-family: var(--font-sans);
+  font-size: var(--text-2xs);
+  font-weight: 560;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+  transition: background-color var(--dur-fast) var(--ease-out-expo), color var(--dur-fast) var(--ease-out-expo), box-shadow var(--dur-fast) var(--ease-out-expo);
+}
+
+.theme-seg svg {
+  width: 12.5px;
+  height: 12.5px;
+  flex-shrink: 0;
+}
+
+.theme-seg:hover {
+  color: var(--text-primary);
+}
+
+.theme-seg.is-active {
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-seg);
+}
+
+.theme-seg.is-active svg {
+  color: var(--accent);
+}
+
+/* --- Profile Hero Header --- */
+.profile-header {
+  padding: var(--space-5) var(--space-6) var(--space-4);
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3-5);
+  flex-shrink: 0;
+}
+
+.profile-header-main {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.profile-identity {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3-5);
+  min-width: 0;
+}
+
+.profile-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: var(--radius-md);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  box-shadow: var(--shadow-xs), var(--surface-sheen);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+.profile-avatar svg {
+  width: 20px;
+  height: 20px;
+}
+
+.profile-title-group {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.profile-title-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.profile-heading {
+  font-size: var(--text-xl);
+  font-weight: 660;
+  letter-spacing: -0.025em;
+  line-height: 1.2;
+  color: var(--text-primary);
+  overflow-wrap: break-word;
+  min-width: 0;
+}
+
+.tag-badge {
+  font-size: var(--text-2xs);
+  font-weight: 560;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border-default);
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  box-shadow: var(--surface-sheen);
+}
+
+.latency-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  font-weight: 550;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+}
+.latency-chip.is-ok {
+  color: var(--signal-live);
+  border-color: var(--signal-live-border);
+  background: var(--signal-live-soft);
+}
+.latency-chip.is-fail {
+  color: var(--signal-danger);
+  border-color: var(--signal-danger-border);
+  background: var(--signal-danger-soft);
+}
+
+.profile-subtitle {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.profile-cta-cluster {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+
+/* --- Sub-navigation Tabs & Secondary Actions --- */
+.profile-nav-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.segmented-tabs {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px;
+  background: var(--bg-rail);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  gap: 2px;
+}
+
+.seg-tab {
+  height: 28px;
+  padding: 0 12px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: var(--font-sans);
+  font-size: var(--text-xs);
+  font-weight: 560;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  transition: background-color var(--dur-fast) var(--ease-out-expo), color var(--dur-fast) var(--ease-out-expo), box-shadow var(--dur-fast) var(--ease-out-expo);
+}
+
+.seg-tab svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+.seg-tab:hover {
+  color: var(--text-primary);
+}
+
+.seg-tab.is-active {
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-seg);
+}
+
+.seg-tab.is-active svg {
+  color: var(--accent);
+}
+
+.secondary-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* --- Buttons --- */
+.btn {
+  height: var(--control-md);
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-default);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-btn);
+  font-family: var(--font-sans);
+  font-size: var(--text-xs);
+  font-weight: 560;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color var(--dur-fast) var(--ease-out-expo), border-color var(--dur-fast) var(--ease-out-expo), transform var(--dur-fast) var(--ease-out-expo), box-shadow var(--dur-fast) var(--ease-out-expo);
+}
+
+.btn svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+.btn:hover:not(:disabled) {
+  background: var(--bg-elevated);
+  border-color: var(--border-strong);
+}
+
+.btn:active:not(:disabled) {
+  transform: scale(0.985);
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+.btn-sm {
+  height: var(--control-sm);
+  padding: 0 9px;
+  font-size: var(--text-2xs);
+}
+
+.btn-ghost {
+  border-color: transparent;
+  background: transparent;
+  color: var(--text-secondary);
+  box-shadow: none;
+}
+.btn-ghost:hover:not(:disabled) {
+  background: var(--bg-hover);
+  border-color: transparent;
+  color: var(--text-primary);
+  box-shadow: none;
+}
+
+.btn-icon {
+  width: var(--control-sm);
+  height: var(--control-sm);
+  padding: 0;
+  border-color: transparent;
+  background: transparent;
+  color: var(--text-secondary);
+  box-shadow: none;
+}
+.btn-icon svg {
+  width: 15px;
+  height: 15px;
+}
+.btn-icon:hover:not(:disabled) {
+  background: var(--bg-hover);
+  border-color: transparent;
+  color: var(--text-primary);
+  box-shadow: none;
+}
+
+.btn-primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--text-on-accent);
+  box-shadow: var(--shadow-primary);
+}
+.btn-primary:hover:not(:disabled) {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+
+.btn-live-active {
+  background: var(--signal-live-soft);
+  border-color: var(--signal-live-border);
+  color: var(--signal-live);
+  box-shadow: none;
+}
+.btn-live-active:hover:not(:disabled) {
+  background: var(--signal-live-soft);
+  border-color: var(--signal-live);
+}
+
+.btn-danger {
+  color: var(--signal-danger);
+}
+.btn-danger:hover:not(:disabled) {
+  background: var(--signal-danger-soft);
+  border-color: var(--signal-danger-border);
+  color: var(--signal-danger);
+}
+
+.kbd {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 550;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: var(--kbd-bg);
+  border: 1px solid var(--kbd-border);
+  box-shadow: 0 1px 0 var(--kbd-shadow);
+  color: var(--text-secondary);
+}
+
+.btn-primary .kbd {
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.26);
+  box-shadow: none;
+  color: #FFFFFF;
+}
+
+/* --- Content Body Scroll Pane --- */
+.workspace-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--space-5) var(--space-6) var(--space-8);
+}
+
+.studio-grid {
+  max-width: 880px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+/* --- Studio Section Panels --- */
+.panel {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card), var(--surface-sheen);
+  overflow: hidden;
+}
+
+.panel-header {
+  padding: var(--space-3-5) var(--space-4);
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.panel-title-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.panel-title {
+  font-size: var(--text-sm);
+  font-weight: 610;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+
+.panel-desc {
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+}
+
+.panel-body {
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+/* --- Provider Preset Strip --- */
+.preset-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(144px, 1fr));
+  gap: var(--space-2);
+}
+
+.preset-card {
+  padding: 9px var(--space-2-5);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-subtle-card);
+  color: var(--text-primary);
+  cursor: pointer;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  transition: border-color var(--dur-fast) var(--ease-out-expo), background-color var(--dur-fast) var(--ease-out-expo), box-shadow var(--dur-fast) var(--ease-out-expo);
+}
+.preset-card:hover {
+  border-color: var(--border-strong);
+  background: var(--bg-hover);
+}
+.preset-card.is-current {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  box-shadow: 0 0 0 1px var(--focus-ring);
+}
+.preset-card-name {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.preset-card-host {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* --- Form Fields --- */
+.field-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3-5);
+}
+
+@media (max-width: 780px) {
+  .field-grid-2 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.field-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.field-label {
+  font-size: var(--text-xs);
+  font-weight: 560;
+  color: var(--text-secondary);
+}
+
+.field-key-hint {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--text-tertiary);
+}
+
+.input, .select {
+  width: 100%;
+  height: var(--control-md);
+  padding: 0 var(--space-3);
+  background-color: var(--bg-inset);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--inset-shadow);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  transition: border-color var(--dur-fast) var(--ease-out-expo), box-shadow var(--dur-fast) var(--ease-out-expo), background-color var(--dur-fast) var(--ease-out-expo);
+}
+
+.select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 32px;
+  background-image: var(--select-chevron);
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  cursor: pointer;
+}
+
+.input.mono {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+}
+
+.input::placeholder {
+  color: var(--text-tertiary);
+}
+
+.input:hover:not(:focus),
+.select:hover:not(:focus) {
+  border-color: var(--border-strong);
+}
+
+.input:focus, .select:focus {
+  outline: none;
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px var(--focus-ring);
+  background-color: var(--bg-surface);
+}
+
+.secret-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.secret-group .input {
+  flex: 1;
+}
+
+/* --- Sync Mode Selector Cards --- */
+.mode-cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.mode-card {
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-subtle-card);
+  cursor: pointer;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  transition: border-color var(--dur-fast) var(--ease-out-expo), background-color var(--dur-fast) var(--ease-out-expo), box-shadow var(--dur-fast) var(--ease-out-expo);
+}
+.mode-card:hover {
+  border-color: var(--border-strong);
+  background: var(--bg-hover);
+}
+.mode-card.is-selected {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  box-shadow: 0 0 0 1px var(--focus-ring);
+}
+.mode-card-title {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.mode-card-desc {
+  font-size: var(--text-2xs);
+  color: var(--text-secondary);
+  line-height: 1.45;
+}
+
+/* --- Visual Theme Studio Cards (Settings Modal) --- */
+.theme-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-2-5);
+}
+
+.theme-card {
+  padding: var(--space-2-5);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-default);
+  background: var(--bg-subtle-card);
+  cursor: pointer;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  transition: border-color var(--dur-fast) var(--ease-out-expo), background-color var(--dur-fast) var(--ease-out-expo), box-shadow var(--dur-fast) var(--ease-out-expo);
+}
+
+.theme-card:hover {
+  border-color: var(--border-strong);
+}
+
+.theme-card.is-selected {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  box-shadow: 0 0 0 1px var(--focus-ring);
+}
+
+.theme-preview {
+  height: 60px;
+  border-radius: 7px;
+  border: 1px solid rgba(128, 122, 110, 0.24);
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: 34% 66%;
+  position: relative;
+}
+
+.theme-preview.is-light {
+  background: #F8F6F1;
+}
+.theme-preview.is-light .tp-rail {
+  background: #EFECE4;
+  border-right: 1px solid #E3DDD0;
+}
+.theme-preview.is-light .tp-card {
+  background: #FFFFFF;
+  border: 1px solid #E4DED1;
+  box-shadow: 0 1px 3px rgba(28, 25, 20, 0.06);
+}
+.theme-preview.is-light .tp-line {
+  background: #D3CCC0;
+}
+
+.theme-preview.is-dark {
+  background: #15161A;
+}
+.theme-preview.is-dark .tp-rail {
+  background: #111215;
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+}
+.theme-preview.is-dark .tp-card {
+  background: #1C1E23;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+}
+.theme-preview.is-dark .tp-line {
+  background: #3A3E48;
+}
+
+.theme-preview.is-system {
+  display: grid;
+  grid-template-columns: 50% 50%;
+}
+.tp-sys-half {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  padding: 8px;
+}
+.tp-sys-half.is-l {
+  background: #F7F5F0;
+  border-right: 1px solid rgba(128, 122, 110, 0.22);
+}
+.tp-sys-half.is-d {
+  background: #141519;
+}
+
+.tp-rail {
+  padding: 7px 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.tp-dots {
+  display: flex;
+  gap: 3px;
+}
+.tp-dots i {
+  width: 4px;
+  height: 4px;
+  border-radius: 99px;
+  background: rgba(145, 138, 126, 0.55);
+}
+.tp-pill-accent {
+  height: 7px;
+  border-radius: 4px;
+  background: #D97250;
+  width: 82%;
+}
+.tp-main {
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.tp-card {
+  padding: 7px;
+  border-radius: 5px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.tp-line {
+  height: 4px;
+  border-radius: 3px;
+  width: 78%;
+}
+.tp-line.is-short {
+  width: 48%;
+}
+
+.theme-card-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+}
+.theme-card-title {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--text-primary);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.theme-card-title svg {
+  width: 13px;
+  height: 13px;
+  color: var(--text-secondary);
+}
+.theme-card.is-selected .theme-card-title svg {
+  color: var(--accent);
+}
+.theme-card-sub {
+  font-size: 10.5px;
+  color: var(--text-tertiary);
+}
+
+/* --- Toggle Switch Rows --- */
+.toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-2) 0;
+  border-top: 1px solid var(--border-subtle);
+}
+.toggle-row:first-child {
+  border-top: none;
+  padding-top: 0;
+}
+
+.toggle-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.toggle-title {
+  font-size: var(--text-sm);
+  font-weight: 550;
+  color: var(--text-primary);
+}
+.toggle-sub {
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+}
+
+.switch {
+  position: relative;
+  width: 38px;
+  height: 22px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border-strong);
+  background: var(--bg-inset);
+  box-shadow: var(--inset-shadow);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background-color var(--dur-fast) var(--ease-out-expo), border-color var(--dur-fast) var(--ease-out-expo);
+}
+.switch::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: var(--radius-pill);
+  background: var(--text-secondary);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.22);
+  transition: transform var(--dur-fast) var(--ease-out-expo), background-color var(--dur-fast) var(--ease-out-expo);
+}
+.switch.is-on {
+  background: var(--accent);
+  border-color: var(--accent);
+  box-shadow: none;
+}
+.switch.is-on::after {
+  transform: translateX(16px);
+  background: var(--text-on-accent);
+}
+
+/* --- Custom Env KV Table --- */
+.kv-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.kv-row {
+  display: grid;
+  grid-template-columns: minmax(160px, 1fr) minmax(180px, 1.4fr) auto;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+/* --- JSON Code Editor Pane --- */
+.code-pane-wrap {
+  height: calc(100vh - 235px);
+  min-height: 320px;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+}
+
+.code-toolbar {
+  padding: var(--space-2) var(--space-3-5);
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--code-gutter-bg);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.json-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--text-xs);
+  font-weight: 560;
+}
+.json-status.is-valid {
+  color: var(--signal-live);
+}
+.json-status.is-invalid {
+  color: var(--signal-danger);
+}
+
+.code-editor-container {
+  position: relative;
+  flex: 1;
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr);
+  min-height: 0;
+  background: var(--bg-inset);
+}
+
+.code-gutter {
+  padding: var(--space-3-5) var(--space-2-5) var(--space-6) 0;
+  text-align: right;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 21px;
+  color: var(--text-tertiary);
+  background: var(--code-gutter-bg);
+  border-right: 1px solid var(--border-subtle);
+  overflow: hidden;
+  user-select: none;
+}
+
+.code-textarea {
+  width: 100%;
+  height: 100%;
+  padding: var(--space-3-5) var(--space-4) var(--space-6);
+  border: none;
+  resize: none;
+  background: transparent;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 21px;
+  tab-size: 2;
+  white-space: pre;
+  overflow: auto;
+  user-select: text;
+}
+.code-textarea:focus {
+  outline: none;
+}
+
+/* --- Effective Diff Viewer --- */
+.diff-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.diff-explainer {
+  padding: var(--space-3) var(--space-4);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.diff-table-card {
+  background: var(--bg-inset);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+}
+
+.diff-header-bar {
+  padding: var(--space-2) var(--space-3-5);
+  background: var(--code-gutter-bg);
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  color: var(--text-secondary);
+}
+
+.diff-lines {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 20px;
+  overflow-x: auto;
+  padding: var(--space-2) 0;
+  user-select: text;
+}
+
+.diff-line {
+  display: grid;
+  grid-template-columns: 42px 42px 22px minmax(0, 1fr);
+  padding: 0 var(--space-3);
+}
+.diff-line.is-add {
+  background: var(--diff-add-bg);
+  color: var(--diff-add-fg);
+}
+.diff-line.is-del {
+  background: var(--diff-del-bg);
+  color: var(--diff-del-fg);
+}
+.diff-line.is-ctx {
+  color: var(--text-secondary);
+}
+.diff-ln {
+  color: var(--text-tertiary);
+  text-align: right;
+  padding-right: 10px;
+  user-select: none;
+  font-variant-numeric: tabular-nums;
+}
+.diff-sig {
+  user-select: none;
+  text-align: center;
+}
+.diff-code {
+  white-space: pre;
+}
+
+/* --- Empty State --- */
+.empty-state {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--space-8);
+  gap: var(--space-3);
+}
+
+.empty-title {
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 500;
+  color: var(--text-primary);
+  letter-spacing: -0.015em;
+}
+
+.empty-desc {
+  max-width: 42ch;
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+/* --- Bottom Status Bar --- */
+.statusbar {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  background: var(--bg-rail);
+  border-top: 1px solid var(--border-subtle);
+  padding: 0 var(--space-3-5);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: var(--text-2xs);
+  color: var(--text-tertiary);
+}
+
+.statusbar-group {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.status-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.status-theme-btn {
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: var(--font-sans);
+  font-size: var(--text-2xs);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  border-radius: var(--radius-xs);
+  transition: background-color var(--dur-fast) var(--ease-out-expo), color var(--dur-fast) var(--ease-out-expo);
+}
+.status-theme-btn svg {
+  width: 11.5px;
+  height: 11.5px;
+}
+.status-theme-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+/* --- Modals & Command Palette (`⌘K`) --- */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--bg-backdrop);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 10vh;
+  z-index: 100;
+  animation: fadeIn 140ms var(--ease-out-expo);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes modalSlide {
+  from { opacity: 0; transform: translateY(8px) scale(0.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.modal {
+  width: min(560px, calc(100vw - 32px));
+  max-height: 80vh;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-overlay), var(--surface-sheen);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: modalSlide 180ms var(--ease-out-expo);
+}
+
+.modal-lg {
+  width: min(680px, calc(100vw - 32px));
+}
+
+.modal-header {
+  padding: var(--space-4) var(--space-5);
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.modal-title {
+  font-size: var(--text-md);
+  font-weight: 620;
+  letter-spacing: -0.015em;
+}
+
+.modal-body {
+  padding: var(--space-4) var(--space-5);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.modal-footer {
+  padding: var(--space-3) var(--space-5);
+  border-top: 1px solid var(--border-subtle);
+  background: var(--bg-rail);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+/* Command Palette */
+.cmd-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2-5);
+  padding: 0 var(--space-4);
+  height: 48px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.cmd-input-wrap svg {
+  width: 16px;
+  height: 16px;
+  color: var(--text-tertiary);
+}
+.cmd-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+}
+.cmd-input:focus {
+  outline: none;
+}
+
+.cmd-list {
+  max-height: 340px;
+  overflow-y: auto;
+  padding: var(--space-2);
+}
+.cmd-item {
+  width: 100%;
+  padding: 9px var(--space-3);
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+}
+.cmd-item:hover,
+.cmd-item.is-active {
+  background: var(--bg-hover);
+}
+.cmd-item-left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2-5);
+}
+.cmd-item-left svg {
+  width: 15px;
+  height: 15px;
+  color: var(--text-secondary);
+}
+
+/* Backup Snapshot Row */
+.backup-row {
+  padding: var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: var(--bg-subtle-card);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+/* Toast Stack */
+.toast-stack {
+  position: fixed;
+  right: var(--space-4);
+  bottom: calc(var(--statusbar-height) + var(--space-3));
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  z-index: 200;
+  pointer-events: none;
+}
+
+.toast {
+  pointer-events: auto;
+  padding: 9px var(--space-3-5);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-toast), var(--surface-sheen);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-xs);
+  color: var(--text-primary);
+  animation: modalSlide 180ms var(--ease-out-expo);
+}
+.toast.is-success svg { color: var(--signal-live); }
+.toast.is-warn svg { color: var(--signal-warn); }
+.toast.is-error svg { color: var(--signal-danger); }
+
+  </style>
+</head>
+<body>
+  <div class="app-shell" id="app-shell">
+    <aside class="rail" id="rail-root" aria-label="环境配置列表"></aside>
+    <main class="workspace" id="workspace-root" aria-label="配置工作台"></main>
+    <footer class="statusbar" id="statusbar-root" aria-label="状态栏"></footer>
+  </div>
+  <div id="modal-root"></div>
+  <div class="toast-stack" id="toast-stack" aria-live="polite"></div>
+
+  <script>
+/* ==========================================================================
+   Claude Code Switcher v2.0 — Authored 1.5px Vector Icon System (Zero Emoji)
+   ========================================================================== */
+
+window.CCS_ICONS = {
+  brandSwitch: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="6" rx="3"/><circle cx="17" cy="8" r="1.5" fill="currentColor"/><rect x="3" y="13" width="18" height="6" rx="3" opacity="0.65"/><circle cx="7" cy="16" r="1.5" fill="currentColor" opacity="0.65"/></svg>`,
+  plus: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>`,
+  search: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="20" y1="20" x2="16.2" y2="16.2"/></svg>`,
+  check: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`,
+  zap: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>`,
+  radar: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20a8 8 0 1 0-8-8"/><path d="M12 16a4 4 0 1 0-4-4"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><path d="M12 12l5.5-5.5"/></svg>`,
+  save: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>`,
+  sliders: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>`,
+  code: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>`,
+  gitDiff: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><line x1="6" y1="8.5" x2="6" y2="15.5"/><circle cx="18" cy="18" r="2.5"/><path d="M18 15.5V9a3 3 0 0 0-3-3h-3"/><polyline points="14 3.5 11.5 6 14 8.5"/></svg>`,
+  eye: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>`,
+  eyeOff: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-6.4 0-10-8-10-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c6.4 0 10 8 10 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="2" y1="2" x2="22" y2="22"/></svg>`,
+  copy: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`,
+  duplicate: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="8" width="13" height="13" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/></svg>`,
+  trash: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>`,
+  edit: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>`,
+  pin: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M12 17v5"/><path d="M9 3h6l1 6 3 3v2H5v-2l3-3 1-6z"/></svg>`,
+  history: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><polyline points="3 3 3 8 8 8"/><polyline points="12 7 12 12 15.5 14"/></svg>`,
+  settings: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.08a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.08a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>`,
+  sun: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="6.34" y2="6.34"/><line x1="17.66" y1="17.66" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/><line x1="4.93" y1="19.07" x2="6.34" y2="17.66"/><line x1="17.66" y1="6.34" x2="19.07" y2="4.93"/></svg>`,
+  moon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`,
+  monitor: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>`,
+  folder: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>`,
+  external: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>`,
+  command: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M18 3a3 3 0 0 0-3 3v12a3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3H6a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3V6a3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3h12a3 3 0 0 0 3-3 3 3 0 0 0-3-3z"/></svg>`,
+  refresh: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>`,
+  alert: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="12.5"/><circle cx="12" cy="16" r="0.8" fill="currentColor"/></svg>`,
+  close: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`,
+  download: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>`,
+  wand: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4V2"/><path d="M15 16v-2"/><path d="M8 9h2"/><path d="M20 9h2"/><path d="M17.8 11.8L19 13"/><path d="M15 9h0"/><path d="M17.8 6.2L19 5"/><path d="M3 21l9-9"/><path d="M12.2 6.2L11 5"/></svg>`,
+};
+
+window.CCS_PROVIDER_MONOGRAM = function (provider) {
+  const map = {
+    anthropic: "AN",
+    openrouter: "OR",
+    deepseek: "DS",
+    glm: "ZP",
+    kimi: "KM",
+    siliconflow: "SF",
+    bedrock: "AWS",
+    vertex: "GCP",
+    custom: "GW",
+  };
+  return map[provider] || "CC";
+};
+
+/* ==========================================================================
+   Claude Code Switcher v2.0 — Provider Presets & Bidirectional Schema Serializer
+   ========================================================================== */
+
+window.CCS_PRESETS = [
+  {
+    id: "anthropic",
+    name: "Anthropic Official",
+    label: "Anthropic 官方",
+    host: "api.anthropic.com",
+    description: "Claude 官方 API 或 Claude Max 订阅直连",
+    template: {
+      env: {
+        ANTHROPIC_BASE_URL: "https://api.anthropic.com",
+        ANTHROPIC_API_KEY: ""
+      },
+      model: "claude-sonnet-4-6"
+    }
+  },
+  {
+    id: "openrouter",
+    name: "OpenRouter",
+    label: "OpenRouter 网关",
+    host: "openrouter.ai",
+    description: "OpenRouter 原生 Anthropic Messages 兼容网关",
+    template: {
+      env: {
+        ANTHROPIC_BASE_URL: "https://openrouter.ai/api",
+        ANTHROPIC_AUTH_TOKEN: ""
+      },
+      model: "anthropic/claude-sonnet-4.6"
+    }
+  },
+  {
+    id: "deepseek",
+    name: "DeepSeek",
+    label: "DeepSeek 兼容端",
+    host: "api.deepseek.com",
+    description: "DeepSeek 官方 Anthropic API 兼容层",
+    template: {
+      env: {
+        ANTHROPIC_BASE_URL: "https://api.deepseek.com/anthropic",
+        ANTHROPIC_AUTH_TOKEN: "",
+        ANTHROPIC_MODEL: "deepseek-chat",
+        ANTHROPIC_SMALL_FAST_MODEL: "deepseek-chat",
+        CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: "1"
+      }
+    }
+  },
+  {
+    id: "glm",
+    name: "Zhipu GLM",
+    label: "智谱 GLM Coding",
+    host: "open.bigmodel.cn",
+    description: "智谱开放平台 Anthropic 协议编码网关",
+    template: {
+      env: {
+        ANTHROPIC_BASE_URL: "https://open.bigmodel.cn/api/anthropic",
+        ANTHROPIC_AUTH_TOKEN: "",
+        CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: "1"
+      }
+    }
+  },
+  {
+    id: "kimi",
+    name: "Moonshot Kimi",
+    label: "Kimi (月之暗面)",
+    host: "api.moonshot.cn",
+    description: "Moonshot Kimi Anthropic 兼容端点",
+    template: {
+      env: {
+        ANTHROPIC_BASE_URL: "https://api.moonshot.cn/anthropic",
+        ANTHROPIC_AUTH_TOKEN: "",
+        CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: "1"
+      }
+    }
+  },
+  {
+    id: "siliconflow",
+    name: "SiliconFlow",
+    label: "硅基流动",
+    host: "api.siliconflow.cn",
+    description: "SiliconFlow 高速推理兼容网关",
+    template: {
+      env: {
+        ANTHROPIC_BASE_URL: "https://api.siliconflow.cn/",
+        ANTHROPIC_AUTH_TOKEN: "",
+        ANTHROPIC_MODEL: "Pro/deepseek-ai/DeepSeek-V3"
+      }
+    }
+  },
+  {
+    id: "bedrock",
+    name: "AWS Bedrock",
+    label: "AWS Bedrock",
+    host: "bedrock.aws",
+    description: "企业级 AWS Bedrock 托管 Claude 模型",
+    template: {
+      env: {
+        CLAUDE_CODE_USE_BEDROCK: "1",
+        AWS_REGION: "us-east-1",
+        ANTHROPIC_MODEL: "us.anthropic.claude-sonnet-4-6-v1:0"
+      }
+    }
+  },
+  {
+    id: "vertex",
+    name: "Google Vertex AI",
+    label: "Google Vertex AI",
+    host: "vertex.googleapis.com",
+    description: "GCP Vertex AI 企业托管 Claude 环境",
+    template: {
+      env: {
+        CLAUDE_CODE_USE_VERTEX: "1",
+        CLOUD_ML_REGION: "global",
+        ANTHROPIC_VERTEX_PROJECT_ID: ""
+      }
+    }
+  },
+  {
+    id: "custom",
+    name: "Custom Proxy",
+    label: "自建中转 / LiteLLM",
+    host: "custom-gateway",
+    description: "支持 OneAPI / NewAPI / LiteLLM 自定义中转",
+    template: {
+      env: {
+        ANTHROPIC_BASE_URL: "https://your-gateway.example.com",
+        ANTHROPIC_AUTH_TOKEN: ""
+      }
+    }
+  }
+];
+
+window.CCS_KNOWN_ENV_KEYS = new Set([
+  "ANTHROPIC_BASE_URL",
+  "ANTHROPIC_API_KEY",
+  "ANTHROPIC_AUTH_TOKEN",
+  "ANTHROPIC_MODEL",
+  "ANTHROPIC_DEFAULT_OPUS_MODEL",
+  "ANTHROPIC_DEFAULT_SONNET_MODEL",
+  "ANTHROPIC_DEFAULT_HAIKU_MODEL",
+  "ANTHROPIC_SMALL_FAST_MODEL",
+  "CLAUDE_CODE_MAX_OUTPUT_TOKENS",
+  "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC",
+  "CLAUDE_CODE_USE_BEDROCK",
+  "CLAUDE_CODE_USE_VERTEX",
+  "AWS_REGION",
+  "CLOUD_ML_REGION",
+  "ANTHROPIC_VERTEX_PROJECT_ID",
+  "HTTPS_PROXY",
+  "HTTP_PROXY"
+]);
+
+window.CCS_PARSE_FORM = function (jsonText) {
+  let obj;
+  try {
+    obj = JSON.parse(jsonText || "{}");
+    if (!obj || typeof obj !== "object" || Array.isArray(obj)) obj = {};
+  } catch (err) {
+    return { valid: false, error: err.message };
+  }
+
+  const env = (obj.env && typeof obj.env === "object" && !Array.isArray(obj.env)) ? obj.env : {};
+  const perms = (obj.permissions && typeof obj.permissions === "object") ? obj.permissions : {};
+
+  let authMode = "oauth_none";
+  if (String(env.CLAUDE_CODE_USE_BEDROCK || "") === "1") {
+    authMode = "bedrock";
+  } else if (String(env.CLAUDE_CODE_USE_VERTEX || "") === "1") {
+    authMode = "vertex";
+  } else if (env.ANTHROPIC_AUTH_TOKEN !== undefined && env.ANTHROPIC_AUTH_TOKEN !== "") {
+    authMode = "auth_token";
+  } else if (env.ANTHROPIC_API_KEY !== undefined && env.ANTHROPIC_API_KEY !== "") {
+    authMode = "api_key";
+  } else if (env.ANTHROPIC_AUTH_TOKEN !== undefined) {
+    authMode = "auth_token";
+  } else if (env.ANTHROPIC_API_KEY !== undefined) {
+    authMode = "api_key";
+  }
+
+  const extraEnv = [];
+  for (const [k, v] of Object.entries(env)) {
+    if (!window.CCS_KNOWN_ENV_KEYS.has(k)) {
+      extraEnv.push({ key: k, value: String(v ?? "") });
+    }
+  }
+
+  return {
+    valid: true,
+    raw: obj,
+    baseUrl: String(env.ANTHROPIC_BASE_URL ?? ""),
+    authMode,
+    apiKey: String(env.ANTHROPIC_API_KEY ?? ""),
+    authToken: String(env.ANTHROPIC_AUTH_TOKEN ?? ""),
+    httpsProxy: String(env.HTTPS_PROXY ?? env.HTTP_PROXY ?? ""),
+    awsRegion: String(env.AWS_REGION ?? ""),
+    vertexRegion: String(env.CLOUD_ML_REGION ?? ""),
+    vertexProject: String(env.ANTHROPIC_VERTEX_PROJECT_ID ?? ""),
+    topModel: String(obj.model ?? ""),
+    envModel: String(env.ANTHROPIC_MODEL ?? ""),
+    opusModel: String(env.ANTHROPIC_DEFAULT_OPUS_MODEL ?? ""),
+    sonnetModel: String(env.ANTHROPIC_DEFAULT_SONNET_MODEL ?? ""),
+    haikuModel: String(env.ANTHROPIC_DEFAULT_HAIKU_MODEL ?? ""),
+    fastModel: String(env.ANTHROPIC_SMALL_FAST_MODEL ?? ""),
+    maxOutputTokens: String(env.CLAUDE_CODE_MAX_OUTPUT_TOKENS ?? ""),
+    disableTraffic: String(env.CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC ?? "") === "1",
+    alwaysThinking: Boolean(obj.alwaysThinkingEnabled),
+    defaultPermMode: String(perms.defaultMode ?? ""),
+    extraEnv
+  };
+};
+
+window.CCS_SERIALIZE_FORM = function (currentJsonText, patch) {
+  let obj = {};
+  try {
+    const parsed = JSON.parse(currentJsonText || "{}");
+    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+      obj = parsed;
+    }
+  } catch (_) {
+    obj = {};
+  }
+
+  if (!obj.env || typeof obj.env !== "object" || Array.isArray(obj.env)) {
+    obj.env = {};
+  }
+
+  const setOrDeleteEnv = (k, val) => {
+    if (val === undefined || val === null || val === "") {
+      delete obj.env[k];
+    } else {
+      obj.env[k] = String(val);
+    }
+  };
+
+  if ("baseUrl" in patch) setOrDeleteEnv("ANTHROPIC_BASE_URL", patch.baseUrl.trim());
+  if ("httpsProxy" in patch) {
+    const p = patch.httpsProxy.trim();
+    setOrDeleteEnv("HTTPS_PROXY", p);
+    if (!p) delete obj.env.HTTP_PROXY;
+  }
+
+  if ("authMode" in patch || "secretValue" in patch) {
+    const form = window.CCS_PARSE_FORM(JSON.stringify(obj));
+    const mode = patch.authMode || form.authMode;
+    const secret = ("secretValue" in patch)
+      ? patch.secretValue
+      : (mode === "api_key" ? form.apiKey : form.authToken);
+
+    delete obj.env.CLAUDE_CODE_USE_BEDROCK;
+    delete obj.env.CLAUDE_CODE_USE_VERTEX;
+
+    if (mode === "api_key") {
+      delete obj.env.ANTHROPIC_AUTH_TOKEN;
+      obj.env.ANTHROPIC_API_KEY = secret;
+    } else if (mode === "auth_token") {
+      delete obj.env.ANTHROPIC_API_KEY;
+      obj.env.ANTHROPIC_AUTH_TOKEN = secret;
+    } else if (mode === "oauth_none") {
+      delete obj.env.ANTHROPIC_API_KEY;
+      delete obj.env.ANTHROPIC_AUTH_TOKEN;
+    } else if (mode === "bedrock") {
+      delete obj.env.ANTHROPIC_API_KEY;
+      delete obj.env.ANTHROPIC_AUTH_TOKEN;
+      obj.env.CLAUDE_CODE_USE_BEDROCK = "1";
+    } else if (mode === "vertex") {
+      delete obj.env.ANTHROPIC_API_KEY;
+      delete obj.env.ANTHROPIC_AUTH_TOKEN;
+      obj.env.CLAUDE_CODE_USE_VERTEX = "1";
+    }
+  }
+
+  if ("awsRegion" in patch) setOrDeleteEnv("AWS_REGION", patch.awsRegion.trim());
+  if ("vertexRegion" in patch) setOrDeleteEnv("CLOUD_ML_REGION", patch.vertexRegion.trim());
+  if ("vertexProject" in patch) setOrDeleteEnv("ANTHROPIC_VERTEX_PROJECT_ID", patch.vertexProject.trim());
+
+  if ("topModel" in patch) {
+    const m = patch.topModel.trim();
+    if (!m) delete obj.model;
+    else obj.model = m;
+  }
+  if ("envModel" in patch) setOrDeleteEnv("ANTHROPIC_MODEL", patch.envModel.trim());
+  if ("opusModel" in patch) setOrDeleteEnv("ANTHROPIC_DEFAULT_OPUS_MODEL", patch.opusModel.trim());
+  if ("sonnetModel" in patch) setOrDeleteEnv("ANTHROPIC_DEFAULT_SONNET_MODEL", patch.sonnetModel.trim());
+  if ("haikuModel" in patch) setOrDeleteEnv("ANTHROPIC_DEFAULT_HAIKU_MODEL", patch.haikuModel.trim());
+  if ("fastModel" in patch) setOrDeleteEnv("ANTHROPIC_SMALL_FAST_MODEL", patch.fastModel.trim());
+  if ("maxOutputTokens" in patch) setOrDeleteEnv("CLAUDE_CODE_MAX_OUTPUT_TOKENS", patch.maxOutputTokens.trim());
+  if ("disableTraffic" in patch) {
+    setOrDeleteEnv("CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC", patch.disableTraffic ? "1" : "");
+  }
+  if ("alwaysThinking" in patch) {
+    if (patch.alwaysThinking) obj.alwaysThinkingEnabled = true;
+    else delete obj.alwaysThinkingEnabled;
+  }
+  if ("defaultPermMode" in patch) {
+    const pm = patch.defaultPermMode.trim();
+    if (!pm) {
+      if (obj.permissions && typeof obj.permissions === "object") {
+        delete obj.permissions.defaultMode;
+        if (Object.keys(obj.permissions).length === 0) delete obj.permissions;
+      }
+    } else {
+      if (!obj.permissions || typeof obj.permissions !== "object") obj.permissions = {};
+      obj.permissions.defaultMode = pm;
+    }
+  }
+
+  if ("extraEnv" in patch && Array.isArray(patch.extraEnv)) {
+    for (const k of Object.keys(obj.env)) {
+      if (!window.CCS_KNOWN_ENV_KEYS.has(k)) {
+        delete obj.env[k];
+      }
+    }
+    for (const row of patch.extraEnv) {
+      const k = (row.key || "").trim();
+      if (k) obj.env[k] = String(row.value ?? "");
+    }
+  }
+
+  return JSON.stringify(obj, null, 2);
+};
+
+/* ==========================================================================
+   Claude Code Switcher v2.0 — Line-by-Line LCS Diff & Secret Redactor
+   ========================================================================== */
+
+window.CCS_MASK_SECRETS_IN_JSON = function (jsonText) {
+  if (!jsonText) return "";
+  return jsonText.replace(
+    /("(?:ANTHROPIC_API_KEY|ANTHROPIC_AUTH_TOKEN|OPENAI_API_KEY|API_KEY|TOKEN|SECRET)"\s*:\s*")([^"]+)(")/gi,
+    (_, p1, secret, p3) => {
+      if (secret.length <= 8) return `${p1}••••••••${p3}`;
+      return `${p1}${secret.slice(0, 6)}••••••${secret.slice(-4)}${p3}`;
+    }
+  );
+};
+
+window.CCS_COMPUTE_DIFF = function (beforeStr, afterStr) {
+  const a = (beforeStr || "{}").split("\n");
+  const b = (afterStr || "{}").split("\n");
+  const n = a.length;
+  const m = b.length;
+
+  // Guard for very large files: fallback simple comparison above 600 lines
+  if (n * m > 360000) {
+    const out = [];
+    const maxLen = Math.max(n, m);
+    for (let i = 0; i < maxLen; i++) {
+      if (a[i] === b[i]) {
+        out.push({ type: "ctx", oldLn: i + 1, newLn: i + 1, text: a[i] });
+      } else {
+        if (i < n) out.push({ type: "del", oldLn: i + 1, newLn: "", text: a[i] });
+        if (i < m) out.push({ type: "add", oldLn: "", newLn: i + 1, text: b[i] });
+      }
+    }
+    return out;
+  }
+
+  const dp = Array.from({ length: n + 1 }, () => new Uint16Array(m + 1));
+  for (let i = n - 1; i >= 0; i--) {
+    for (let j = m - 1; j >= 0; j--) {
+      if (a[i] === b[j]) {
+        dp[i][j] = dp[i + 1][j + 1] + 1;
+      } else {
+        dp[i][j] = dp[i + 1][j] >= dp[i][j + 1] ? dp[i + 1][j] : dp[i][j + 1];
+      }
+    }
+  }
+
+  const ops = [];
+  let i = 0;
+  let j = 0;
+  let oldLn = 1;
+  let newLn = 1;
+  while (i < n && j < m) {
+    if (a[i] === b[j]) {
+      ops.push({ type: "ctx", oldLn: oldLn++, newLn: newLn++, text: a[i] });
+      i++;
+      j++;
+    } else if (dp[i + 1][j] >= dp[i][j + 1]) {
+      ops.push({ type: "del", oldLn: oldLn++, newLn: "", text: a[i] });
+      i++;
+    } else {
+      ops.push({ type: "add", oldLn: "", newLn: newLn++, text: b[j] });
+      j++;
+    }
+  }
+  while (i < n) {
+    ops.push({ type: "del", oldLn: oldLn++, newLn: "", text: a[i++] });
+  }
+  while (j < m) {
+    ops.push({ type: "add", oldLn: "", newLn: newLn++, text: b[j++] });
+  }
+  return ops;
+};
+
+/* ==========================================================================
+   Claude Code Switcher v2.0 — Studio Frontend Controller & IPC Bridge
+   ========================================================================== */
+
+(function () {
+  "use strict";
+
+  const ICONS = window.CCS_ICONS;
+  const PRESETS = window.CCS_PRESETS;
+
+  // --- Native Wry IPC Bridge + Browser Preview Fallback ---
+  let rpcSeq = 1;
+  const pendingRpc = new Map();
+
+  window.__ccs_resolve = function (id, ok, payload) {
+    const entry = pendingRpc.get(id);
+    if (!entry) return;
+    pendingRpc.delete(id);
+    if (ok) entry.resolve(payload);
+    else entry.reject(new Error(typeof payload === "string" ? payload : JSON.stringify(payload)));
+  };
+
+  const isNative = Boolean(window.ipc && typeof window.ipc.postMessage === "function");
+
+  function rpc(cmd, payload = {}) {
+    if (!isNative) {
+      return mockRpc(cmd, payload);
+    }
+    return new Promise((resolve, reject) => {
+      const id = rpcSeq++;
+      pendingRpc.set(id, { resolve, reject });
+      window.ipc.postMessage(JSON.stringify({ id, cmd, payload }));
+    });
+  }
+
+  // --- Shared Smart-Merge Projection (mirrors Rust `compute_effective_config`) ---
+  const MANAGED_ENV_KEYS = [
+    "ANTHROPIC_BASE_URL",
+    "ANTHROPIC_API_KEY",
+    "ANTHROPIC_AUTH_TOKEN",
+    "ANTHROPIC_MODEL",
+    "ANTHROPIC_DEFAULT_OPUS_MODEL",
+    "ANTHROPIC_DEFAULT_SONNET_MODEL",
+    "ANTHROPIC_DEFAULT_HAIKU_MODEL",
+    "ANTHROPIC_SMALL_FAST_MODEL",
+    "CLAUDE_CODE_MAX_OUTPUT_TOKENS",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC",
+    "CLAUDE_CODE_USE_BEDROCK",
+    "CLAUDE_CODE_USE_VERTEX",
+    "AWS_REGION",
+    "CLOUD_ML_REGION",
+    "ANTHROPIC_VERTEX_PROJECT_ID",
+    "HTTPS_PROXY",
+    "HTTP_PROXY"
+  ];
+
+  function computeEffectiveJson(liveJsonStr, profileJsonStr, syncMode) {
+    let profileObj;
+    try {
+      profileObj = JSON.parse(profileJsonStr || "{}");
+    } catch (_) {
+      return profileJsonStr || "{}";
+    }
+    if (syncMode === "replace") {
+      return JSON.stringify(profileObj, null, 2);
+    }
+    let baseObj = {};
+    try {
+      const parsed = JSON.parse(liveJsonStr || "{}");
+      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+        baseObj = JSON.parse(JSON.stringify(parsed));
+      }
+    } catch (_) {
+      baseObj = {};
+    }
+
+    if (!baseObj.env || typeof baseObj.env !== "object" || Array.isArray(baseObj.env)) {
+      baseObj.env = {};
+    }
+    for (const k of MANAGED_ENV_KEYS) {
+      delete baseObj.env[k];
+    }
+    if (profileObj.env && typeof profileObj.env === "object" && !Array.isArray(profileObj.env)) {
+      for (const [k, v] of Object.entries(profileObj.env)) {
+        if ((k === "ANTHROPIC_API_KEY" || k === "ANTHROPIC_AUTH_TOKEN") && typeof v === "string" && v.trim() === "") {
+          continue;
+        }
+        baseObj.env[k] = v;
+      }
+    }
+    if (Object.keys(baseObj.env).length === 0) {
+      delete baseObj.env;
+    }
+
+    // Clear stale profile-managed top-level keys before applying target profile
+    delete baseObj.model;
+    delete baseObj.alwaysThinkingEnabled;
+
+    for (const [k, v] of Object.entries(profileObj)) {
+      if (k === "env") continue;
+      if (k === "model" && typeof v === "string" && v.trim() === "") continue;
+      if (k === "permissions" && v && typeof v === "object" && baseObj.permissions && typeof baseObj.permissions === "object") {
+        baseObj.permissions = { ...baseObj.permissions, ...v };
+      } else {
+        baseObj[k] = v;
+      }
+    }
+    return JSON.stringify(baseObj, null, 2);
+  }
+
+  function extractProviderProfileFromLiveJs(liveRaw) {
+    try {
+      const parsed = JSON.parse(liveRaw || "{}");
+      if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return liveRaw;
+      const out = {};
+      if (parsed.env && typeof parsed.env === "object") out.env = parsed.env;
+      if ("model" in parsed) out.model = parsed.model;
+      if ("alwaysThinkingEnabled" in parsed) out.alwaysThinkingEnabled = parsed.alwaysThinkingEnabled;
+      if (Object.keys(out).length === 0) out.env = {};
+      return JSON.stringify(out, null, 2);
+    } catch (_) {
+      return liveRaw;
+    }
+  }
+
+  // --- Browser Preview Mock Backend (Used only when outside Native Wry) ---
+  const mockStore = (function createMockStore() {
+    const liveInitial = JSON.stringify({
+      env: {
+        ANTHROPIC_BASE_URL: "https://api.anthropic.com",
+        ANTHROPIC_API_KEY: "sk-ant-api03-demo8841a9c02b7e4f2a"
+      },
+      model: "claude-sonnet-4-6",
+      alwaysThinkingEnabled: true,
+      permissions: {
+        allow: ["Bash(cargo check:*)", "Bash(git status:*)", "Read(**)"],
+        deny: ["Bash(rm -rf /:*)"],
+        defaultMode: "acceptEdits"
+      },
+      hooks: {
+        Stop: [{ matcher: "", hooks: [{ type: "command", command: "afplay /System/Library/Sounds/Glass.aiff" }] }]
+      },
+      enabledPlugins: ["github-mcp", "rust-analyzer-lsp"]
+    }, null, 2);
+
+    return {
+      settings: {
+        config_directory: "~/.claude-code-switcher",
+        claude_config_path: "~/.claude/settings.json",
+        theme: "Dark",
+        default_config_file: "Anthropic Official.json",
+        default_sync_mode: "merge",
+        auto_backup: true
+      },
+      liveContent: liveInitial,
+      backups: [
+        {
+          id: "original-claude-settings",
+          fileName: "original-claude-settings.json",
+          createdAt: "首次启动",
+          label: "初始原版 ~/.claude/settings.json (永久保护)",
+          byteSize: liveInitial.length,
+          isOriginal: true,
+          content: liveInitial
+        },
+        {
+          id: "snap-01",
+          fileName: "snap-01.json",
+          createdAt: "15 分钟前",
+          label: "切换至「OpenRouter Relay」前自动备份",
+          byteSize: 642,
+          isOriginal: false,
+          content: liveInitial
+        },
+        {
+          id: "snap-02",
+          fileName: "snap-02.json",
+          createdAt: "3 小时前",
+          label: "切换至「DeepSeek V3 Coding」前自动备份",
+          byteSize: 618,
+          isOriginal: false,
+          content: liveInitial
+        }
+      ],
+      profiles: [
+        {
+          fileName: "Anthropic Official.json",
+          displayName: "Anthropic Official",
+          provider: "anthropic",
+          description: "Claude 官方直连主力环境 · Opus / Sonnet 4.6",
+          syncMode: "merge",
+          pinned: true,
+          lastLatencyMs: 128,
+          lastProbeOk: true,
+          lastProbeDetail: "HTTP 401 · TLS 1.3 OK",
+          updatedAgo: "刚刚",
+          content: JSON.stringify({
+            env: {
+              ANTHROPIC_BASE_URL: "https://api.anthropic.com",
+              ANTHROPIC_API_KEY: "sk-ant-api03-demo8841a9c02b7e4f2a"
+            },
+            model: "claude-sonnet-4-6",
+            alwaysThinkingEnabled: true
+          }, null, 2)
+        },
+        {
+          fileName: "OpenRouter Relay.json",
+          displayName: "OpenRouter Relay",
+          provider: "openrouter",
+          description: "备用高可用多模型路由网关",
+          syncMode: "merge",
+          pinned: true,
+          lastLatencyMs: 186,
+          lastProbeOk: true,
+          lastProbeDetail: "HTTP 200 · TLS 1.3 OK",
+          updatedAgo: "25 分钟前",
+          content: JSON.stringify({
+            env: {
+              ANTHROPIC_BASE_URL: "https://openrouter.ai/api",
+              ANTHROPIC_AUTH_TOKEN: "sk-or-v1-92bc41e09fa188b27c3d"
+            },
+            model: "anthropic/claude-sonnet-4.6"
+          }, null, 2)
+        },
+        {
+          fileName: "DeepSeek V3 Coding.json",
+          displayName: "DeepSeek V3 Coding",
+          provider: "deepseek",
+          description: "低成本高频补全与重构专用配置",
+          syncMode: "merge",
+          pinned: false,
+          lastLatencyMs: 64,
+          lastProbeOk: true,
+          lastProbeDetail: "HTTP 401 · 国内直连极速",
+          updatedAgo: "2 小时前",
+          content: JSON.stringify({
+            env: {
+              ANTHROPIC_BASE_URL: "https://api.deepseek.com/anthropic",
+              ANTHROPIC_AUTH_TOKEN: "sk-ds88103a7f2c904b12e6",
+              ANTHROPIC_MODEL: "deepseek-chat",
+              ANTHROPIC_SMALL_FAST_MODEL: "deepseek-chat",
+              CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: "1"
+            }
+          }, null, 2)
+        },
+        {
+          fileName: "Zhipu GLM Coding.json",
+          displayName: "Zhipu GLM Coding",
+          provider: "glm",
+          description: "智谱开放平台原生 Anthropic 协议网关",
+          syncMode: "merge",
+          pinned: false,
+          lastLatencyMs: 52,
+          lastProbeOk: true,
+          lastProbeDetail: "HTTP 401 · CN-North OK",
+          updatedAgo: "昨天",
+          content: JSON.stringify({
+            env: {
+              ANTHROPIC_BASE_URL: "https://open.bigmodel.cn/api/anthropic",
+              ANTHROPIC_AUTH_TOKEN: "zp-991a8b34c012ef98a112",
+              CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: "1"
+            }
+          }, null, 2)
+        },
+        {
+          fileName: "AWS Bedrock Enterprise.json",
+          displayName: "AWS Bedrock Enterprise",
+          provider: "bedrock",
+          description: "公司生产 VPC 合规环境 (us-east-1)",
+          syncMode: "merge",
+          pinned: false,
+          lastLatencyMs: 214,
+          lastProbeOk: true,
+          lastProbeDetail: "IAM 凭证模式",
+          updatedAgo: "3 天前",
+          content: JSON.stringify({
+            env: {
+              CLAUDE_CODE_USE_BEDROCK: "1",
+              AWS_REGION: "us-east-1",
+              ANTHROPIC_MODEL: "us.anthropic.claude-sonnet-4-6-v1:0"
+            }
+          }, null, 2)
+        }
+      ]
+    };
+  })();
+
+  function enrichMockProfile(p) {
+    const parsed = window.CCS_PARSE_FORM(p.content);
+    let host = "api.anthropic.com";
+    if (parsed.authMode === "bedrock") host = `bedrock.${parsed.awsRegion || "aws"}`;
+    else if (parsed.authMode === "vertex") host = "vertex.googleapis.com";
+    else if (parsed.baseUrl) {
+      try { host = new URL(parsed.baseUrl).host; } catch (_) { host = parsed.baseUrl; }
+    }
+    const secret = parsed.authMode === "api_key" ? parsed.apiKey : parsed.authToken;
+    const maskedKey = secret
+      ? (secret.length > 10 ? `${secret.slice(0, 6)}••••${secret.slice(-4)}` : "••••••••")
+      : (parsed.authMode === "oauth_none" ? "OAuth / 订阅" : (parsed.authMode === "bedrock" || parsed.authMode === "vertex" ? "IAM / Cloud" : "待填写密钥"));
+    return {
+      ...p,
+      isActive: mockStore.settings.default_config_file === p.fileName,
+      baseHost: host,
+      baseUrl: parsed.baseUrl || "https://api.anthropic.com",
+      authKind: parsed.authMode,
+      maskedKey,
+      modelSummary: parsed.topModel || parsed.envModel || "默认模型",
+      effectivePreview: computeEffectiveJson(mockStore.liveContent, p.content, p.syncMode)
+    };
+  }
+
+  function buildMockState(targetFile = undefined) {
+    const profiles = mockStore.profiles.map(enrichMockProfile).sort((a, b) => {
+      if (a.isActive !== b.isActive) return a.isActive ? -1 : 1;
+      if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
+      return a.displayName.localeCompare(b.displayName);
+    });
+    const active = profiles.find((p) => p.isActive);
+    const liveForm = window.CCS_PARSE_FORM(mockStore.liveContent);
+    let syncState = "unmanaged";
+    if (!liveForm.valid) {
+      syncState = "corrupted";
+    } else if (active) {
+      try {
+        syncState = JSON.stringify(JSON.parse(active.effectivePreview)) === JSON.stringify(JSON.parse(mockStore.liveContent))
+          ? "synced"
+          : "drifted";
+      } catch (_) {
+        syncState = "drifted";
+      }
+    }
+    let activeHost = liveForm.valid ? "api.anthropic.com" : "JSON 语法错误";
+    if (liveForm.valid && liveForm.baseUrl) {
+      try { activeHost = new URL(liveForm.baseUrl).host; } catch (_) { activeHost = liveForm.baseUrl; }
+    }
+    const liveRaw = liveForm.raw || {};
+    const preservedSections = ["permissions", "hooks", "enabledPlugins", "statusLine", "mcpServers"]
+      .filter((k) => k in liveRaw);
+
+    return {
+      appVersion: "2.0.1",
+      platform: "macos",
+      settings: { ...mockStore.settings },
+      liveStatus: {
+        exists: true,
+        syncState,
+        activeHost,
+        activeModel: liveForm.topModel || liveForm.envModel || "默认模型",
+        preservedSections,
+        liveContent: mockStore.liveContent,
+        byteSize: mockStore.liveContent.length,
+        modifiedAgo: "刚刚"
+      },
+      profiles,
+      backupsCount: mockStore.backups.length,
+      targetFile
+    };
+  }
+
+  async function mockRpc(cmd, payload) {
+    await new Promise((r) => setTimeout(r, cmd === "probe_endpoint" ? 260 : 25));
+    switch (cmd) {
+      case "get_state":
+        return buildMockState();
+      case "create_profile": {
+        const baseClean = payload.name.replace(/\.json$/i, "").trim() || "New Profile";
+        let fileName = `${baseClean}.json`;
+        let counter = 1;
+        while (mockStore.profiles.some((x) => x.fileName === fileName)) {
+          fileName = `${baseClean}_${counter++}.json`;
+        }
+        const displayName = fileName.replace(/\.json$/i, "");
+        mockStore.profiles.push({
+          fileName,
+          displayName,
+          provider: payload.provider || "custom",
+          description: payload.description || "",
+          syncMode: payload.syncMode || mockStore.settings.default_sync_mode,
+          pinned: Boolean(payload.pinned),
+          lastLatencyMs: null,
+          lastProbeOk: null,
+          lastProbeDetail: "",
+          updatedAgo: "刚刚",
+          content: payload.content
+        });
+        if (payload.activateNow) {
+          mockStore.liveContent = computeEffectiveJson(mockStore.liveContent, payload.content, payload.syncMode || "merge");
+          mockStore.settings.default_config_file = fileName;
+        }
+        return buildMockState(fileName);
+      }
+      case "save_profile": {
+        const idx = mockStore.profiles.findIndex((p) => p.fileName === payload.fileName);
+        if (idx >= 0) {
+          mockStore.profiles[idx] = {
+            ...mockStore.profiles[idx],
+            content: payload.content,
+            provider: payload.provider ?? mockStore.profiles[idx].provider,
+            description: payload.description ?? mockStore.profiles[idx].description,
+            syncMode: payload.syncMode ?? mockStore.profiles[idx].syncMode,
+            pinned: payload.pinned ?? mockStore.profiles[idx].pinned,
+            updatedAgo: "刚刚"
+          };
+          if (mockStore.settings.default_config_file === payload.fileName) {
+            mockStore.liveContent = computeEffectiveJson(mockStore.liveContent, payload.content, mockStore.profiles[idx].syncMode);
+          }
+        }
+        return buildMockState(payload.fileName);
+      }
+      case "activate_profile": {
+        const p = mockStore.profiles.find((x) => x.fileName === payload.fileName);
+        if (p) {
+          if (mockStore.settings.auto_backup) {
+            const origIdx = mockStore.backups.findIndex((b) => b.isOriginal);
+            const insertAt = origIdx >= 0 ? origIdx + 1 : 0;
+            mockStore.backups.splice(insertAt, 0, {
+              id: `snap-${Date.now()}`,
+              fileName: `snap-${Date.now()}.json`,
+              createdAt: "刚刚",
+              label: `切换至「${p.displayName}」前自动备份`,
+              byteSize: mockStore.liveContent.length,
+              isOriginal: false,
+              content: mockStore.liveContent
+            });
+          }
+          if (payload.syncModeOverride) p.syncMode = payload.syncModeOverride;
+          mockStore.liveContent = computeEffectiveJson(mockStore.liveContent, p.content, p.syncMode);
+          mockStore.settings.default_config_file = p.fileName;
+        }
+        return buildMockState(payload.fileName);
+      }
+      case "toggle_pin": {
+        const p = mockStore.profiles.find((x) => x.fileName === payload.fileName);
+        if (p) p.pinned = !p.pinned;
+        return buildMockState(payload.fileName);
+      }
+      case "duplicate_profile": {
+        const p = mockStore.profiles.find((x) => x.fileName === payload.fileName);
+        let newFn;
+        if (p) {
+          let copyName = `${p.displayName} 副本`;
+          newFn = `${copyName}.json`;
+          let c = 1;
+          while (mockStore.profiles.some((x) => x.fileName === newFn)) {
+            newFn = `${copyName}_${c++}.json`;
+          }
+          mockStore.profiles.push({
+            ...p,
+            fileName: newFn,
+            displayName: newFn.replace(/\.json$/i, ""),
+            pinned: false,
+            updatedAgo: "刚刚"
+          });
+        }
+        return buildMockState(newFn);
+      }
+      case "rename_profile": {
+        const p = mockStore.profiles.find((x) => x.fileName === payload.oldFileName);
+        let newFn;
+        if (p) {
+          const clean = payload.newName.replace(/\.json$/i, "").trim();
+          newFn = `${clean}.json`;
+          if (mockStore.settings.default_config_file === p.fileName) {
+            mockStore.settings.default_config_file = newFn;
+          }
+          p.fileName = newFn;
+          p.displayName = clean;
+        }
+        return buildMockState(newFn);
+      }
+      case "delete_profile": {
+        mockStore.profiles = mockStore.profiles.filter((x) => x.fileName !== payload.fileName);
+        if (mockStore.settings.default_config_file === payload.fileName) {
+          mockStore.settings.default_config_file = "";
+        }
+        return buildMockState();
+      }
+      case "probe_endpoint": {
+        const ms = 58 + Math.floor(Math.random() * 95);
+        const p = mockStore.profiles.find((x) => x.fileName === payload.fileName);
+        if (p) {
+          p.lastLatencyMs = ms;
+          p.lastProbeOk = true;
+          p.lastProbeDetail = "HTTP 401 · TLS OK";
+        }
+        return {
+          reachable: true,
+          statusCode: 401,
+          latencyMs: ms,
+          endpoint: payload.baseUrl || "https://api.anthropic.com",
+          detail: "网关握手正常 · TLS 证书有效"
+        };
+      }
+      case "import_live_config": {
+        const extracted = extractProviderProfileFromLiveJs(mockStore.liveContent);
+        if (payload.mode === "update_active" && mockStore.settings.default_config_file) {
+          const p = mockStore.profiles.find((x) => x.fileName === mockStore.settings.default_config_file);
+          if (p) {
+            p.content = p.syncMode === "replace" ? mockStore.liveContent : extracted;
+            return buildMockState(p.fileName);
+          }
+        }
+        const baseName = payload.name || "Claude 实时导入配置";
+        let fn = `${baseName}.json`;
+        let c = 1;
+        while (mockStore.profiles.some((x) => x.fileName === fn)) {
+          fn = `${baseName}_${c++}.json`;
+        }
+        mockStore.profiles.push({
+          fileName: fn,
+          displayName: fn.replace(/\.json$/i, ""),
+          provider: "anthropic",
+          description: "从 ~/.claude/settings.json 捕获导入",
+          syncMode: "merge",
+          pinned: false,
+          lastLatencyMs: null,
+          lastProbeOk: null,
+          lastProbeDetail: "",
+          updatedAgo: "刚刚",
+          content: extracted
+        });
+        mockStore.settings.default_config_file = fn;
+        return buildMockState(fn);
+      }
+      case "list_backups":
+        return mockStore.backups;
+      case "restore_backup": {
+        const snap = mockStore.backups.find((b) => b.id === payload.id);
+        if (snap) {
+          mockStore.liveContent = snap.content;
+          const matching = mockStore.profiles.find((p) => {
+            try {
+              const eff = computeEffectiveJson(snap.content, p.content, p.syncMode);
+              return JSON.stringify(JSON.parse(eff)) === JSON.stringify(JSON.parse(snap.content));
+            } catch (_) {
+              return false;
+            }
+          });
+          mockStore.settings.default_config_file = matching ? matching.fileName : "";
+          return buildMockState(matching?.fileName);
+        }
+        return buildMockState();
+      }
+      case "delete_backup": {
+        mockStore.backups = mockStore.backups.filter((b) => b.isOriginal || b.id !== payload.id);
+        return mockStore.backups;
+      }
+      case "update_settings": {
+        if (payload.theme) mockStore.settings.theme = payload.theme;
+        if (payload.configDirectory) mockStore.settings.config_directory = payload.configDirectory;
+        if (payload.defaultSyncMode) mockStore.settings.default_sync_mode = payload.defaultSyncMode;
+        if (typeof payload.autoBackup === "boolean") mockStore.settings.auto_backup = payload.autoBackup;
+        return buildMockState();
+      }
+      case "pick_directory":
+        return { path: null };
+      default:
+        return {};
+    }
+  }
+
+  // --- Reactive UI State ---
+  const ui = {
+    workspace: null,
+    selectedFile: null,
+    activeTab: "studio", // "studio" | "json" | "diff"
+    searchQuery: "",
+    revealSecret: false,
+    maskDiffSecrets: true,
+    probing: false,
+
+    // Draft buffer for currently selected profile
+    draftContent: "",
+    draftProvider: "anthropic",
+    draftDescription: "",
+    draftSyncMode: "merge",
+    draftPinned: false,
+    isDirty: false,
+
+    // Modals: null | "new" | "rename" | "delete" | "backups" | "settings" | "palette" | "unsaved"
+    modal: null,
+    pendingAction: null,
+    backupsList: [],
+    previewBackupId: null,
+    newWizard: {
+      presetId: "anthropic",
+      name: "Anthropic Official",
+      description: "Claude 官方 API 或 Claude Max 订阅直连",
+      baseUrl: "https://api.anthropic.com",
+      secret: "",
+      model: "claude-sonnet-4-6",
+      syncMode: "merge",
+      activateNow: true
+    },
+    renameValue: "",
+    settingsDraft: {
+      theme: "Dark",
+      configDirectory: "",
+      defaultSyncMode: "merge",
+      autoBackup: true
+    },
+    paletteQuery: "",
+    paletteIndex: 0
+  };
+
+  function escapeHtml(str) {
+    return String(str ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  async function copyToClipboard(text) {
+    try {
+      if (navigator.clipboard && typeof navigator.clipboard.writeText === "function") {
+        await navigator.clipboard.writeText(text);
+        return true;
+      }
+    } catch (_) {
+      // Fallback below for WebViews with restricted clipboard API
+    }
+    try {
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      document.execCommand("copy");
+      ta.remove();
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  function showToast(message, kind = "success") {
+    const stack = document.getElementById("toast-stack");
+    if (!stack) return;
+    const el = document.createElement("div");
+    el.className = `toast is-${kind}`;
+    const iconSvg = kind === "error" ? ICONS.alert : kind === "warn" ? ICONS.alert : ICONS.check;
+    el.innerHTML = `<span style="display:inline-flex;width:15px;height:15px">${iconSvg}</span><span>${escapeHtml(message)}</span>`;
+    stack.appendChild(el);
+    setTimeout(() => {
+      el.style.opacity = "0";
+      el.style.transition = "opacity 180ms ease";
+      setTimeout(() => el.remove(), 200);
+    }, 2800);
+  }
+
+  function normalizeThemeMode(themeStr) {
+    const v = String(themeStr || "").trim().toLowerCase();
+    if (v === "light") return "Light";
+    if (v === "system" || v === "auto") return "System";
+    return "Dark";
+  }
+
+  function resolveEffectiveTheme(themeStr) {
+    const mode = normalizeThemeMode(themeStr);
+    if (mode === "Light") return "light";
+    if (mode === "Dark") return "dark";
+    if (window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches) {
+      return "light";
+    }
+    return "dark";
+  }
+
+  function applyTheme(themeStr, persistCache = true) {
+    const mode = normalizeThemeMode(themeStr);
+    const effective = resolveEffectiveTheme(mode);
+    document.documentElement.setAttribute("data-theme", effective);
+    if (persistCache) {
+      try {
+        localStorage.setItem("ccs_theme_mode", mode);
+      } catch (_) {}
+    }
+  }
+
+  if (window.matchMedia) {
+    const media = window.matchMedia("(prefers-color-scheme: light)");
+    const onSchemeChange = () => {
+      const activeMode = ui.modal === "settings"
+        ? ui.settingsDraft.theme
+        : ui.workspace?.settings?.theme;
+      if (normalizeThemeMode(activeMode) === "System") {
+        applyTheme("System", false);
+      }
+    };
+    if (typeof media.addEventListener === "function") {
+      media.addEventListener("change", onSchemeChange);
+    } else if (typeof media.addListener === "function") {
+      media.addListener(onSchemeChange);
+    }
+  }
+
+  function currentSelectedProfile() {
+    if (!ui.workspace || !ui.selectedFile) return null;
+    return ui.workspace.profiles.find((p) => p.fileName === ui.selectedFile) || null;
+  }
+
+  function loadProfileIntoDraft(profile) {
+    if (!profile) {
+      ui.selectedFile = null;
+      ui.draftContent = "";
+      ui.isDirty = false;
+      return;
+    }
+    ui.selectedFile = profile.fileName;
+    ui.draftContent = profile.content;
+    ui.draftProvider = profile.provider || "anthropic";
+    ui.draftDescription = profile.description || "";
+    ui.draftSyncMode = profile.syncMode || "merge";
+    ui.draftPinned = Boolean(profile.pinned);
+    ui.revealSecret = false;
+    ui.isDirty = false;
+  }
+
+  function recomputeDirty() {
+    const p = currentSelectedProfile();
+    if (!p) {
+      ui.isDirty = false;
+      return;
+    }
+    ui.isDirty =
+      ui.draftContent !== p.content ||
+      ui.draftProvider !== (p.provider || "anthropic") ||
+      ui.draftDescription !== (p.description || "") ||
+      ui.draftSyncMode !== (p.syncMode || "merge") ||
+      ui.draftPinned !== Boolean(p.pinned);
+  }
+
+  function syncWorkspaceState(nextWorkspace, preferredFileName = null) {
+    ui.workspace = nextWorkspace;
+    applyTheme(nextWorkspace.settings.theme);
+
+    const shell = document.getElementById("app-shell");
+    if (shell) {
+      if (nextWorkspace.platform === "macos" && isNative) {
+        shell.classList.add("app-Shell-macos");
+      } else {
+        shell.classList.remove("app-Shell-macos");
+      }
+    }
+
+    const targetFile = preferredFileName || nextWorkspace.targetFile || ui.selectedFile || nextWorkspace.settings.default_config_file;
+    let found = nextWorkspace.profiles.find((p) => p.fileName === targetFile);
+    if (!found && nextWorkspace.profiles.length > 0) {
+      found = nextWorkspace.profiles[0];
+    }
+
+    if (!found) {
+      loadProfileIntoDraft(null);
+    } else if (found.fileName !== ui.selectedFile || !ui.isDirty) {
+      loadProfileIntoDraft(found);
+    } else {
+      recomputeDirty();
+    }
+    renderAll();
+  }
+
+  function guardUnsavedChanges(nextFn) {
+    if (!ui.isDirty) {
+      nextFn();
+      return;
+    }
+    ui.pendingAction = nextFn;
+    ui.modal = "unsaved";
+    renderModal();
+  }
+
+  function handleRevertDraft() {
+    const p = currentSelectedProfile();
+    if (!p) return;
+    loadProfileIntoDraft(p);
+    renderAll();
+    showToast(`已放弃对「${p.displayName}」的未保存更改`, "success");
+  }
+
+  // --- Actions ---
+  async function handleSaveCurrent() {
+    const p = currentSelectedProfile();
+    if (!p) return false;
+    try {
+      const parsed = JSON.parse(ui.draftContent);
+      if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+        showToast("JSON 根节点必须是对象 {}", "error");
+        return false;
+      }
+      const formatted = JSON.stringify(parsed, null, 2);
+      ui.draftContent = formatted;
+    } catch (err) {
+      showToast(`JSON 语法错误，无法保存: ${err.message}`, "error");
+      return false;
+    }
+    try {
+      const next = await rpc("save_profile", {
+        fileName: p.fileName,
+        content: ui.draftContent,
+        provider: ui.draftProvider,
+        description: ui.draftDescription,
+        syncMode: ui.draftSyncMode,
+        pinned: ui.draftPinned
+      });
+      ui.isDirty = false;
+      syncWorkspaceState(next, p.fileName);
+      showToast(
+        p.isActive ? `已保存「${p.displayName}」并实时同步至 Claude Code` : `已保存配置「${p.displayName}」`,
+        "success"
+      );
+      return true;
+    } catch (err) {
+      try {
+        const refreshed = await rpc("get_state");
+        ui.workspace = refreshed;
+        recomputeDirty();
+        renderAll();
+      } catch (_) {}
+      showToast(`保存警告: ${err.message}`, "error");
+      return false;
+    }
+  }
+
+  async function handleActivateProfile(fileName) {
+    const target = ui.workspace.profiles.find((p) => p.fileName === fileName);
+    if (!target) return;
+
+    if (fileName === ui.selectedFile && ui.isDirty) {
+      const wasActive = target.isActive;
+      const saved = await handleSaveCurrent();
+      if (!saved) return;
+      if (wasActive && ui.workspace?.liveStatus?.syncState === "synced") {
+        return;
+      }
+    }
+
+    const preserveDirtySelection = fileName !== ui.selectedFile && ui.isDirty;
+
+    try {
+      const next = await rpc("activate_profile", {
+        fileName,
+        syncModeOverride: fileName === ui.selectedFile ? ui.draftSyncMode : undefined
+      });
+      syncWorkspaceState(next, preserveDirtySelection ? ui.selectedFile : fileName);
+      showToast(`已切换至「${target.displayName}」· ~/.claude/settings.json 已生效`, "success");
+    } catch (err) {
+      showToast(`切换配置失败: ${err.message}`, "error");
+    }
+  }
+
+  async function handleProbeCurrent() {
+    const p = currentSelectedProfile();
+    if (!p || ui.probing) return;
+    const form = window.CCS_PARSE_FORM(ui.draftContent);
+    if (!form.valid) {
+      showToast("当前 JSON 格式有误，请先修复后再测速", "warn");
+      return;
+    }
+    let baseUrl = form.baseUrl;
+    if (!baseUrl) {
+      if (form.authMode === "bedrock") {
+        baseUrl = `https://bedrock-runtime.${form.awsRegion || "us-east-1"}.amazonaws.com`;
+      } else if (form.authMode === "vertex") {
+        baseUrl = form.vertexRegion && form.vertexRegion !== "global"
+          ? `https://${form.vertexRegion}-aiplatform.googleapis.com`
+          : "https://aiplatform.googleapis.com";
+      } else {
+        baseUrl = "https://api.anthropic.com";
+      }
+    }
+    ui.probing = true;
+    renderWorkspaceHeaderOnly();
+    try {
+      const res = await rpc("probe_endpoint", {
+        fileName: p.fileName,
+        baseUrl,
+        apiKey: form.apiKey,
+        authToken: form.authToken,
+        httpsProxy: form.httpsProxy
+      });
+      const fresh = await rpc("get_state");
+      ui.probing = false;
+      ui.workspace = fresh;
+      renderRailListOnly();
+      renderWorkspaceHeaderOnly();
+      if (res.reachable) {
+        showToast(`网关连通正常: ${res.latencyMs} ms (${res.detail})`, "success");
+      } else {
+        showToast(`连接不可达: ${res.detail}`, "error");
+      }
+    } catch (err) {
+      ui.probing = false;
+      renderWorkspaceHeaderOnly();
+      showToast(`测速出错: ${err.message}`, "error");
+    }
+  }
+
+  async function handleSetTheme(nextMode) {
+    if (!ui.workspace) return;
+    const normalized = normalizeThemeMode(nextMode);
+    if (normalizeThemeMode(ui.workspace.settings.theme) === normalized) return;
+    try {
+      applyTheme(normalized, true);
+      const next = await rpc("update_settings", { theme: normalized });
+      syncWorkspaceState(next, ui.selectedFile);
+      const labelMap = {
+        Light: "浅色 · 日光宣纸",
+        Dark: "深色 · 曜石暗室",
+        System: "跟随系统外观"
+      };
+      showToast(`已切换至「${labelMap[normalized]}」`, "success");
+    } catch (err) {
+      showToast(err.message, "error");
+    }
+  }
+
+  async function handleToggleTheme() {
+    if (!ui.workspace) return;
+    const effective = resolveEffectiveTheme(ui.workspace.settings.theme);
+    const nextTheme = effective === "light" ? "Dark" : "Light";
+    await handleSetTheme(nextTheme);
+  }
+
+  function renderThemeCapsuleHtml() {
+    const mode = normalizeThemeMode(ui.workspace?.settings?.theme);
+    return `
+      <div class="theme-capsule" role="group" aria-label="外观主题切换">
+        <button type="button" class="theme-seg ${mode === "Light" ? "is-active" : ""}" data-theme-pick="Light" title="浅色主题 · 日光宣纸 (⌘⇧L)">
+          ${ICONS.sun}<span>浅色</span>
+        </button>
+        <button type="button" class="theme-seg ${mode === "Dark" ? "is-active" : ""}" data-theme-pick="Dark" title="深色主题 · 曜石暗室 (⌘⇧L)">
+          ${ICONS.moon}<span>深色</span>
+        </button>
+        <button type="button" class="theme-seg ${mode === "System" ? "is-active" : ""}" data-theme-pick="System" title="跟随操作系统深浅色自动切换">
+          ${ICONS.monitor}<span>自动</span>
+        </button>
+      </div>
+    `;
+  }
+
+  function bindThemeCapsuleEvents(scope) {
+    if (!scope) return;
+    scope.querySelectorAll("[data-theme-pick]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const picked = btn.getAttribute("data-theme-pick");
+        if (picked) handleSetTheme(picked);
+      });
+    });
+  }
+
+  function openNewProfileWizard(defaultPresetId = "anthropic") {
+    const preset = PRESETS.find((x) => x.id === defaultPresetId) || PRESETS[0];
+    const tpl = preset.template || {};
+    const env = tpl.env || {};
+    ui.newWizard = {
+      presetId: preset.id,
+      name: preset.name,
+      description: preset.description,
+      baseUrl: env.ANTHROPIC_BASE_URL || "",
+      secret: "",
+      model: tpl.model || env.ANTHROPIC_MODEL || "",
+      syncMode: ui.workspace?.settings?.default_sync_mode || "merge",
+      activateNow: true
+    };
+    ui.modal = "new";
+    renderModal();
+    requestAnimationFrame(() => {
+      const el = document.getElementById("wiz-name-input");
+      if (el) el.focus();
+    });
+  }
+
+  async function openBackupsModal() {
+    try {
+      ui.backupsList = await rpc("list_backups");
+      ui.previewBackupId = ui.backupsList[0]?.id || null;
+      ui.modal = "backups";
+      renderModal();
+    } catch (err) {
+      showToast(`读取备份历史失败: ${err.message}`, "error");
+    }
+  }
+
+  function openSettingsModal() {
+    if (!ui.workspace) return;
+    ui.settingsDraft = {
+      theme: normalizeThemeMode(ui.workspace.settings.theme),
+      configDirectory: ui.workspace.settings.config_directory,
+      defaultSyncMode: ui.workspace.settings.default_sync_mode || "merge",
+      autoBackup: ui.workspace.settings.auto_backup !== false
+    };
+    ui.modal = "settings";
+    renderModal();
+  }
+
+  function openCommandPalette() {
+    ui.paletteQuery = "";
+    ui.paletteIndex = 0;
+    ui.modal = "palette";
+    renderModal();
+    requestAnimationFrame(() => {
+      const el = document.getElementById("cmd-palette-input");
+      if (el) el.focus();
+    });
+  }
+
+  // --- Partial & Full Renderers ---
+  function renderAll() {
+    renderRail();
+    renderWorkspace();
+    renderStatusBar();
+    renderModal();
+  }
+
+  function renderRail() {
+    const rail = document.getElementById("rail-root");
+    if (!rail || !ui.workspace) return;
+    const { liveStatus, settings } = ui.workspace;
+
+    let statusPillClass = "is-missing";
+    let statusLabel = "未托管";
+    if (liveStatus.syncState === "synced") {
+      statusPillClass = "is-synced";
+      statusLabel = "实时已同步";
+    } else if (liveStatus.syncState === "drifted") {
+      statusPillClass = "is-drifted";
+      statusLabel = "检测到外部变更";
+    } else if (liveStatus.syncState === "corrupted") {
+      statusPillClass = "is-corrupted";
+      statusLabel = "JSON 语法损坏";
+    } else if (!liveStatus.exists) {
+      statusPillClass = "is-missing";
+      statusLabel = "尚未生成配置";
+    }
+
+    rail.innerHTML = `
+      <div class="rail-titlebar" data-drag-region="true">
+        <div class="brand-lockup" data-drag-region="true">
+          <span class="brand-mark">${ICONS.brandSwitch}</span>
+          <span class="brand-title" data-drag-region="true">Claude Switcher</span>
+        </div>
+        <div class="rail-actions">
+          <button class="btn btn-icon" id="btn-cmd-palette" title="命令面板 (⌘K)">${ICONS.command}</button>
+          <button class="btn btn-icon" id="btn-open-settings" title="应用与主题设置 (⌘,)">${ICONS.settings}</button>
+        </div>
+      </div>
+
+      <div class="live-card">
+        <div class="live-card-top">
+          <span style="font-size:var(--text-2xs);font-weight:600;color:var(--text-secondary)">~/.claude/settings.json</span>
+          <span class="live-pill ${statusPillClass}"><span class="pulse-dot"></span>${statusLabel}</span>
+        </div>
+        <div class="live-meta">
+          <span class="live-host" title="${escapeHtml(liveStatus.activeHost)}">${escapeHtml(liveStatus.activeHost || "未设置网关")}</span>
+          <span class="tabular" style="font-size:var(--text-2xs)">${escapeHtml(liveStatus.activeModel || "默认")}</span>
+        </div>
+        ${liveStatus.preservedSections && liveStatus.preservedSections.length > 0 ? `
+          <div style="font-size:10.5px;color:var(--text-tertiary)">
+            智能保护字段: ${liveStatus.preservedSections.map(escapeHtml).join(" · ")}
+          </div>
+        ` : ""}
+        ${liveStatus.syncState === "corrupted" ? `
+          <div class="live-drift-bar">
+            <button class="btn btn-sm btn-primary" id="btn-repair-live" style="width:100%">${ICONS.history} 从备份快照回滚修复</button>
+          </div>
+        ` : liveStatus.syncState === "drifted" ? `
+          <div class="live-drift-bar">
+            ${settings.default_config_file ? `<button class="btn btn-sm" id="btn-absorb-live" title="将 ~/.claude/settings.json 中的外部变更吸纳回当前活动配置">吸纳变更</button>` : ""}
+            <button class="btn btn-sm" id="btn-import-live" style="flex:1" title="将当前 ~/.claude/settings.json 另存为一份新的独立配置">另存新配置</button>
+            ${settings.default_config_file ? `<button class="btn btn-sm btn-primary" id="btn-reapply-active" title="用当前活动配置重新覆盖同步 ~/.claude/settings.json">覆盖同步</button>` : ""}
+          </div>
+        ` : liveStatus.syncState === "unmanaged" && liveStatus.exists ? `
+          <div class="live-drift-bar">
+            <button class="btn btn-sm" id="btn-import-live" style="width:100%">${ICONS.download} 捕获为新配置并托管</button>
+          </div>
+        ` : ""}
+      </div>
+
+      <div class="rail-toolbar">
+        <div class="search-box">
+          ${ICONS.search}
+          <input type="text" class="search-input" id="rail-search-input" placeholder="搜索环境 / 网关 (⌘F)" value="${escapeHtml(ui.searchQuery)}" />
+          <button class="search-clear" id="rail-search-clear" style="${ui.searchQuery ? "" : "display:none"}" title="清空搜索">${ICONS.close}</button>
+        </div>
+        <button class="btn btn-sm btn-primary" id="btn-new-profile" title="新建配置 (⌘N)">${ICONS.plus} 新建</button>
+      </div>
+
+      <div class="profile-list" id="rail-profile-list"></div>
+    `;
+
+    renderRailListOnly();
+    bindRailEvents();
+  }
+
+  function selectProfileByFileName(fn) {
+    const target = ui.workspace?.profiles.find((x) => x.fileName === fn);
+    if (!target) return;
+    loadProfileIntoDraft(target);
+    renderRailListOnly();
+    renderWorkspace();
+    renderStatusBar();
+  }
+
+  function renderRailListOnly() {
+    const container = document.getElementById("rail-profile-list");
+    if (!container || !ui.workspace) return;
+    const clearBtn = document.getElementById("rail-search-clear");
+    if (clearBtn) clearBtn.style.display = ui.searchQuery ? "inline-flex" : "none";
+
+    const q = ui.searchQuery.trim().toLowerCase();
+    const filtered = ui.workspace.profiles.filter((p) => {
+      if (!q) return true;
+      return (
+        p.displayName.toLowerCase().includes(q) ||
+        p.baseHost.toLowerCase().includes(q) ||
+        (p.description || "").toLowerCase().includes(q) ||
+        (p.modelSummary || "").toLowerCase().includes(q)
+      );
+    });
+
+    if (filtered.length === 0) {
+      container.innerHTML = `
+        <div style="padding:36px 16px;text-align:center;color:var(--text-tertiary);font-size:var(--text-xs)">
+          ${ui.workspace.profiles.length === 0 ? "尚未创建任何环境配置" : "没有匹配的环境配置"}
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = `
+      <div class="rail-section-title">
+        <span>配置环境 (${filtered.length})</span>
+        <span class="tabular">双击快速激活</span>
+      </div>
+      ${filtered.map((p) => {
+        const isSel = p.fileName === ui.selectedFile;
+        const cls = [
+          "profile-item",
+          isSel ? "is-selected" : "",
+          p.isActive ? "is-active-live" : ""
+        ].filter(Boolean).join(" ");
+        return `
+          <div class="${cls}" tabindex="0" role="button" data-profile-file="${escapeHtml(p.fileName)}">
+            <div class="provider-badge">${escapeHtml(window.CCS_PROVIDER_MONOGRAM(p.provider))}</div>
+            <div class="profile-item-body">
+              <div class="profile-item-title-row">
+                <span class="profile-item-name">${escapeHtml(p.displayName)}</span>
+                ${p.pinned ? `<span class="pin-icon" title="已置顶">${ICONS.pin}</span>` : ""}
+              </div>
+              <div class="profile-item-sub">
+                <span class="profile-item-host">${escapeHtml(p.baseHost)}</span>
+                ${p.lastLatencyMs ? `<span class="tabular" style="white-space:nowrap;flex-shrink:0">· ${p.lastLatencyMs}ms</span>` : ""}
+              </div>
+            </div>
+            <div class="profile-item-right">
+              ${p.isActive
+                ? `<span class="active-dot-badge"><span class="pulse-dot"></span>生效</span>`
+                : `<button class="quick-switch-btn" data-quick-activate="${escapeHtml(p.fileName)}" title="立即切换到此配置">启用</button>`
+              }
+            </div>
+          </div>
+        `;
+      }).join("")}
+    `;
+
+    container.querySelectorAll("[data-profile-file]").forEach((row) => {
+      row.addEventListener("click", (e) => {
+        const quick = e.target.closest("[data-quick-activate]");
+        if (quick) {
+          e.stopPropagation();
+          handleActivateProfile(quick.getAttribute("data-quick-activate"));
+          return;
+        }
+        const fn = row.getAttribute("data-profile-file");
+        if (fn === ui.selectedFile) return;
+        guardUnsavedChanges(() => selectProfileByFileName(fn));
+      });
+      row.addEventListener("dblclick", () => {
+        const fn = row.getAttribute("data-profile-file");
+        handleActivateProfile(fn);
+      });
+      row.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          const fn = row.getAttribute("data-profile-file");
+          if (fn === ui.selectedFile) return;
+          guardUnsavedChanges(() => selectProfileByFileName(fn));
+        }
+      });
+    });
+  }
+
+  function bindRailEvents() {
+    document.getElementById("btn-cmd-palette")?.addEventListener("click", openCommandPalette);
+    document.getElementById("btn-theme-toggle")?.addEventListener("click", handleToggleTheme);
+    document.getElementById("btn-open-settings")?.addEventListener("click", openSettingsModal);
+    document.getElementById("btn-new-profile")?.addEventListener("click", () => {
+      guardUnsavedChanges(() => openNewProfileWizard("anthropic"));
+    });
+
+    const searchInput = document.getElementById("rail-search-input");
+    searchInput?.addEventListener("input", (e) => {
+      ui.searchQuery = e.target.value;
+      renderRailListOnly();
+    });
+    document.getElementById("rail-search-clear")?.addEventListener("click", () => {
+      ui.searchQuery = "";
+      if (searchInput) {
+        searchInput.value = "";
+        searchInput.focus();
+      }
+      renderRailListOnly();
+    });
+
+    document.getElementById("btn-repair-live")?.addEventListener("click", openBackupsModal);
+
+    document.getElementById("btn-absorb-live")?.addEventListener("click", async () => {
+      try {
+        const next = await rpc("import_live_config", { mode: "update_active" });
+        ui.isDirty = false;
+        syncWorkspaceState(next, next.targetFile);
+        showToast("已将外部变更吸纳并更新至当前活动配置", "success");
+      } catch (err) {
+        showToast(err.message, "error");
+      }
+    });
+
+    document.getElementById("btn-import-live")?.addEventListener("click", async () => {
+      try {
+        const next = await rpc("import_live_config", { mode: "new_profile" });
+        if (!ui.isDirty) {
+          syncWorkspaceState(next, next.targetFile);
+        } else {
+          syncWorkspaceState(next, ui.selectedFile);
+        }
+        showToast("已将当前 ~/.claude/settings.json 捕获为新配置", "success");
+      } catch (err) {
+        showToast(err.message, "error");
+      }
+    });
+
+    document.getElementById("btn-reapply-active")?.addEventListener("click", () => {
+      if (ui.workspace?.settings?.default_config_file) {
+        handleActivateProfile(ui.workspace.settings.default_config_file);
+      }
+    });
+  }
+
+  function renderWorkspace() {
+    const root = document.getElementById("workspace-root");
+    if (!root || !ui.workspace) return;
+    const p = currentSelectedProfile();
+
+    if (!p) {
+      root.innerHTML = `
+        <div class="workspace-topbar" data-drag-region="true">
+          <div class="topbar-breadcrumbs" data-drag-region="true">
+            <span class="crumb-muted">工作台</span>
+          </div>
+          <div class="topbar-controls">
+            ${renderThemeCapsuleHtml()}
+            <span class="topbar-divider"></span>
+            <button class="btn btn-sm btn-ghost" id="ws-btn-backups">${ICONS.history} 历史快照 (${ui.workspace.backupsCount})</button>
+          </div>
+        </div>
+        <div class="empty-state">
+          <div class="profile-avatar" style="width:52px;height:52px">${ICONS.brandSwitch}</div>
+          <h1 class="empty-title">选择一个环境，或从官方预设开始</h1>
+          <p class="empty-desc">支持 Anthropic 官方、OpenRouter、DeepSeek、智谱 GLM、Kimi、AWS Bedrock 与自建中转网关，切换时默认智能保护您的 Hooks 与权限配置。</p>
+          <div style="display:flex;gap:10px;margin-top:8px">
+            <button class="btn btn-primary" id="empty-btn-new">${ICONS.plus} 新建预设配置</button>
+            <button class="btn" id="empty-btn-import">${ICONS.download} 导入当前 Claude 配置</button>
+          </div>
+        </div>
+      `;
+      bindThemeCapsuleEvents(root);
+      document.getElementById("ws-btn-backups")?.addEventListener("click", openBackupsModal);
+      document.getElementById("empty-btn-new")?.addEventListener("click", () => openNewProfileWizard("anthropic"));
+      document.getElementById("empty-btn-import")?.addEventListener("click", async () => {
+        try {
+          const next = await rpc("import_live_config", { mode: "new_profile" });
+          syncWorkspaceState(next, next.targetFile);
+        } catch (err) {
+          showToast(err.message, "error");
+        }
+      });
+      return;
+    }
+
+    root.innerHTML = `
+      <div id="ws-header-slot"></div>
+      <div class="workspace-body" id="ws-body-slot"></div>
+    `;
+    renderWorkspaceHeaderOnly();
+    renderWorkspaceBodyOnly();
+  }
+
+  function computeDraftHost(fallbackHost) {
+    const parsed = window.CCS_PARSE_FORM(ui.draftContent);
+    if (!parsed.valid) return fallbackHost;
+    if (parsed.authMode === "bedrock") return `bedrock.${parsed.awsRegion || "aws"}`;
+    if (parsed.authMode === "vertex") return "vertex.googleapis.com";
+    if (parsed.baseUrl) {
+      try { return new URL(parsed.baseUrl).host || parsed.baseUrl; } catch (_) { return parsed.baseUrl; }
+    }
+    return "api.anthropic.com";
+  }
+
+  function renderWorkspaceHeaderOnly() {
+    const slot = document.getElementById("ws-header-slot");
+    const p = currentSelectedProfile();
+    if (!slot || !p || !ui.workspace) return;
+
+    const syncedAndActive = p.isActive && ui.workspace.liveStatus.syncState === "synced" && !ui.isDirty;
+    const syncLabel = ui.draftSyncMode === "merge" ? "智能合并" : "完整覆盖";
+    const liveDraftHost = computeDraftHost(p.baseHost);
+
+    let latencyBadge = "";
+    if (ui.probing) {
+      latencyBadge = `<span class="latency-chip tabular">测速中…</span>`;
+    } else if (p.lastLatencyMs !== null && p.lastLatencyMs !== undefined) {
+      const okCls = p.lastProbeOk ? "is-ok" : "is-fail";
+      latencyBadge = `<span class="latency-chip tabular ${okCls}" title="${escapeHtml(p.lastProbeDetail || "")}">${p.lastLatencyMs} ms</span>`;
+    }
+
+    slot.innerHTML = `
+      <div class="workspace-topbar" data-drag-region="true">
+        <div class="topbar-breadcrumbs" data-drag-region="true">
+          <span class="crumb-muted" data-drag-region="true">环境配置 /</span>
+          <span class="crumb-current" data-drag-region="true">${escapeHtml(p.fileName)}</span>
+          ${ui.isDirty ? `<span class="unsaved-badge">● 未保存更改</span>` : ""}
+        </div>
+        <div class="topbar-controls">
+          ${renderThemeCapsuleHtml()}
+          <span class="topbar-divider"></span>
+          <button class="btn btn-sm btn-ghost" id="ws-btn-backups" title="查看与回滚自动备份快照">
+            ${ICONS.history} 快照 <span class="tabular">(${ui.workspace.backupsCount})</span>
+          </button>
+          <button class="btn btn-sm btn-ghost" id="ws-btn-refresh" title="重新扫描磁盘配置">
+            ${ICONS.refresh} 刷新
+          </button>
+        </div>
+      </div>
+
+      <div class="profile-header">
+        <div class="profile-header-main">
+          <div class="profile-identity">
+            <div class="profile-avatar">${ICONS.sliders}</div>
+            <div class="profile-title-group">
+              <div class="profile-title-row">
+                <h1 class="profile-heading">${escapeHtml(p.displayName)}</h1>
+                <span class="tag-badge">${escapeHtml(syncLabel)}</span>
+                ${latencyBadge}
+              </div>
+              <div class="profile-subtitle">
+                <span class="mono">${escapeHtml(liveDraftHost)}</span>
+                <span>·</span>
+                <span>${escapeHtml(ui.draftDescription || "未填写环境备注")}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="profile-cta-cluster">
+            <button class="btn" id="btn-probe" ${ui.probing ? "disabled" : ""} title="检测 API 网关连通性与延迟">
+              ${ICONS.radar} ${ui.probing ? "检测中…" : "连通测速"}
+            </button>
+            ${ui.isDirty ? `
+              <button class="btn btn-ghost" id="btn-revert-draft" title="放弃当前未保存修改，恢复至已保存版本">
+                放弃更改
+              </button>
+            ` : ""}
+            <button class="btn" id="btn-save-profile" ${ui.isDirty ? "" : "disabled"} title="保存当前配置 (⌘S)">
+              ${ICONS.save} 保存 <span class="kbd">⌘S</span>
+            </button>
+            ${syncedAndActive
+              ? `<button class="btn btn-live-active" id="btn-activate-profile" title="点击可强制重新写入 ~/.claude/settings.json">
+                  ${ICONS.check} 当前生效中
+                </button>`
+              : `<button class="btn btn-primary" id="btn-activate-profile" title="将此环境应用到 ~/.claude/settings.json (⌘↵)">
+                  ${ICONS.zap} 切换并激活 <span class="kbd">⌘↵</span>
+                </button>`
+            }
+          </div>
+        </div>
+
+        <div class="profile-nav-row">
+          <div class="segmented-tabs" role="tablist">
+            <button class="seg-tab ${ui.activeTab === "studio" ? "is-active" : ""}" data-tab="studio">
+              ${ICONS.sliders} 可视化工作台
+            </button>
+            <button class="seg-tab ${ui.activeTab === "json" ? "is-active" : ""}" data-tab="json">
+              ${ICONS.code} JSON 源码
+            </button>
+            <button class="seg-tab ${ui.activeTab === "diff" ? "is-active" : ""}" data-tab="diff">
+              ${ICONS.gitDiff} 生效预览与差异
+            </button>
+          </div>
+
+          <div class="secondary-actions">
+            <button class="btn btn-sm btn-ghost" id="btn-pin-profile" title="${ui.draftPinned ? "取消置顶" : "置顶此配置"}">
+              ${ICONS.pin} ${ui.draftPinned ? "已置顶" : "置顶"}
+            </button>
+            <button class="btn btn-sm btn-ghost" id="btn-dup-profile" title="克隆一份副本">
+              ${ICONS.duplicate} 克隆
+            </button>
+            <button class="btn btn-sm btn-ghost" id="btn-rename-profile" title="重命名配置文件">
+              ${ICONS.edit} 重命名
+            </button>
+            <button class="btn btn-sm btn-ghost btn-danger" id="btn-delete-profile" title="删除此配置文件">
+              ${ICONS.trash} 删除
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    bindThemeCapsuleEvents(slot);
+    document.getElementById("ws-btn-backups")?.addEventListener("click", openBackupsModal);
+    document.getElementById("ws-btn-refresh")?.addEventListener("click", () => {
+      guardUnsavedChanges(async () => {
+        ui.isDirty = false;
+        const next = await rpc("get_state");
+        syncWorkspaceState(next, ui.selectedFile);
+        showToast("已与本地磁盘及 Claude 配置重新同步", "success");
+      });
+    });
+
+    document.getElementById("btn-probe")?.addEventListener("click", handleProbeCurrent);
+    document.getElementById("btn-revert-draft")?.addEventListener("click", handleRevertDraft);
+    document.getElementById("btn-save-profile")?.addEventListener("click", handleSaveCurrent);
+    document.getElementById("btn-activate-profile")?.addEventListener("click", () => handleActivateProfile(p.fileName));
+
+    slot.querySelectorAll("[data-tab]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const nextTab = btn.getAttribute("data-tab");
+        if (nextTab !== ui.activeTab) {
+          ui.activeTab = nextTab;
+          renderWorkspaceHeaderOnly();
+          renderWorkspaceBodyOnly();
+        }
+      });
+    });
+
+    document.getElementById("btn-pin-profile")?.addEventListener("click", async () => {
+      const next = await rpc("toggle_pin", { fileName: p.fileName });
+      ui.draftPinned = !ui.draftPinned;
+      syncWorkspaceState(next, p.fileName);
+    });
+
+    document.getElementById("btn-dup-profile")?.addEventListener("click", () => {
+      guardUnsavedChanges(async () => {
+        const next = await rpc("duplicate_profile", { fileName: p.fileName });
+        syncWorkspaceState(next, next.targetFile);
+        showToast(`已克隆「${p.displayName}」`, "success");
+      });
+    });
+
+    document.getElementById("btn-rename-profile")?.addEventListener("click", () => {
+      ui.renameValue = p.displayName;
+      ui.modal = "rename";
+      renderModal();
+      requestAnimationFrame(() => document.getElementById("rename-modal-input")?.select());
+    });
+
+    document.getElementById("btn-delete-profile")?.addEventListener("click", () => {
+      ui.modal = "delete";
+      renderModal();
+    });
+  }
+
+  function renderWorkspaceBodyOnly() {
+    const body = document.getElementById("ws-body-slot");
+    const p = currentSelectedProfile();
+    if (!body || !p) return;
+
+    if (ui.activeTab === "studio") {
+      renderStudioTab(body);
+    } else if (ui.activeTab === "json") {
+      renderJsonTab(body);
+    } else {
+      renderDiffTab(body, p);
+    }
+  }
+
+  function updateDraftFromFormPatch(patch, rerenderStudio = false) {
+    ui.draftContent = window.CCS_SERIALIZE_FORM(ui.draftContent, patch);
+    recomputeDirty();
+    renderWorkspaceHeaderOnly();
+    renderStatusBar();
+    if (rerenderStudio) {
+      const body = document.getElementById("ws-body-slot");
+      if (body) renderStudioTab(body);
+    }
+  }
+
+  function renderStudioTab(container) {
+    const form = window.CCS_PARSE_FORM(ui.draftContent);
+    if (!form.valid) {
+      container.innerHTML = `
+        <div class="panel" style="max-width:720px">
+          <div class="panel-header">
+            <div class="panel-title-wrap">
+              <div class="panel-title" style="color:var(--signal-danger)">JSON 语法存在错误，暂时无法渲染可视化表单</div>
+              <div class="panel-desc">${escapeHtml(form.error)}</div>
+            </div>
+            <button class="btn btn-primary" id="btn-jump-fix-json">${ICONS.code} 前往 JSON 源码修复</button>
+          </div>
+        </div>
+      `;
+      document.getElementById("btn-jump-fix-json")?.addEventListener("click", () => {
+        ui.activeTab = "json";
+        renderWorkspaceHeaderOnly();
+        renderWorkspaceBodyOnly();
+      });
+      return;
+    }
+
+    const secretVal = form.authMode === "api_key" ? form.apiKey : form.authToken;
+
+    container.innerHTML = `
+      <div class="studio-grid">
+        <!-- 1. Gateway & Credentials (Primary task above the fold) -->
+        <section class="panel">
+          <div class="panel-header">
+            <div class="panel-title-wrap">
+              <div class="panel-title">网关地址与认证凭证</div>
+              <div class="panel-desc">管理 Claude Code 连接端点与密钥认证方式</div>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div class="field-grid-2">
+              <div class="field">
+                <div class="field-label-row">
+                  <label class="field-label" for="f-auth-mode">认证模式</label>
+                </div>
+                <select id="f-auth-mode" class="select">
+                  <option value="auth_token" ${form.authMode === "auth_token" ? "selected" : ""}>Bearer Token (ANTHROPIC_AUTH_TOKEN · 推荐中转/网关)</option>
+                  <option value="api_key" ${form.authMode === "api_key" ? "selected" : ""}>API Key (ANTHROPIC_API_KEY · 官方标准密钥)</option>
+                  <option value="oauth_none" ${form.authMode === "oauth_none" ? "selected" : ""}>Claude OAuth 订阅登录 (不注入环境变量密钥)</option>
+                  <option value="bedrock" ${form.authMode === "bedrock" ? "selected" : ""}>AWS Bedrock (CLAUDE_CODE_USE_BEDROCK=1)</option>
+                  <option value="vertex" ${form.authMode === "vertex" ? "selected" : ""}>Google Vertex AI (CLAUDE_CODE_USE_VERTEX=1)</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <div class="field-label-row">
+                  <label class="field-label" for="f-base-url">API 网关地址</label>
+                  <span class="field-key-hint">ANTHROPIC_BASE_URL</span>
+                </div>
+                <input id="f-base-url" type="text" class="input mono" placeholder="https://api.anthropic.com" value="${escapeHtml(form.baseUrl)}" />
+              </div>
+            </div>
+
+            ${(form.authMode === "api_key" || form.authMode === "auth_token") ? `
+              <div class="field">
+                <div class="field-label-row">
+                  <label class="field-label" for="f-secret">密钥凭证</label>
+                  <span class="field-key-hint">${form.authMode === "api_key" ? "ANTHROPIC_API_KEY" : "ANTHROPIC_AUTH_TOKEN"}</span>
+                </div>
+                <div class="secret-group">
+                  <input id="f-secret" type="${ui.revealSecret ? "text" : "password"}" class="input mono" placeholder="sk-..." value="${escapeHtml(secretVal)}" autocomplete="off" spellcheck="false" />
+                  <button class="btn" id="btn-toggle-secret" type="button" title="${ui.revealSecret ? "隐藏密钥" : "显示明文"}">
+                    ${ui.revealSecret ? ICONS.eyeOff : ICONS.eye}
+                  </button>
+                  <button class="btn" id="btn-copy-secret" type="button" title="复制密钥">
+                    ${ICONS.copy}
+                  </button>
+                </div>
+              </div>
+            ` : ""}
+
+            ${form.authMode === "bedrock" ? `
+              <div class="field">
+                <div class="field-label-row">
+                  <label class="field-label" for="f-aws-region">AWS 区域</label>
+                  <span class="field-key-hint">AWS_REGION</span>
+                </div>
+                <input id="f-aws-region" type="text" class="input mono" placeholder="us-east-1" value="${escapeHtml(form.awsRegion)}" />
+              </div>
+            ` : ""}
+
+            ${form.authMode === "vertex" ? `
+              <div class="field-grid-2">
+                <div class="field">
+                  <div class="field-label-row">
+                    <label class="field-label" for="f-vertex-project">GCP Project ID</label>
+                    <span class="field-key-hint">ANTHROPIC_VERTEX_PROJECT_ID</span>
+                  </div>
+                  <input id="f-vertex-project" type="text" class="input mono" placeholder="my-gcp-project" value="${escapeHtml(form.vertexProject)}" />
+                </div>
+                <div class="field">
+                  <div class="field-label-row">
+                    <label class="field-label" for="f-vertex-region">Vertex 区域</label>
+                    <span class="field-key-hint">CLOUD_ML_REGION</span>
+                  </div>
+                  <input id="f-vertex-region" type="text" class="input mono" placeholder="global" value="${escapeHtml(form.vertexRegion)}" />
+                </div>
+              </div>
+            ` : ""}
+
+            <div class="field-grid-2">
+              <div class="field">
+                <div class="field-label-row">
+                  <label class="field-label" for="f-proxy">网络代理 (可选)</label>
+                  <span class="field-key-hint">HTTPS_PROXY</span>
+                </div>
+                <input id="f-proxy" type="text" class="input mono" placeholder="例如 http://127.0.0.1:7890" value="${escapeHtml(form.httpsProxy)}" />
+              </div>
+              <div class="field">
+                <div class="field-label-row">
+                  <label class="field-label" for="f-desc">环境用途备注</label>
+                  <span class="field-key-hint">本地元数据 · 不写入 settings.json</span>
+                </div>
+                <input id="f-desc" type="text" class="input" placeholder="例如：主力官方 Max 账号 / DeepSeek 低成本编码网关" value="${escapeHtml(ui.draftDescription)}" />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 2. Provider Quick Preset -->
+        <section class="panel">
+          <div class="panel-header">
+            <div class="panel-title-wrap">
+              <div class="panel-title">服务商快速预设模板</div>
+              <div class="panel-desc">一键套用主流网关规范参数与推荐模型映射</div>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div class="preset-strip">
+              ${PRESETS.map((pr) => `
+                <button class="preset-card ${ui.draftProvider === pr.id ? "is-current" : ""}" data-apply-preset="${pr.id}">
+                  <span class="preset-card-name">
+                    <span>${escapeHtml(pr.label)}</span>
+                    <span class="mono" style="font-size:10px;opacity:0.75">${escapeHtml(window.CCS_PROVIDER_MONOGRAM(pr.id))}</span>
+                  </span>
+                  <span class="preset-card-host">${escapeHtml(pr.host)}</span>
+                </button>
+              `).join("")}
+            </div>
+          </div>
+        </section>
+
+        <!-- 3. Model Routing -->
+        <section class="panel">
+          <div class="panel-header">
+            <div class="panel-title-wrap">
+              <div class="panel-title">模型路由映射</div>
+              <div class="panel-desc">精确指定主模型及 Opus / Sonnet / Haiku 子任务映射模型（留空则使用默认）</div>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div class="field-grid-2">
+              <div class="field">
+                <div class="field-label-row">
+                  <label class="field-label" for="f-top-model">Claude Code 默认模型</label>
+                  <span class="field-key-hint">settings.model</span>
+                </div>
+                <input id="f-top-model" type="text" class="input mono" list="claude-model-suggestions" placeholder="claude-sonnet-4-6 / opus[1m]" value="${escapeHtml(form.topModel)}" />
+                <datalist id="claude-model-suggestions">
+                  <option value="claude-sonnet-4-6"></option>
+                  <option value="claude-opus-4-7"></option>
+                  <option value="opus[1m]"></option>
+                  <option value="sonnet"></option>
+                  <option value="haiku"></option>
+                </datalist>
+              </div>
+              <div class="field">
+                <div class="field-label-row">
+                  <label class="field-label" for="f-env-model">强制环境变量模型</label>
+                  <span class="field-key-hint">ANTHROPIC_MODEL</span>
+                </div>
+                <input id="f-env-model" type="text" class="input mono" placeholder="例如 deepseek-chat" value="${escapeHtml(form.envModel)}" />
+              </div>
+              <div class="field">
+                <div class="field-label-row">
+                  <label class="field-label" for="f-opus-model">Opus 槽位映射</label>
+                  <span class="field-key-hint">ANTHROPIC_DEFAULT_OPUS_MODEL</span>
+                </div>
+                <input id="f-opus-model" type="text" class="input mono" placeholder="留空使用官方默认" value="${escapeHtml(form.opusModel)}" />
+              </div>
+              <div class="field">
+                <div class="field-label-row">
+                  <label class="field-label" for="f-sonnet-model">Sonnet 槽位映射</label>
+                  <span class="field-key-hint">ANTHROPIC_DEFAULT_SONNET_MODEL</span>
+                </div>
+                <input id="f-sonnet-model" type="text" class="input mono" placeholder="留空使用官方默认" value="${escapeHtml(form.sonnetModel)}" />
+              </div>
+              <div class="field">
+                <div class="field-label-row">
+                  <label class="field-label" for="f-haiku-model">Haiku 槽位映射</label>
+                  <span class="field-key-hint">ANTHROPIC_DEFAULT_HAIKU_MODEL</span>
+                </div>
+                <input id="f-haiku-model" type="text" class="input mono" placeholder="留空使用官方默认" value="${escapeHtml(form.haikuModel)}" />
+              </div>
+              <div class="field">
+                <div class="field-label-row">
+                  <label class="field-label" for="f-fast-model">轻量快速模型</label>
+                  <span class="field-key-hint">ANTHROPIC_SMALL_FAST_MODEL</span>
+                </div>
+                <input id="f-fast-model" type="text" class="input mono" placeholder="用于后台标题生成/快速检索" value="${escapeHtml(form.fastModel)}" />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 4. Sync Safety & Runtime Policies -->
+        <section class="panel">
+          <div class="panel-header">
+            <div class="panel-title-wrap">
+              <div class="panel-title">同步策略与运行行为</div>
+              <div class="panel-desc">控制切换配置时如何写入 ~/.claude/settings.json</div>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div class="mode-cards">
+              <button type="button" class="mode-card ${ui.draftSyncMode === "merge" ? "is-selected" : ""}" data-sync-mode="merge">
+                <div class="mode-card-title">
+                  <span>智能合并 (推荐)</span>
+                  ${ui.draftSyncMode === "merge" ? `<span style="color:var(--accent);width:14px;height:14px">${ICONS.check}</span>` : ""}
+                </div>
+                <div class="mode-card-desc">仅替换 API 环境变量与模型参数，完整保留您现有的 Hooks、Permissions、MCP 与插件配置。</div>
+              </button>
+              <button type="button" class="mode-card ${ui.draftSyncMode === "replace" ? "is-selected" : ""}" data-sync-mode="replace">
+                <div class="mode-card-title">
+                  <span>完整覆盖隔离</span>
+                  ${ui.draftSyncMode === "replace" ? `<span style="color:var(--accent);width:14px;height:14px">${ICONS.check}</span>` : ""}
+                </div>
+                <div class="mode-card-desc">使用当前配置文件 JSON 完全替换 ~/.claude/settings.json，适合需要彻底隔离全部设置的场景。</div>
+              </button>
+            </div>
+
+            <div class="field-grid-2">
+              <div class="field">
+                <div class="field-label-row">
+                  <label class="field-label" for="f-perm-mode">默认权限策略</label>
+                  <span class="field-key-hint">permissions.defaultMode</span>
+                </div>
+                <select id="f-perm-mode" class="select">
+                  <option value="" ${form.defaultPermMode === "" ? "selected" : ""}>不覆盖 (沿用全局当前设置)</option>
+                  <option value="default" ${form.defaultPermMode === "default" ? "selected" : ""}>default (每次询问工具操作)</option>
+                  <option value="acceptEdits" ${form.defaultPermMode === "acceptEdits" ? "selected" : ""}>acceptEdits (自动允许文件编辑)</option>
+                  <option value="plan" ${form.defaultPermMode === "plan" ? "selected" : ""}>plan (只读规划模式)</option>
+                  <option value="bypassPermissions" ${form.defaultPermMode === "bypassPermissions" ? "selected" : ""}>bypassPermissions (全自动免确认)</option>
+                </select>
+              </div>
+              <div class="field">
+                <div class="field-label-row">
+                  <label class="field-label" for="f-max-tokens">最大输出 Token 限制</label>
+                  <span class="field-key-hint">CLAUDE_CODE_MAX_OUTPUT_TOKENS</span>
+                </div>
+                <input id="f-max-tokens" type="text" class="input mono tabular" placeholder="例如 64000 (留空默认)" value="${escapeHtml(form.maxOutputTokens)}" />
+              </div>
+            </div>
+
+            <div>
+              <div class="toggle-row">
+                <div class="toggle-info">
+                  <span class="toggle-title">默认开启深度思考 (Always Thinking)</span>
+                  <span class="toggle-sub">对应 settings.json 中的 alwaysThinkingEnabled 字段</span>
+                </div>
+                <button type="button" class="switch ${form.alwaysThinking ? "is-on" : ""}" id="sw-thinking" aria-pressed="${form.alwaysThinking}"></button>
+              </div>
+              <div class="toggle-row">
+                <div class="toggle-info">
+                  <span class="toggle-title">精简非必要遥测流量</span>
+                  <span class="toggle-sub">注入 CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1，第三方网关推荐开启</span>
+                </div>
+                <button type="button" class="switch ${form.disableTraffic ? "is-on" : ""}" id="sw-traffic" aria-pressed="${form.disableTraffic}"></button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 5. Extra Custom Env Variables -->
+        <section class="panel">
+          <div class="panel-header">
+            <div class="panel-title-wrap">
+              <div class="panel-title">扩展环境变量 (Custom env)</div>
+              <div class="panel-desc">注入额外的自定义键值对到 env 对象中</div>
+            </div>
+            <button type="button" class="btn btn-sm" id="btn-add-kv">${ICONS.plus} 添加变量</button>
+          </div>
+          <div class="panel-body">
+            ${form.extraEnv.length === 0 ? `
+              <div style="font-size:var(--text-xs);color:var(--text-tertiary)">暂无额外环境变量。点击右上角「添加变量」可注入自定义参数。</div>
+            ` : `
+              <div class="kv-list" id="kv-list">
+                ${form.extraEnv.map((item, idx) => `
+                  <div class="kv-row" data-kv-idx="${idx}">
+                    <input type="text" class="input mono kv-key" placeholder="ENV_KEY" value="${escapeHtml(item.key)}" />
+                    <input type="text" class="input mono kv-val" placeholder="value" value="${escapeHtml(item.value)}" />
+                    <button type="button" class="btn btn-icon btn-danger kv-del" title="移除此变量">${ICONS.trash}</button>
+                  </div>
+                `).join("")}
+              </div>
+            `}
+          </div>
+        </section>
+      </div>
+    `;
+
+    // Bind Studio events without blowing away focused inputs on typing
+    container.querySelectorAll("[data-apply-preset]").forEach((card) => {
+      card.addEventListener("click", () => {
+        const pid = card.getAttribute("data-apply-preset");
+        const preset = PRESETS.find((x) => x.id === pid);
+        if (!preset) return;
+        ui.draftProvider = pid;
+        if (!ui.draftDescription) ui.draftDescription = preset.description;
+
+        // Merge preset env/model onto current JSON while preserving proxy, thinking, permissions, custom extraEnv, and secret
+        const curForm = window.CCS_PARSE_FORM(ui.draftContent);
+        const existingSecret = curForm.apiKey || curForm.authToken;
+        const curRaw = curForm.valid && curForm.raw ? curForm.raw : {};
+        const nextObj = JSON.parse(JSON.stringify(preset.template));
+        if (!nextObj.env) nextObj.env = {};
+
+        if (existingSecret && !existingSecret.includes("your-")) {
+          if ("ANTHROPIC_AUTH_TOKEN" in nextObj.env) nextObj.env.ANTHROPIC_AUTH_TOKEN = existingSecret;
+          else if ("ANTHROPIC_API_KEY" in nextObj.env) nextObj.env.ANTHROPIC_API_KEY = existingSecret;
+        }
+        if (curForm.httpsProxy) nextObj.env.HTTPS_PROXY = curForm.httpsProxy;
+        if (curForm.maxOutputTokens) nextObj.env.CLAUDE_CODE_MAX_OUTPUT_TOKENS = curForm.maxOutputTokens;
+        if (Array.isArray(curForm.extraEnv)) {
+          for (const kv of curForm.extraEnv) {
+            if (kv.key) nextObj.env[kv.key] = kv.value;
+          }
+        }
+        if (curRaw.alwaysThinkingEnabled) nextObj.alwaysThinkingEnabled = true;
+        if (curRaw.permissions && typeof curRaw.permissions === "object") {
+          nextObj.permissions = JSON.parse(JSON.stringify(curRaw.permissions));
+        }
+
+        ui.draftContent = JSON.stringify(nextObj, null, 2);
+        recomputeDirty();
+        renderWorkspaceHeaderOnly();
+        renderStudioTab(container);
+        showToast(`已套用「${preset.label}」推荐模板`, "success");
+      });
+    });
+
+    document.getElementById("f-desc")?.addEventListener("input", (e) => {
+      ui.draftDescription = e.target.value;
+      recomputeDirty();
+      renderWorkspaceHeaderOnly();
+    });
+
+    document.getElementById("f-auth-mode")?.addEventListener("change", (e) => {
+      updateDraftFromFormPatch({ authMode: e.target.value }, true);
+    });
+
+    document.getElementById("f-base-url")?.addEventListener("input", (e) => {
+      updateDraftFromFormPatch({ baseUrl: e.target.value }, false);
+    });
+
+    document.getElementById("f-secret")?.addEventListener("input", (e) => {
+      updateDraftFromFormPatch({ secretValue: e.target.value }, false);
+    });
+
+    document.getElementById("btn-toggle-secret")?.addEventListener("click", () => {
+      ui.revealSecret = !ui.revealSecret;
+      renderStudioTab(container);
+    });
+
+    document.getElementById("btn-copy-secret")?.addEventListener("click", async () => {
+      if (!secretVal) return;
+      const ok = await copyToClipboard(secretVal);
+      showToast(ok ? "密钥已复制到剪贴板" : "复制失败，请手动复制", ok ? "success" : "error");
+    });
+
+    document.getElementById("f-aws-region")?.addEventListener("input", (e) => {
+      updateDraftFromFormPatch({ awsRegion: e.target.value }, false);
+    });
+    document.getElementById("f-vertex-project")?.addEventListener("input", (e) => {
+      updateDraftFromFormPatch({ vertexProject: e.target.value }, false);
+    });
+    document.getElementById("f-vertex-region")?.addEventListener("input", (e) => {
+      updateDraftFromFormPatch({ vertexRegion: e.target.value }, false);
+    });
+    document.getElementById("f-proxy")?.addEventListener("input", (e) => {
+      updateDraftFromFormPatch({ httpsProxy: e.target.value }, false);
+    });
+
+    document.getElementById("f-top-model")?.addEventListener("input", (e) => {
+      updateDraftFromFormPatch({ topModel: e.target.value }, false);
+    });
+    document.getElementById("f-env-model")?.addEventListener("input", (e) => {
+      updateDraftFromFormPatch({ envModel: e.target.value }, false);
+    });
+    document.getElementById("f-opus-model")?.addEventListener("input", (e) => {
+      updateDraftFromFormPatch({ opusModel: e.target.value }, false);
+    });
+    document.getElementById("f-sonnet-model")?.addEventListener("input", (e) => {
+      updateDraftFromFormPatch({ sonnetModel: e.target.value }, false);
+    });
+    document.getElementById("f-haiku-model")?.addEventListener("input", (e) => {
+      updateDraftFromFormPatch({ haikuModel: e.target.value }, false);
+    });
+    document.getElementById("f-fast-model")?.addEventListener("input", (e) => {
+      updateDraftFromFormPatch({ fastModel: e.target.value }, false);
+    });
+
+    container.querySelectorAll("[data-sync-mode]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        ui.draftSyncMode = btn.getAttribute("data-sync-mode");
+        recomputeDirty();
+        renderWorkspaceHeaderOnly();
+        renderStudioTab(container);
+      });
+    });
+
+    document.getElementById("f-perm-mode")?.addEventListener("change", (e) => {
+      updateDraftFromFormPatch({ defaultPermMode: e.target.value }, false);
+    });
+    document.getElementById("f-max-tokens")?.addEventListener("input", (e) => {
+      updateDraftFromFormPatch({ maxOutputTokens: e.target.value }, false);
+    });
+
+    document.getElementById("sw-thinking")?.addEventListener("click", () => {
+      const cur = window.CCS_PARSE_FORM(ui.draftContent);
+      updateDraftFromFormPatch({ alwaysThinking: !cur.alwaysThinking }, true);
+    });
+    document.getElementById("sw-traffic")?.addEventListener("click", () => {
+      const cur = window.CCS_PARSE_FORM(ui.draftContent);
+      updateDraftFromFormPatch({ disableTraffic: !cur.disableTraffic }, true);
+    });
+
+    document.getElementById("btn-add-kv")?.addEventListener("click", () => {
+      const cur = window.CCS_PARSE_FORM(ui.draftContent);
+      const nextExtra = [...cur.extraEnv, { key: "CUSTOM_ENV_VAR", value: "" }];
+      updateDraftFromFormPatch({ extraEnv: nextExtra }, true);
+    });
+
+    const collectKvRows = () => {
+      const rows = [];
+      container.querySelectorAll(".kv-row").forEach((r) => {
+        rows.push({
+          key: r.querySelector(".kv-key")?.value || "",
+          value: r.querySelector(".kv-val")?.value || ""
+        });
+      });
+      return rows;
+    };
+
+    container.querySelectorAll(".kv-key, .kv-val").forEach((inp) => {
+      inp.addEventListener("input", () => {
+        updateDraftFromFormPatch({ extraEnv: collectKvRows() }, false);
+      });
+    });
+
+    container.querySelectorAll(".kv-del").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        const row = e.currentTarget.closest(".kv-row");
+        row?.remove();
+        updateDraftFromFormPatch({ extraEnv: collectKvRows() }, true);
+      });
+    });
+  }
+
+  function renderJsonTab(container) {
+    const buildGutterLines = (txt) => {
+      const count = Math.max(1, (txt || "").split("\n").length);
+      let out = "";
+      for (let i = 1; i <= count; i++) out += `${i}\n`;
+      return out;
+    };
+
+    const validate = (txt) => {
+      try {
+        const parsed = JSON.parse(txt);
+        if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+          return { ok: false, msg: "JSON 根节点必须是对象 {}" };
+        }
+        return { ok: true, msg: "JSON 语法有效" };
+      } catch (err) {
+        return { ok: false, msg: err.message };
+      }
+    };
+
+    const v = validate(ui.draftContent);
+
+    container.innerHTML = `
+      <div class="code-pane-wrap">
+        <div class="code-toolbar">
+          <div class="json-status ${v.ok ? "is-valid" : "is-invalid"}" id="json-live-status">
+            <span style="width:14px;height:14px;display:inline-flex">${v.ok ? ICONS.check : ICONS.alert}</span>
+            <span id="json-live-msg">${escapeHtml(v.msg)}</span>
+          </div>
+          <div style="display:flex;gap:6px">
+            <button class="btn btn-sm" id="btn-format-json">${ICONS.wand} 格式化 JSON <span class="kbd">⌘⇧F</span></button>
+            <button class="btn btn-sm" id="btn-copy-json">${ICONS.copy} 复制全文</button>
+          </div>
+        </div>
+        <div class="code-editor-container">
+          <pre class="code-gutter tabular" id="code-gutter">${buildGutterLines(ui.draftContent)}</pre>
+          <textarea class="code-textarea" id="code-textarea" spellcheck="false" autocomplete="off" autocapitalize="off">${escapeHtml(ui.draftContent)}</textarea>
+        </div>
+      </div>
+    `;
+
+    const ta = document.getElementById("code-textarea");
+    const gutter = document.getElementById("code-gutter");
+    const statusBox = document.getElementById("json-live-status");
+
+    const updateEditorMeta = () => {
+      if (!ta || !gutter || !statusBox) return;
+      ui.draftContent = ta.value;
+      gutter.textContent = buildGutterLines(ta.value);
+      gutter.scrollTop = ta.scrollTop;
+      const res = validate(ta.value);
+      statusBox.className = `json-status ${res.ok ? "is-valid" : "is-invalid"}`;
+      statusBox.innerHTML = `
+        <span style="width:14px;height:14px;display:inline-flex">${res.ok ? ICONS.check : ICONS.alert}</span>
+        <span>${escapeHtml(res.msg)}</span>
+      `;
+      recomputeDirty();
+      renderWorkspaceHeaderOnly();
+      renderStatusBar();
+    };
+
+    ta?.addEventListener("input", updateEditorMeta);
+    ta?.addEventListener("scroll", () => {
+      if (gutter && ta) gutter.scrollTop = ta.scrollTop;
+    });
+    ta?.addEventListener("keydown", (e) => {
+      if (e.key === "Tab") {
+        e.preventDefault();
+        const start = ta.selectionStart;
+        const end = ta.selectionEnd;
+        ta.value = ta.value.substring(0, start) + "  " + ta.value.substring(end);
+        ta.selectionStart = ta.selectionEnd = start + 2;
+        updateEditorMeta();
+      }
+    });
+
+    document.getElementById("btn-format-json")?.addEventListener("click", () => {
+      try {
+        const formatted = JSON.stringify(JSON.parse(ui.draftContent), null, 2);
+        ui.draftContent = formatted;
+        if (ta) ta.value = formatted;
+        updateEditorMeta();
+        showToast("已格式化为标准 2 空格缩进 JSON", "success");
+      } catch (err) {
+        showToast(`JSON 格式无效: ${err.message}`, "error");
+      }
+    });
+
+    document.getElementById("btn-copy-json")?.addEventListener("click", async () => {
+      const ok = await copyToClipboard(ui.draftContent);
+      showToast(ok ? "JSON 内容已复制" : "复制失败，请手动复制", ok ? "success" : "error");
+    });
+  }
+
+  function renderDiffTab(container, profile) {
+    const liveRaw = ui.workspace?.liveStatus?.liveContent || "{}";
+    const effectiveRaw = computeEffectiveJson(liveRaw, ui.draftContent, ui.draftSyncMode);
+
+    const beforeDisplay = ui.maskDiffSecrets ? window.CCS_MASK_SECRETS_IN_JSON(liveRaw) : liveRaw;
+    const afterDisplay = ui.maskDiffSecrets ? window.CCS_MASK_SECRETS_IN_JSON(effectiveRaw) : effectiveRaw;
+    const ops = window.CCS_COMPUTE_DIFF(beforeDisplay, afterDisplay);
+
+    const addedCount = ops.filter((o) => o.type === "add").length;
+    const deletedCount = ops.filter((o) => o.type === "del").length;
+    const identical = addedCount === 0 && deletedCount === 0;
+
+    container.innerHTML = `
+      <div class="diff-wrap">
+        <div class="diff-explainer">
+          <div style="display:flex;flex-direction:column;gap:3px">
+            <div style="font-size:var(--text-sm);font-weight:600">
+              切换后 <span class="mono">~/.claude/settings.json</span> 实际生效变更预览
+            </div>
+            <div style="font-size:var(--text-xs);color:var(--text-secondary)">
+              当前同步模式为 <strong>${ui.draftSyncMode === "merge" ? "智能合并 (保留 Hooks / Permissions / Plugins)" : "完整覆盖"}</strong>
+              ${identical ? " · 与线上文件完全一致，无任何差异" : ` · <span style="color:var(--signal-live)">+${addedCount} 行新增</span> / <span style="color:var(--signal-danger)">-${deletedCount} 行移除</span>`}
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <button class="btn btn-sm" id="btn-toggle-diff-mask">
+              ${ui.maskDiffSecrets ? ICONS.eye : ICONS.eyeOff} ${ui.maskDiffSecrets ? "显示明文密钥" : "脱敏隐藏密钥"}
+            </button>
+          </div>
+        </div>
+
+        <div class="diff-table-card">
+          <div class="diff-header-bar">
+            <span>--- 当前 ~/.claude/settings.json</span>
+            <span>+++ 激活「${escapeHtml(profile.displayName)}」后结果</span>
+          </div>
+          <div class="diff-lines">
+            ${ops.map((row) => {
+              const cls = row.type === "add" ? "is-add" : row.type === "del" ? "is-del" : "is-ctx";
+              const sig = row.type === "add" ? "+" : row.type === "del" ? "-" : " ";
+              return `
+                <div class="diff-line ${cls}">
+                  <span class="diff-ln">${row.oldLn}</span>
+                  <span class="diff-ln">${row.newLn}</span>
+                  <span class="diff-sig">${sig}</span>
+                  <span class="diff-code">${escapeHtml(row.text)}</span>
+                </div>
+              `;
+            }).join("")}
+          </div>
+        </div>
+      </div>
+    `;
+
+    document.getElementById("btn-toggle-diff-mask")?.addEventListener("click", () => {
+      ui.maskDiffSecrets = !ui.maskDiffSecrets;
+      renderDiffTab(container, profile);
+    });
+  }
+
+  function renderStatusBar() {
+    const bar = document.getElementById("statusbar-root");
+    if (!bar || !ui.workspace) return;
+    const p = currentSelectedProfile();
+    const charCount = (ui.draftContent || "").length;
+    const lineCount = ui.draftContent ? ui.draftContent.split("\n").length : 0;
+    const themeMode = normalizeThemeMode(ui.workspace.settings.theme);
+    const themeLabel = themeMode === "Light" ? "浅色" : themeMode === "System" ? "跟随系统" : "深色";
+    const themeIcon = themeMode === "Light" ? ICONS.sun : themeMode === "System" ? ICONS.monitor : ICONS.moon;
+    const syncColor =
+      ui.workspace.liveStatus.syncState === "synced"
+        ? "var(--signal-live)"
+        : ui.workspace.liveStatus.syncState === "corrupted"
+          ? "var(--signal-danger)"
+          : "var(--signal-warn)";
+
+    bar.innerHTML = `
+      <div class="statusbar-group">
+        <span class="status-item">
+          <span class="pulse-dot" style="color:${syncColor}"></span>
+          <span>当前活动配置: <strong>${escapeHtml(ui.workspace.settings.default_config_file || "未指定")}</strong></span>
+        </span>
+        <span class="status-item mono">${escapeHtml(ui.workspace.settings.config_directory)}</span>
+      </div>
+      <div class="statusbar-group tabular">
+        ${p ? `<span>${lineCount} 行 · ${charCount} 字符</span>` : ""}
+        <span>快捷键: <span class="kbd">⌘K</span> 命令 · <span class="kbd">⌘⇧L</span> 主题 · <span class="kbd">⌘↵</span> 激活</span>
+        <button type="button" class="status-theme-btn" id="status-theme-btn" title="点击切换深色 / 浅色外观 (⌘⇧L)">
+          ${themeIcon}<span>${themeLabel}</span>
+        </button>
+        <span>v${escapeHtml(ui.workspace.appVersion)}</span>
+      </div>
+    `;
+    document.getElementById("status-theme-btn")?.addEventListener("click", handleToggleTheme);
+  }
+
+  // --- Modals & Command Palette ---
+  function closeModal() {
+    const wasSettings = ui.modal === "settings";
+    ui.modal = null;
+    ui.pendingAction = null;
+    if (wasSettings && ui.workspace) {
+      const savedTheme = normalizeThemeMode(ui.workspace.settings.theme);
+      applyTheme(savedTheme, true);
+      if (isNative) {
+        rpc("window_action", { action: "set_theme", theme: savedTheme }).catch(() => {});
+      }
+    }
+    renderModal();
+  }
+
+  function renderModal() {
+    const root = document.getElementById("modal-root");
+    if (!root) return;
+    if (!ui.modal) {
+      root.innerHTML = "";
+      return;
+    }
+
+    if (ui.modal === "unsaved") {
+      const p = currentSelectedProfile();
+      root.innerHTML = `
+        <div class="overlay" id="modal-overlay">
+          <div class="modal" role="dialog" aria-modal="true" style="width:440px">
+            <div class="modal-header">
+              <span class="modal-title">当前配置有未保存的更改</span>
+              <button class="btn btn-icon" id="modal-close">${ICONS.close}</button>
+            </div>
+            <div class="modal-body">
+              <p style="color:var(--text-secondary);font-size:var(--text-sm)">
+                您对 <strong>${escapeHtml(p?.displayName || "当前配置")}</strong> 进行了修改但尚未保存。切换或离开前是否保存这些修改？
+              </p>
+            </div>
+            <div class="modal-footer">
+              <button class="btn" id="unsaved-cancel" style="margin-right:auto">取消</button>
+              <button class="btn btn-danger" id="unsaved-discard">放弃未保存更改</button>
+              <button class="btn btn-primary" id="unsaved-save">${ICONS.save} 保存并继续</button>
+            </div>
+          </div>
+        </div>
+      `;
+      document.getElementById("modal-close")?.addEventListener("click", closeModal);
+      document.getElementById("unsaved-cancel")?.addEventListener("click", closeModal);
+      document.getElementById("unsaved-discard")?.addEventListener("click", () => {
+        const fn = ui.pendingAction;
+        ui.isDirty = false;
+        closeModal();
+        fn?.();
+      });
+      document.getElementById("unsaved-save")?.addEventListener("click", async () => {
+        const fn = ui.pendingAction;
+        const ok = await handleSaveCurrent();
+        if (ok) {
+          closeModal();
+          fn?.();
+        }
+      });
+    } else if (ui.modal === "new") {
+      const w = ui.newWizard;
+      root.innerHTML = `
+        <div class="overlay" id="modal-overlay">
+          <div class="modal modal-lg" role="dialog" aria-modal="true">
+            <div class="modal-header">
+              <span class="modal-title">新建 Claude Code 环境配置</span>
+              <button class="btn btn-icon" id="modal-close">${ICONS.close}</button>
+            </div>
+            <div class="modal-body">
+              <div class="field">
+                <span class="field-label">1. 选择服务商模板</span>
+                <div class="preset-strip">
+                  ${PRESETS.map((pr) => `
+                    <button type="button" class="preset-card ${w.presetId === pr.id ? "is-current" : ""}" data-wiz-preset="${pr.id}">
+                      <span class="preset-card-name">${escapeHtml(pr.label)}</span>
+                      <span class="preset-card-host">${escapeHtml(pr.host)}</span>
+                    </button>
+                  `).join("")}
+                </div>
+              </div>
+              <div class="field-grid-2">
+                <div class="field">
+                  <label class="field-label" for="wiz-name-input">2. 配置名称</label>
+                  <input id="wiz-name-input" type="text" class="input" value="${escapeHtml(w.name)}" placeholder="例如：Anthropic 主力账号" />
+                </div>
+                <div class="field">
+                  <label class="field-label" for="wiz-model-input">默认模型 (可选)</label>
+                  <input id="wiz-model-input" type="text" class="input mono" value="${escapeHtml(w.model)}" placeholder="claude-sonnet-4-6" />
+                </div>
+              </div>
+              ${w.presetId !== "bedrock" && w.presetId !== "vertex" ? `
+                <div class="field-grid-2">
+                  <div class="field">
+                    <label class="field-label" for="wiz-url-input">API 网关地址</label>
+                    <input id="wiz-url-input" type="text" class="input mono" value="${escapeHtml(w.baseUrl)}" placeholder="https://api.anthropic.com" />
+                  </div>
+                  <div class="field">
+                    <label class="field-label" for="wiz-secret-input">API Key / Auth Token (留空则不覆盖现有登录)</label>
+                    <input id="wiz-secret-input" type="password" class="input mono" value="${escapeHtml(w.secret)}" placeholder="sk-..." />
+                  </div>
+                </div>
+              ` : ""}
+              <div class="field">
+                <label class="field-label" for="wiz-desc-input">备注说明</label>
+                <input id="wiz-desc-input" type="text" class="input" value="${escapeHtml(w.description)}" />
+              </div>
+              <div class="toggle-row" style="border-top:1px solid var(--border-subtle);padding-top:12px">
+                <div class="toggle-info">
+                  <span class="toggle-title">创建后立即激活并同步至 Claude Code</span>
+                  <span class="toggle-sub">默认采用「智能合并」模式，安全保留现有 Hooks 与权限</span>
+                </div>
+                <button type="button" class="switch ${w.activateNow ? "is-on" : ""}" id="wiz-activate-sw"></button>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button class="btn" id="wiz-cancel">取消</button>
+              <button class="btn btn-primary" id="wiz-submit">${ICONS.plus} 创建环境配置</button>
+            </div>
+          </div>
+        </div>
+      `;
+
+      root.querySelectorAll("[data-wiz-preset]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const pid = btn.getAttribute("data-wiz-preset");
+          const pr = PRESETS.find((x) => x.id === pid);
+          if (!pr) return;
+          const env = pr.template.env || {};
+          ui.newWizard = {
+            ...ui.newWizard,
+            presetId: pr.id,
+            name: pr.name,
+            description: pr.description,
+            baseUrl: env.ANTHROPIC_BASE_URL || "",
+            model: pr.template.model || env.ANTHROPIC_MODEL || ""
+          };
+          renderModal();
+        });
+      });
+
+      document.getElementById("wiz-name-input")?.addEventListener("input", (e) => { ui.newWizard.name = e.target.value; });
+      document.getElementById("wiz-model-input")?.addEventListener("input", (e) => { ui.newWizard.model = e.target.value; });
+      document.getElementById("wiz-url-input")?.addEventListener("input", (e) => { ui.newWizard.baseUrl = e.target.value; });
+      document.getElementById("wiz-secret-input")?.addEventListener("input", (e) => { ui.newWizard.secret = e.target.value; });
+      document.getElementById("wiz-desc-input")?.addEventListener("input", (e) => { ui.newWizard.description = e.target.value; });
+      document.getElementById("wiz-activate-sw")?.addEventListener("click", () => {
+        ui.newWizard.activateNow = !ui.newWizard.activateNow;
+        renderModal();
+      });
+
+      document.getElementById("modal-close")?.addEventListener("click", closeModal);
+      document.getElementById("wiz-cancel")?.addEventListener("click", closeModal);
+      document.getElementById("wiz-submit")?.addEventListener("click", async () => {
+        const pr = PRESETS.find((x) => x.id === ui.newWizard.presetId) || PRESETS[0];
+        const obj = JSON.parse(JSON.stringify(pr.template));
+        if (!obj.env) obj.env = {};
+        if (ui.newWizard.presetId !== "bedrock" && ui.newWizard.presetId !== "vertex") {
+          if (ui.newWizard.baseUrl.trim()) obj.env.ANTHROPIC_BASE_URL = ui.newWizard.baseUrl.trim();
+          else delete obj.env.ANTHROPIC_BASE_URL;
+        }
+        if (ui.newWizard.secret.trim()) {
+          if ("ANTHROPIC_AUTH_TOKEN" in obj.env || ui.newWizard.presetId !== "anthropic") {
+            delete obj.env.ANTHROPIC_API_KEY;
+            obj.env.ANTHROPIC_AUTH_TOKEN = ui.newWizard.secret.trim();
+          } else {
+            obj.env.ANTHROPIC_API_KEY = ui.newWizard.secret.trim();
+          }
+        }
+        const mTrim = ui.newWizard.model.trim();
+        if (mTrim) {
+          if ("ANTHROPIC_MODEL" in obj.env) obj.env.ANTHROPIC_MODEL = mTrim;
+          else obj.model = mTrim;
+        } else {
+          delete obj.model;
+          delete obj.env.ANTHROPIC_MODEL;
+        }
+        try {
+          const nameClean = ui.newWizard.name.trim() || pr.name;
+          const next = await rpc("create_profile", {
+            name: nameClean,
+            content: JSON.stringify(obj, null, 2),
+            provider: ui.newWizard.presetId,
+            description: ui.newWizard.description.trim(),
+            syncMode: ui.newWizard.syncMode,
+            pinned: false,
+            activateNow: ui.newWizard.activateNow
+          });
+          ui.isDirty = false;
+          closeModal();
+          syncWorkspaceState(next, next.targetFile);
+          showToast(`已创建配置「${next.targetFile ? next.targetFile.replace(/\.json$/i, "") : nameClean}」`, "success");
+        } catch (err) {
+          showToast(err.message, "error");
+        }
+      });
+    } else if (ui.modal === "rename") {
+      const p = currentSelectedProfile();
+      root.innerHTML = `
+        <div class="overlay" id="modal-overlay">
+          <div class="modal" role="dialog" aria-modal="true" style="width:420px">
+            <div class="modal-header">
+              <span class="modal-title">重命名配置文件</span>
+              <button class="btn btn-icon" id="modal-close">${ICONS.close}</button>
+            </div>
+            <div class="modal-body">
+              <div class="field">
+                <label class="field-label" for="rename-modal-input">新配置名称</label>
+                <input id="rename-modal-input" type="text" class="input" value="${escapeHtml(ui.renameValue)}" />
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button class="btn" id="rename-cancel">取消</button>
+              <button class="btn btn-primary" id="rename-submit">确认重命名</button>
+            </div>
+          </div>
+        </div>
+      `;
+      const submitRename = async () => {
+        if (!p || !ui.renameValue.trim()) return;
+        try {
+          const clean = ui.renameValue.replace(/\.json$/i, "").trim();
+          const next = await rpc("rename_profile", { oldFileName: p.fileName, newName: clean });
+          closeModal();
+          const newFn = next.targetFile || `${clean}.json`;
+          ui.selectedFile = newFn;
+          syncWorkspaceState(next, newFn);
+          showToast(`已重命名为「${newFn.replace(/\.json$/i, "")}」`, "success");
+        } catch (err) {
+          showToast(err.message, "error");
+        }
+      };
+      document.getElementById("rename-modal-input")?.addEventListener("input", (e) => { ui.renameValue = e.target.value; });
+      document.getElementById("rename-modal-input")?.addEventListener("keydown", (e) => { if (e.key === "Enter") submitRename(); });
+      document.getElementById("modal-close")?.addEventListener("click", closeModal);
+      document.getElementById("rename-cancel")?.addEventListener("click", closeModal);
+      document.getElementById("rename-submit")?.addEventListener("click", submitRename);
+    } else if (ui.modal === "delete") {
+      const p = currentSelectedProfile();
+      root.innerHTML = `
+        <div class="overlay" id="modal-overlay">
+          <div class="modal" role="dialog" aria-modal="true" style="width:430px">
+            <div class="modal-header">
+              <span class="modal-title">删除环境配置</span>
+              <button class="btn btn-icon" id="modal-close">${ICONS.close}</button>
+            </div>
+            <div class="modal-body">
+              <p style="color:var(--text-secondary);font-size:var(--text-sm)">
+                确定要永久删除配置文件 <strong>${escapeHtml(p?.displayName || "")}</strong> 吗？此操作不会删除您当前的 <span class="mono">~/.claude/settings.json</span>。
+              </p>
+            </div>
+            <div class="modal-footer">
+              <button class="btn" id="del-cancel">取消</button>
+              <button class="btn btn-primary" style="background:var(--signal-danger);border-color:var(--signal-danger)" id="del-confirm">${ICONS.trash} 确认删除</button>
+            </div>
+          </div>
+        </div>
+      `;
+      document.getElementById("modal-close")?.addEventListener("click", closeModal);
+      document.getElementById("del-cancel")?.addEventListener("click", closeModal);
+      document.getElementById("del-confirm")?.addEventListener("click", async () => {
+        if (!p) return;
+        try {
+          const next = await rpc("delete_profile", { fileName: p.fileName });
+          ui.selectedFile = null;
+          ui.isDirty = false;
+          closeModal();
+          syncWorkspaceState(next);
+          showToast(`已删除「${p.displayName}」`, "success");
+        } catch (err) {
+          showToast(err.message, "error");
+        }
+      });
+    } else if (ui.modal === "backups") {
+      const selectedSnap = ui.backupsList.find((b) => b.id === ui.previewBackupId) || ui.backupsList[0];
+      root.innerHTML = `
+        <div class="overlay" id="modal-overlay">
+          <div class="modal modal-lg" role="dialog" aria-modal="true">
+            <div class="modal-header">
+              <span class="modal-title">~/.claude/settings.json 自动时间机器快照</span>
+              <button class="btn btn-icon" id="modal-close">${ICONS.close}</button>
+            </div>
+            <div class="modal-body">
+              ${ui.backupsList.length === 0 ? `
+                <div style="padding:24px;text-align:center;color:var(--text-tertiary)">暂无历史快照。首次发现原版文件或每次切换配置前会自动在此创建安全备份。</div>
+              ` : `
+                <div style="display:flex;flex-direction:column;gap:8px;max-height:230px;overflow-y:auto">
+                  ${ui.backupsList.map((b) => `
+                    <div class="backup-row" style="${selectedSnap?.id === b.id ? "border-color:var(--accent)" : ""}">
+                      <div style="min-width:0;cursor:pointer;flex:1" data-snap-select="${escapeHtml(b.id)}">
+                        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+                          <span style="font-size:var(--text-xs);font-weight:600">${escapeHtml(b.label)}</span>
+                          ${b.isOriginal ? `<span class="snap-badge-orig">初始原版 · 永久保留</span>` : ""}
+                        </div>
+                        <div class="tabular" style="font-size:11px;color:var(--text-tertiary)">${escapeHtml(b.createdAt)} · ${b.byteSize} Bytes · ${escapeHtml(b.fileName)}</div>
+                      </div>
+                      <div style="display:flex;gap:6px;align-items:center">
+                        <button class="btn btn-sm btn-primary" data-snap-restore="${escapeHtml(b.id)}">回滚恢复</button>
+                        ${b.isOriginal ? "" : `<button class="btn btn-icon btn-danger" data-snap-del="${escapeHtml(b.id)}" title="删除快照">${ICONS.trash}</button>`}
+                      </div>
+                    </div>
+                  `).join("")}
+                </div>
+                ${selectedSnap ? `
+                  <div class="field">
+                    <span class="field-label">快照内容预览 (已自动脱敏密钥)</span>
+                    <pre class="mono" style="max-height:190px;overflow:auto;padding:12px;background:var(--bg-inset);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);font-size:11.5px;user-select:text">${escapeHtml(window.CCS_MASK_SECRETS_IN_JSON(selectedSnap.content))}</pre>
+                  </div>
+                ` : ""}
+              `}
+            </div>
+            <div class="modal-footer">
+              ${isNative ? `<button class="btn btn-ghost" id="btn-reveal-backups" style="margin-right:auto">${ICONS.external} 在文件管理器中打开备份目录</button>` : ""}
+              <button class="btn" id="backups-close">关闭</button>
+            </div>
+          </div>
+        </div>
+      `;
+      document.getElementById("modal-close")?.addEventListener("click", closeModal);
+      document.getElementById("backups-close")?.addEventListener("click", closeModal);
+      document.getElementById("btn-reveal-backups")?.addEventListener("click", () => rpc("reveal_path", { target: "backups_dir" }));
+
+      root.querySelectorAll("[data-snap-select]").forEach((el) => {
+        el.addEventListener("click", () => {
+          ui.previewBackupId = el.getAttribute("data-snap-select");
+          renderModal();
+        });
+      });
+      root.querySelectorAll("[data-snap-restore]").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          const id = btn.getAttribute("data-snap-restore");
+          try {
+            const next = await rpc("restore_backup", { id });
+            closeModal();
+            ui.isDirty = false;
+            syncWorkspaceState(next, next.targetFile || ui.selectedFile);
+            showToast("已将 ~/.claude/settings.json 安全回滚至所选快照", "success");
+          } catch (err) {
+            showToast(`回滚失败: ${err.message}`, "error");
+          }
+        });
+      });
+      root.querySelectorAll("[data-snap-del]").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          const id = btn.getAttribute("data-snap-del");
+          ui.backupsList = await rpc("delete_backup", { id });
+          if (!ui.backupsList.some((b) => b.id === ui.previewBackupId)) {
+            ui.previewBackupId = ui.backupsList[0]?.id || null;
+          }
+          if (ui.workspace) ui.workspace.backupsCount = ui.backupsList.length;
+          renderWorkspaceHeaderOnly();
+          renderModal();
+        });
+      });
+    } else if (ui.modal === "settings") {
+      const draftTheme = normalizeThemeMode(ui.settingsDraft.theme);
+      root.innerHTML = `
+        <div class="overlay" id="modal-overlay">
+          <div class="modal" role="dialog" aria-modal="true">
+            <div class="modal-header">
+              <span class="modal-title">应用与外观设置</span>
+              <button class="btn btn-icon" id="modal-close">${ICONS.close}</button>
+            </div>
+            <div class="modal-body">
+              <div class="field">
+                <div class="field-label-row">
+                  <span class="field-label">界面外观主题</span>
+                  <span class="field-key-hint">⌘⇧L 快速切换</span>
+                </div>
+                <div class="theme-picker-grid">
+                  <button type="button" class="theme-card ${draftTheme === "Light" ? "is-selected" : ""}" data-set-theme="Light">
+                    <div class="theme-preview is-light" aria-hidden="true">
+                      <div class="tp-rail">
+                        <div class="tp-dots"><i></i><i></i><i></i></div>
+                        <div class="tp-pill-accent"></div>
+                        <div class="tp-line"></div>
+                      </div>
+                      <div class="tp-main">
+                        <div class="tp-card">
+                          <div class="tp-line"></div>
+                          <div class="tp-line is-short"></div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="theme-card-meta">
+                      <span class="theme-card-title">${ICONS.sun} 浅色模式</span>
+                      <span class="theme-card-sub">日光宣纸</span>
+                    </div>
+                  </button>
+
+                  <button type="button" class="theme-card ${draftTheme === "Dark" ? "is-selected" : ""}" data-set-theme="Dark">
+                    <div class="theme-preview is-dark" aria-hidden="true">
+                      <div class="tp-rail">
+                        <div class="tp-dots"><i></i><i></i><i></i></div>
+                        <div class="tp-pill-accent"></div>
+                        <div class="tp-line"></div>
+                      </div>
+                      <div class="tp-main">
+                        <div class="tp-card">
+                          <div class="tp-line"></div>
+                          <div class="tp-line is-short"></div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="theme-card-meta">
+                      <span class="theme-card-title">${ICONS.moon} 深色模式</span>
+                      <span class="theme-card-sub">曜石暗室</span>
+                    </div>
+                  </button>
+
+                  <button type="button" class="theme-card ${draftTheme === "System" ? "is-selected" : ""}" data-set-theme="System">
+                    <div class="theme-preview is-system" aria-hidden="true">
+                      <div class="tp-sys-half is-l">
+                        <div class="tp-pill-accent"></div>
+                        <div class="tp-line" style="background:#D0C9BC"></div>
+                        <div class="tp-line is-short" style="background:#DED8CC"></div>
+                      </div>
+                      <div class="tp-sys-half is-d">
+                        <div class="tp-pill-accent"></div>
+                        <div class="tp-line" style="background:#3A3E48"></div>
+                        <div class="tp-line is-short" style="background:#2A2D35"></div>
+                      </div>
+                    </div>
+                    <div class="theme-card-meta">
+                      <span class="theme-card-title">${ICONS.monitor} 跟随系统</span>
+                      <span class="theme-card-sub">自动适配</span>
+                    </div>
+                  </button>
+                </div>
+              </div>
+
+              <div class="field">
+                <label class="field-label" for="set-dir-input">环境配置存储目录</label>
+                <div class="secret-group">
+                  <input id="set-dir-input" type="text" class="input mono" value="${escapeHtml(ui.settingsDraft.configDirectory)}" />
+                  ${isNative ? `<button class="btn" id="btn-pick-folder">${ICONS.folder} 浏览</button>` : ""}
+                </div>
+              </div>
+              <div class="field">
+                <label class="field-label" for="set-sync-mode">新建配置默认同步策略</label>
+                <select id="set-sync-mode" class="select">
+                  <option value="merge" ${ui.settingsDraft.defaultSyncMode === "merge" ? "selected" : ""}>智能合并 (推荐 · 保留 Hooks / 权限 / 插件)</option>
+                  <option value="replace" ${ui.settingsDraft.defaultSyncMode === "replace" ? "selected" : ""}>完整覆盖 settings.json</option>
+                </select>
+              </div>
+              <div class="toggle-row" style="border-top:1px solid var(--border-subtle);padding-top:12px">
+                <div class="toggle-info">
+                  <span class="toggle-title">写入前自动创建快照备份</span>
+                  <span class="toggle-sub">永久保留首次原版 settings.json，并滚动保存最近 25 份切换前快照</span>
+                </div>
+                <button type="button" class="switch ${ui.settingsDraft.autoBackup ? "is-on" : ""}" id="set-backup-sw"></button>
+              </div>
+              ${isNative ? `
+                <div style="display:flex;gap:8px;padding-top:4px;flex-wrap:wrap">
+                  <button class="btn btn-sm" id="btn-reveal-profiles">${ICONS.external} 打开配置库文件夹</button>
+                  <button class="btn btn-sm" id="btn-reveal-claude">${ICONS.external} 定位 ~/.claude/settings.json</button>
+                </div>
+              ` : ""}
+            </div>
+            <div class="modal-footer">
+              <button class="btn" id="set-cancel">取消</button>
+              <button class="btn btn-primary" id="set-save">保存设置</button>
+            </div>
+          </div>
+        </div>
+      `;
+      document.getElementById("modal-close")?.addEventListener("click", closeModal);
+      document.getElementById("set-cancel")?.addEventListener("click", closeModal);
+      root.querySelectorAll("[data-set-theme]").forEach((card) => {
+        card.addEventListener("click", () => {
+          const picked = normalizeThemeMode(card.getAttribute("data-set-theme"));
+          ui.settingsDraft.theme = picked;
+          applyTheme(picked, false);
+          if (isNative) {
+            rpc("window_action", { action: "set_theme", theme: picked }).catch(() => {});
+          }
+          renderModal();
+        });
+      });
+      document.getElementById("set-dir-input")?.addEventListener("input", (e) => { ui.settingsDraft.configDirectory = e.target.value; });
+      document.getElementById("set-sync-mode")?.addEventListener("change", (e) => { ui.settingsDraft.defaultSyncMode = e.target.value; });
+      document.getElementById("set-backup-sw")?.addEventListener("click", () => {
+        ui.settingsDraft.autoBackup = !ui.settingsDraft.autoBackup;
+        renderModal();
+      });
+      document.getElementById("btn-pick-folder")?.addEventListener("click", async () => {
+        const res = await rpc("pick_directory");
+        if (res && res.path) {
+          ui.settingsDraft.configDirectory = res.path;
+          renderModal();
+        }
+      });
+      document.getElementById("btn-reveal-profiles")?.addEventListener("click", () => rpc("reveal_path", { target: "profiles_dir" }));
+      document.getElementById("btn-reveal-claude")?.addEventListener("click", () => rpc("reveal_path", { target: "claude_config" }));
+      document.getElementById("set-save")?.addEventListener("click", async () => {
+        try {
+          const next = await rpc("update_settings", {
+            theme: normalizeThemeMode(ui.settingsDraft.theme),
+            configDirectory: ui.settingsDraft.configDirectory.trim(),
+            defaultSyncMode: ui.settingsDraft.defaultSyncMode,
+            autoBackup: ui.settingsDraft.autoBackup
+          });
+          ui.modal = null;
+          ui.pendingAction = null;
+          renderModal();
+          syncWorkspaceState(next);
+          showToast("应用与外观设置已更新", "success");
+        } catch (err) {
+          showToast(err.message, "error");
+        }
+      });
+    } else if (ui.modal === "palette") {
+      renderCommandPaletteModal(root);
+      return;
+    }
+
+    document.getElementById("modal-overlay")?.addEventListener("mousedown", (e) => {
+      if (e.target.id === "modal-overlay") closeModal();
+    });
+  }
+
+  function getPaletteCommands() {
+    const items = [];
+    if (ui.workspace) {
+      for (const p of ui.workspace.profiles) {
+        items.push({
+          id: `act:${p.fileName}`,
+          icon: ICONS.zap,
+          title: `切换并激活: ${p.displayName}`,
+          hint: p.baseHost,
+          run: () => handleActivateProfile(p.fileName)
+        });
+      }
+    }
+    items.push(
+      { id: "new", icon: ICONS.plus, title: "新建环境配置…", hint: "⌘N", run: () => openNewProfileWizard("anthropic") },
+      { id: "probe", icon: ICONS.radar, title: "对当前配置执行连通性测速", hint: "Ping", run: () => handleProbeCurrent() },
+      { id: "diff", icon: ICONS.gitDiff, title: "查看 ~/.claude/settings.json 生效差异对比", hint: "Diff", run: () => { ui.activeTab = "diff"; renderWorkspaceHeaderOnly(); renderWorkspaceBodyOnly(); } },
+      { id: "backups", icon: ICONS.history, title: "打开时间机器自动备份快照…", hint: "Backups", run: () => openBackupsModal() },
+      { id: "theme-light", icon: ICONS.sun, title: "外观主题: 切换至浅色模式 (日光宣纸)", hint: "Light", run: () => handleSetTheme("Light") },
+      { id: "theme-dark", icon: ICONS.moon, title: "外观主题: 切换至深色模式 (曜石暗室)", hint: "Dark", run: () => handleSetTheme("Dark") },
+      { id: "theme-system", icon: ICONS.monitor, title: "外观主题: 跟随操作系统自动切换", hint: "Auto", run: () => handleSetTheme("System") },
+      { id: "settings", icon: ICONS.settings, title: "打开应用与外观设置…", hint: "⌘,", run: () => openSettingsModal() }
+    );
+    const q = ui.paletteQuery.trim().toLowerCase();
+    if (!q) return items;
+    return items.filter((it) => it.title.toLowerCase().includes(q) || it.hint.toLowerCase().includes(q));
+  }
+
+  function renderCommandPaletteModal(root) {
+    const list = getPaletteCommands();
+    if (ui.paletteIndex >= list.length) ui.paletteIndex = 0;
+
+    root.innerHTML = `
+      <div class="overlay" id="modal-overlay">
+        <div class="modal" role="dialog" aria-modal="true">
+          <div class="cmd-input-wrap">
+            ${ICONS.search}
+            <input id="cmd-palette-input" class="cmd-input" type="text" placeholder="输入环境名称立即切换，或搜索外观 / 命令…" value="${escapeHtml(ui.paletteQuery)}" autocomplete="off" />
+            <span class="kbd">ESC</span>
+          </div>
+          <div class="cmd-list" id="cmd-palette-list"></div>
+        </div>
+      </div>
+    `;
+
+    const paintList = () => {
+      const items = getPaletteCommands();
+      const box = document.getElementById("cmd-palette-list");
+      if (!box) return;
+      if (items.length === 0) {
+        box.innerHTML = `<div style="padding:18px;text-align:center;color:var(--text-tertiary);font-size:var(--text-xs)">无匹配命令</div>`;
+        return;
+      }
+      box.innerHTML = items.map((it, idx) => `
+        <button class="cmd-item ${idx === ui.paletteIndex ? "is-active" : ""}" data-cmd-idx="${idx}">
+          <span class="cmd-item-left">${it.icon}<span>${escapeHtml(it.title)}</span></span>
+          <span class="kbd">${escapeHtml(it.hint)}</span>
+        </button>
+      `).join("");
+      box.querySelectorAll("[data-cmd-idx]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const item = items[Number(btn.getAttribute("data-cmd-idx"))];
+          closeModal();
+          item?.run();
+        });
+      });
+    };
+
+    paintList();
+    const inp = document.getElementById("cmd-palette-input");
+    inp?.addEventListener("input", (e) => {
+      ui.paletteQuery = e.target.value;
+      ui.paletteIndex = 0;
+      paintList();
+    });
+    inp?.addEventListener("keydown", (e) => {
+      const items = getPaletteCommands();
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        ui.paletteIndex = items.length ? (ui.paletteIndex + 1) % items.length : 0;
+        paintList();
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        ui.paletteIndex = items.length ? (ui.paletteIndex - 1 + items.length) % items.length : 0;
+        paintList();
+      } else if (e.key === "Enter") {
+        e.preventDefault();
+        const chosen = items[ui.paletteIndex];
+        closeModal();
+        chosen?.run();
+      }
+    });
+
+    document.getElementById("modal-overlay")?.addEventListener("mousedown", (e) => {
+      if (e.target.id === "modal-overlay") closeModal();
+    });
+  }
+
+  // --- Global Keyboard Shortcuts & Native Titlebar Drag ---
+  window.addEventListener("keydown", (e) => {
+    const mod = e.metaKey || e.ctrlKey;
+    if (e.key === "Escape" && ui.modal) {
+      e.preventDefault();
+      closeModal();
+      return;
+    }
+    if (mod && e.shiftKey && e.key.toLowerCase() === "l") {
+      e.preventDefault();
+      handleToggleTheme();
+      return;
+    }
+    if (mod && e.key.toLowerCase() === "k") {
+      e.preventDefault();
+      if (ui.modal === "palette") closeModal();
+      else openCommandPalette();
+      return;
+    }
+    if (mod && e.key.toLowerCase() === "s") {
+      e.preventDefault();
+      handleSaveCurrent();
+      return;
+    }
+    if (mod && e.key === "Enter") {
+      e.preventDefault();
+      if (ui.selectedFile && !ui.modal) handleActivateProfile(ui.selectedFile);
+      return;
+    }
+    if (mod && e.key.toLowerCase() === "n") {
+      e.preventDefault();
+      guardUnsavedChanges(() => openNewProfileWizard("anthropic"));
+      return;
+    }
+    if (mod && e.key === ",") {
+      e.preventDefault();
+      openSettingsModal();
+      return;
+    }
+    if (mod && e.key.toLowerCase() === "f" && !e.shiftKey) {
+      const searchEl = document.getElementById("rail-search-input");
+      if (searchEl && document.activeElement?.id !== "code-textarea") {
+        e.preventDefault();
+        searchEl.focus();
+        searchEl.select();
+      }
+      return;
+    }
+    if (mod && e.shiftKey && e.key.toLowerCase() === "f") {
+      if (ui.activeTab === "json") {
+        e.preventDefault();
+        document.getElementById("btn-format-json")?.click();
+      }
+    }
+  });
+
+  document.addEventListener("mousedown", (e) => {
+    if (!isNative || e.button !== 0) return;
+    if (e.target.closest("button, input, select, textarea, a, [role='button']")) return;
+    if (e.target.closest("[data-drag-region]")) {
+      rpc("window_action", { action: e.detail === 2 ? "toggle_maximize" : "drag" }).catch(() => {});
+    }
+  });
+
+  // --- Boot ---
+  async function boot() {
+    try {
+      const state = await rpc("get_state");
+      let preferred = null;
+      if (!isNative && window.location.search) {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get("theme") === "light") state.settings.theme = "Light";
+        if (params.get("theme") === "dark") state.settings.theme = "Dark";
+        if (params.get("theme") === "system") state.settings.theme = "System";
+        const tab = params.get("tab");
+        if (tab === "studio" || tab === "json" || tab === "diff") ui.activeTab = tab;
+        const sel = params.get("select");
+        if (sel) {
+          const match = state.profiles.find((p) => p.displayName.toLowerCase().includes(sel.toLowerCase()));
+          if (match) preferred = match.fileName;
+        }
+      }
+      syncWorkspaceState(state, preferred);
+      if (!isNative && window.location.search) {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get("modal") === "new") openNewProfileWizard("openrouter");
+        if (params.get("modal") === "palette") openCommandPalette();
+        if (params.get("modal") === "settings") openSettingsModal();
+      }
+    } catch (err) {
+      showToast(`初始化失败: ${err.message}`, "error");
+    }
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", boot);
+  } else {
+    boot();
+  }
+})();
+
+  </script>
+</body>
+</html>

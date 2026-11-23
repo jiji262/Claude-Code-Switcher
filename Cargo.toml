@@ -1,0 +1,35 @@
+[package]
+name = "claude-code-switcher"
+version = "2.0.1"
+edition = "2021"
+authors = ["Claude Code Switcher Contributors"]
+description = "Precision environment, gateway, and model routing switchboard for Claude Code"
+license = "MIT OR Apache-2.0"
+keywords = ["claude", "claude-code", "switcher", "config", "desktop"]
+categories = ["gui", "config", "development-tools"]
+
+[[bin]]
+name = "claude-code-switcher"
+path = "src/main.rs"
+
+[[bin]]
+name = "generate_icons"
+path = "src/bin/generate_icons.rs"
+
+[dependencies]
+tao = "0.37.2"
+wry = "0.57.2"
+muda = "0.21.2"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = { version = "1.0", features = ["preserve_order"] }
+directories = "5.0"
+rfd = "0.14"
+url = "2.5"
+resvg = "0.37"
+tiny-skia = "0.11"
+
+[target.'cfg(windows)'.build-dependencies]
+winresource = "0.1"
+
+[dev-dependencies]
+tempfile = "3.10"

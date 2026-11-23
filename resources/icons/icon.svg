@@ -1,0 +1,50 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgShell" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#23211E"/>
+      <stop offset="100%" stop-color="#131210"/>
+    </linearGradient>
+    <linearGradient id="rimStroke" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#423E37"/>
+      <stop offset="100%" stop-color="#211F1C"/>
+    </linearGradient>
+    <linearGradient id="clayTrack" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#E38363"/>
+      <stop offset="100%" stop-color="#C45A38"/>
+    </linearGradient>
+    <linearGradient id="ivoryKnob" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#EAE5DC"/>
+    </linearGradient>
+    <linearGradient id="slateTrack" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#2A2824"/>
+      <stop offset="100%" stop-color="#22201D"/>
+    </linearGradient>
+  </defs>
+
+  <!-- macOS Optical Squircle Base (840x840 centered with 92px Dock margin) -->
+  <rect x="92" y="92" width="840" height="840" rx="192" ry="192" fill="url(#bgShell)" stroke="url(#rimStroke)" stroke-width="8"/>
+
+  <!-- Subtle Recessed Instrument Faceplate -->
+  <rect x="140" y="140" width="744" height="744" rx="148" ry="148" fill="#171614" stroke="#282622" stroke-width="3"/>
+
+  <!-- Top Active Switch Rail (Claude Terracotta) -->
+  <rect x="222" y="276" width="580" height="204" rx="102" ry="102" fill="url(#clayTrack)"/>
+  <!-- Code Prompt Chevron on Active Rail -->
+  <path d="M 318 344 L 362 378 L 318 412" fill="none" stroke="#FAF8F4" stroke-width="26" stroke-linecap="round" stroke-linejoin="round" opacity="0.92"/>
+  <line x1="392" y1="412" x2="452" y2="412" stroke="#FAF8F4" stroke-width="24" stroke-linecap="round" opacity="0.85"/>
+  <!-- Active Tactile Knob (Right / Engaged) -->
+  <circle cx="700" cy="378" r="78" fill="url(#ivoryKnob)"/>
+  <!-- Live Signal Pin Inside Active Knob -->
+  <circle cx="700" cy="378" r="20" fill="#279663"/>
+
+  <!-- Bottom Standby Switch Rail (Obsidian Stone) -->
+  <rect x="222" y="544" width="580" height="204" rx="102" ry="102" fill="url(#slateTrack)" stroke="#35322C" stroke-width="6"/>
+  <!-- Standby Tactile Knob (Left) -->
+  <circle cx="324" cy="646" r="74" fill="#3B3832"/>
+  <circle cx="324" cy="646" r="18" fill="#8A8377"/>
+  <!-- Code Brackets on Standby Rail -->
+  <path d="M 556 612 L 516 646 L 556 680" fill="none" stroke="#9C9588" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M 664 612 L 704 646 L 664 680" fill="none" stroke="#9C9588" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"/>
+  <line x1="624" y1="604" x2="596" y2="688" stroke="#D97757" stroke-width="20" stroke-linecap="round"/>
+</svg>
